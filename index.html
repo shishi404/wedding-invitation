@@ -1,0 +1,58 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#f6f0e7">
+<meta name="description" content="一封婚礼邀请，期待与你相见。">
+<title>我们的婚礼 · 邀请函</title>
+<style>
+:root{--paper:#f6f0e7;--ink:#742f3a;--muted:#9b8074;--line:#d8c7b7}*{box-sizing:border-box}html{scroll-behavior:smooth}body{margin:0;background:var(--paper);color:var(--ink);font-family:"Songti SC","Noto Serif CJK SC","SimSun",serif}body:before{content:"";position:fixed;inset:12px;border:1px solid var(--line);pointer-events:none;z-index:5}button{font:inherit;cursor:pointer}main{max-width:600px;margin:auto;padding:0 32px}section{min-height:85svh;padding:85px 0;text-align:center;display:flex;flex-direction:column;align-items:center;justify-content:center}.eyebrow{font-family:Georgia,serif;font-size:11px;letter-spacing:5px;text-transform:uppercase;color:var(--muted)}.cover{min-height:100svh;position:relative}.ornament{width:180px;height:120px;margin:30px auto 25px}.ornament svg{width:100%;height:100%;fill:none;stroke:var(--ink);stroke-width:1;opacity:.65}h1{font-size:clamp(42px,11vw,66px);font-weight:400;line-height:1.5;letter-spacing:10px;margin:14px 0 20px;padding-left:10px}.sub{font-size:13px;letter-spacing:4px;line-height:2.3;color:var(--muted)}.envelope{background:none;border:1px solid var(--line);width:240px;height:145px;position:relative;margin:34px 0 22px;color:var(--ink);transition:transform .7s,opacity .7s;box-shadow:0 10px 30px #742f3a08}.envelope:before,.envelope:after{content:"";position:absolute;top:0;width:50%;height:1px;background:var(--line)}.envelope:before{left:0;transform:rotate(30deg);transform-origin:left}.envelope:after{right:0;transform:rotate(-30deg);transform-origin:right}.seal{display:inline-flex;align-items:center;justify-content:center;background:var(--ink);color:var(--paper);border-radius:50%;width:48px;height:48px;font-size:18px;box-shadow:0 0 0 4px #742f3a13}.envelope.opened{transform:translateY(-10px);opacity:.45}.hint{font-size:11px;letter-spacing:3px;color:var(--muted)}.down{margin-top:30px;animation:float 3s ease-in-out infinite;font-size:23px;color:var(--muted)}.divider{height:60px;border-left:1px solid var(--line);margin:24px auto}.names{font-size:32px;letter-spacing:5px;line-height:1.8;margin:20px 0}.amp{font-family:Georgia,serif;font-style:italic;display:block;font-size:27px;color:var(--muted)}h2{font-size:28px;font-weight:400;letter-spacing:5px;margin:20px 0}.copy{font-size:15px;line-height:2.5;letter-spacing:2px;margin:12px 0}.date{font:40px Georgia,serif;letter-spacing:3px;margin:25px 0 12px}.detail{padding:22px 0;width:100%;border-top:1px solid var(--line)}.detail:last-child{border-bottom:1px solid var(--line)}.label{font-size:11px;letter-spacing:3px;color:var(--muted);margin-bottom:12px}.value{font-size:18px;line-height:1.8;letter-spacing:2px}.photo{width:100%;aspect-ratio:4/5;border:1px solid var(--line);display:flex;flex-direction:column;justify-content:center;gap:15px;margin:22px 0;color:var(--muted);background:linear-gradient(135deg,#eee5d8,#f9f5ee)}.photo span:first-child{font-size:36px;font-family:Georgia,serif;font-style:italic}.photo span:last-child{font-size:11px;letter-spacing:3px}.photo img{width:100%;height:100%;object-fit:cover}.closing{min-height:65svh}.closing .heart{font-size:28px;margin:20px}.footer{font:10px Georgia,serif;letter-spacing:3px;color:var(--muted);margin-top:30px}.reveal{opacity:0;transform:translateY(24px);transition:opacity 1s,transform 1s}.reveal.visible{opacity:1;transform:translateY(0)}@keyframes float{50%{transform:translateY(7px)}}@media(prefers-reduced-motion:reduce){html{scroll-behavior:auto}*,*:before,*:after{animation:none!important;transition:none!important}.reveal{opacity:1;transform:none}}@media(min-width:700px){body:before{inset:22px}main{padding:0 60px}}
+</style>
+</head>
+<body>
+<main>
+<section class="cover">
+<div class="eyebrow">Together with you</div>
+<div class="ornament" aria-hidden="true"><svg viewBox="0 0 180 120"><path d="M90 108C60 88 37 65 39 43C41 23 66 20 90 43C114 20 139 23 141 43C143 65 120 88 90 108Z"/><path d="M32 101Q17 72 30 40M27 76Q7 66 14 53Q28 56 27 76M28 61Q42 47 41 36Q26 40 28 61M148 101Q163 72 150 40M153 76Q173 66 166 53Q152 56 153 76M152 61Q138 47 139 36Q154 40 152 61"/></svg></div>
+<h1>婚礼邀请</h1>
+<div class="sub">以爱之名 · 邀你赴约</div>
+<button class="envelope" id="open" aria-label="打开婚礼请柬"><span class="seal" aria-hidden="true">囍</span></button>
+<div class="hint" id="hint">轻触，打开这封邀请</div>
+<div class="down" aria-hidden="true">↓</div>
+</section>
+<section id="invitation" class="reveal">
+<div class="eyebrow">We are getting married</div>
+<div class="names"><span data-field="partnerOne">新郎姓名</span><span class="amp">&amp;</span><span data-field="partnerTwo">新娘姓名</span></div>
+<div class="divider"></div>
+<p class="copy" id="message">人生的这一场美好相遇<br>想与你一同见证<br>诚邀你参加我们的婚礼</p>
+</section>
+<section class="reveal">
+<div class="eyebrow">Our little forever</div>
+<h2>我们的故事</h2>
+<div class="photo" id="photo"><span>Our story</span><span>在这里放一张我们的照片</span></div>
+<p class="copy" data-field="story">在这里，写下我们的故事。</p>
+</section>
+<section class="reveal">
+<div class="eyebrow">Save the date</div>
+<h2>期待相见</h2>
+<div class="date" data-field="date">待定日期</div>
+<div class="sub" data-field="weekday">婚礼日期待填写</div>
+<div class="divider"></div>
+<div class="detail"><div class="label">婚礼时间</div><div class="value" data-field="time">待填写</div></div>
+<div class="detail"><div class="label">婚礼地点</div><div class="value" data-field="venue">场地名称待填写</div></div>
+<div class="detail"><div class="label">详细地址</div><div class="value" data-field="address">地址待填写</div></div>
+</section>
+<section class="closing reveal"><div class="eyebrow">With love</div><div class="heart" aria-hidden="true">♡</div><h2>有你，更圆满</h2><p class="copy">把这份喜悦，分享给你<br>期待与你相见</p><div class="footer">OUR WEDDING INVITATION</div></section>
+</main>
+<script src="data.js"></script>
+<script>
+const data=window.invitationData||{};
+document.querySelectorAll('[data-field]').forEach(el=>{const value=data[el.dataset.field];if(value)el.textContent=value});
+if(data.message)document.querySelector('#message').textContent=data.message;
+if(data.photo){const img=document.createElement('img');img.src=data.photo;img.alt='我们的合影';document.querySelector('#photo').replaceChildren(img)}
+document.querySelector('#open').addEventListener('click',()=>{document.querySelector('#open').classList.add('opened');document.querySelector('#hint').textContent='这份喜悦，想与你分享';document.querySelector('#invitation').scrollIntoView({behavior:matchMedia('(prefers-reduced-motion: reduce)').matches?'auto':'smooth'})});
+if('IntersectionObserver' in window){const observer=new IntersectionObserver(entries=>{entries.forEach(entry=>{if(entry.isIntersecting){entry.target.classList.add('visible');observer.unobserve(entry.target)}})},{threshold:.12});document.querySelectorAll('.reveal').forEach(el=>observer.observe(el))}else{document.querySelectorAll('.reveal').forEach(el=>el.classList.add('visible'))}
+</script>
+</body>
+</html>
