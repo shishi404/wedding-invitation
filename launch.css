@@ -10,3 +10,4 @@ body.intro-active{overflow:hidden}main[hidden]{display:none!important}main{max-w
 body:not(.intro-active) .music-toggle{color:var(--muted,#6c705d);text-shadow:none}
 body:not(.intro-active) .music-toggle:after{background:currentColor;opacity:.4}
 body:not(.intro-active) .music-toggle:focus-visible{outline-color:currentColor}
+.outro-char{display:inline-block;white-space:pre;will-change:transform,opacity}
