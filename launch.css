@@ -4,3 +4,9 @@ body.intro-active{overflow:hidden}main[hidden]{display:none!important}main{max-w
 
 
 .launch{background-image:linear-gradient(#06120c33,#06120c44),url('garden-dusk.png')}.launch-announcement .launch-date{opacity:0;transition:opacity 1.2s .8s}.launch-announcement.show .launch-date{opacity:.8}
+
+/* 与跳过同样的文字按钮；比跳过的 .5s 延迟再晚半秒。 */
+.music-toggle{position:fixed;top:max(18px,env(safe-area-inset-top));bottom:auto;z-index:30;animation-delay:1s}
+body:not(.intro-active) .music-toggle{color:var(--muted,#6c705d);text-shadow:none}
+body:not(.intro-active) .music-toggle:after{background:currentColor;opacity:.4}
+body:not(.intro-active) .music-toggle:focus-visible{outline-color:currentColor}

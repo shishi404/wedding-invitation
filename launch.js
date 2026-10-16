@@ -7,7 +7,22 @@ const gl=canvas.getContext('webgl',{alpha:true,antialias:false,premultipliedAlph
 let fallback=gl?null:canvas.getContext('2d'),W=390,H=844,D=1,VW=3.5,VH=7.6,frame=0,begin=null,epoch=performance.now(),done=false,timer=0,pausedAt=null;
 const chars=Array.from('我们结婚了永爱心之与你相遇光风花月日木水山云白飞梦禾亻彳氵忄扌艹宀辶纟灬阝彡丿丨乀丶夕竹言雨羽人一二三十口小大子女生长久'),phrase=Array.from('我们结婚了');
 let seed=417;function rand(){seed=(seed*1664525+1013904223)>>>0;return seed/4294967296}const mix=(a,b,t)=>a+(b-a)*t,clamp=x=>Math.max(0,Math.min(1,x)),smooth=x=>{x=clamp(x);return x*x*(3-2*x)};
-const seeds=Array.from({length:460},(_,i)=>{let y=1-2*(i+.5)/460,a=i*2.3999632297,r=Math.sqrt(1-y*y);return {x:r*Math.cos(a)*.77,y:y*.77,z:r*Math.sin(a)*.77,ch:i<5?i:Math.floor(rand()*chars.length),delay:rand()*2.7,speed:.7+rand()*.8,spin:(rand()-.5)*4,phase:rand()*6.28,size:.095+rand()*.045}});
+const seeds=Array.from({length:460},(_,i)=>{let y=1-2*(i+.5)/460,a=i*2.3999632297,r=Math.sqrt(1-y*y);return {x:r*Math.cos(a)*.77,y:y*.77,z:r*Math.sin(a)*.77,ch:Math.floor(rand()*chars.length),delay:rand()*2.7,speed:.7+rand()*.8,spin:(rand()-.5)*4,phase:rand()*6.28,size:.095+rand()*.045}});
+// 五个标题字符就是花冠上的五颗种子，分布在可见的不同高度。
+phrase.forEach((ch,slot)=>{
+ const targetY=.5-slot*.25;
+ const p=seeds.filter(p=>p.z>.25&&p.phraseIndex===undefined).sort((a,b)=>Math.abs(a.y-targetY)-Math.abs(b.y-targetY))[0];
+ p.ch=chars.indexOf(ch);p.phraseIndex=slot;
+});
+let arrivalOrder=[],arrivalTimes=Array(5).fill(5.2);
+function shuffleArrivals(){
+ const previous=arrivalOrder.join('');
+ do{
+  arrivalOrder=[0,1,2,3,4];
+  for(let i=4;i>0;i--){const j=Math.floor(Math.random()*(i+1));[arrivalOrder[i],arrivalOrder[j]]=[arrivalOrder[j],arrivalOrder[i]]}
+ }while(arrivalOrder.join('')==='01234'||arrivalOrder.join('')===previous);
+ arrivalOrder.forEach((slot,rank)=>{arrivalTimes[slot]=3.2+rank*.5});
+}
 const atlas=document.createElement('canvas');atlas.width=1024;atlas.height=512;const ink=atlas.getContext('2d');ink.fillStyle='#fff';ink.font='bold 46px "Songti SC","Noto Serif CJK SC","SimSun",serif';ink.textAlign='center';ink.textBaseline='middle';chars.forEach((c,i)=>ink.fillText(c,(i%16)*64+32,Math.floor(i/16)*64+33));
 let program,buffer,texture,locations,values=new Float32Array((seeds.length+70)*6*12),cursor=0;
 if(gl){
@@ -60,22 +75,48 @@ function drawStem(c){
  underside.addColorStop(0,'#28251f00');underside.addColorStop(.45,'#28251f44');underside.addColorStop(1,'#201b1be0');
  pen.fillStyle=underside;pen.fillRect(head[0]-10,head[1],20,6);pen.restore();
 }
+const driftSources=seeds.filter(p=>p.x>.35&&Math.abs(p.z)<.45);
 function render(clock,t){cursor=0;if(gl)gl.clear(gl.COLOR_BUFFER_BIT);else fallback.clearRect(0,0,W,H);const c=center(begin===null?clock:(begin-epoch)/1000);drawStem(c);const titleWidth=Math.min(VW*.54,3.6),titleSize=titleWidth/5*.96,titleX=VW*.155;
 seeds.forEach((p,i)=>{let x=c.x+p.x,y=c.y+p.y,z=p.z,rx=.1*Math.sin(clock+p.phase),ry=.12*Math.cos(clock+p.phase),rz=.1*Math.sin(clock*.5+p.phase),size=p.size,alpha=.72+.28*(p.z+.77)/1.54;
  const idle=t===null&&!reduced?1:t!==null&&!reduced?1-smooth(t/.7):0;if(idle){x+=idle*Math.sin(clock*.9+p.phase)*.03;y+=idle*Math.cos(clock*.7+p.phase)*.018;rz+=idle*Math.sin(clock*.6+p.phase)*.045}
- if(t!==null){const age=Math.max(0,t-p.delay),flow=smooth(age/5.5);x+=flow*(VW*1.35+2+p.speed);y+=Math.sin(age*p.speed+p.phase)*flow*.9+flow*(p.phase-3)*.20;z+=Math.sin(age*.8+p.phase)*flow*2.1;rx+=age*p.spin*.25*flow;ry+=age*p.spin*.7*flow;rz+=age*p.spin*.4*flow;alpha*=1-smooth((age-4.2)/1.6);
- if(i<5){const gather=smooth((t-2.3)/3.2);x=mix(x,titleX+(i-2)*titleWidth/5,gather);y=mix(y,.59,gather);z=mix(z,0,gather);rx*=1-gather;ry*=1-gather;rz*=1-gather;size=mix(size,titleSize,gather);alpha=mix(alpha,1,gather)}
+ if(t!==null&&p.phraseIndex!==undefined){
+  // 从点击瞬间的屏幕位置直接移到落点，不叠加其他种子的风向曲线。
+  const slot=p.phraseIndex,at=(begin-epoch)/1000,gather=smooth(t/arrivalTimes[slot]);
+  const sourceX=c.x+p.x+(reduced?0:Math.sin(at*.9+p.phase)*.03),sourceY=c.y+p.y+(reduced?0:Math.cos(at*.7+p.phase)*.018);
+  const sourcePerspective=8/(8-p.z);
+  z=mix(p.z,0,gather);const perspective=8/(8-z);
+  x=mix(sourceX*sourcePerspective,titleX+(slot-2)*titleWidth/5,gather)/perspective;
+  y=mix(sourceY*sourcePerspective,.59,gather)/perspective;
+  rx=.1*Math.sin(at+p.phase)*(1-gather);ry=.12*Math.cos(at+p.phase)*(1-gather);
+  rz=(.1*Math.sin(at*.5+p.phase)+(reduced?0:Math.sin(at*.6+p.phase)*.045))*(1-gather);
+  size=mix(p.size*sourcePerspective,titleSize,gather)/perspective;alpha=mix(alpha,1,gather);
+ }else if(t!==null){const age=Math.max(0,t-p.delay),flow=smooth(age/5.5);x+=flow*(VW*1.35+2+p.speed);y+=Math.sin(age*p.speed+p.phase)*flow*.9+flow*(p.phase-3)*.20;z+=Math.sin(age*.8+p.phase)*flow*2.1;rx+=age*p.spin*.25*flow;ry+=age*p.spin*.7*flow;rz+=age*p.spin*.4*flow;alpha*=1-smooth((age-4.2)/1.6);
  }
  glyph(x,y,z,p.ch,size,alpha,rx,ry,rz);
 });
-// 待机时少量部首从花冠右侧逸出，形成持续向右的风。
-if(t===null&&!reduced){for(let i=0;i<38;i++){let age=(clock*.65+i*.173)%6.5,travel=age/6.5,phase=i*1.731;glyph(c.x+.48+travel*(VW+1),c.y+Math.sin(phase+travel*3)*.4+travel*.4,Math.sin(phase)*1.8,(i*7+18)%chars.length,.075+((i*13)%9)*.006,Math.sin(travel*Math.PI)*.65,travel,travel*3,travel*2+phase)}}
+// 复制花冠边缘的字符作独立粒子；出生后的位置不再跟随花冠摇摆。
+if(!reduced&&(t===null||t<.8)){
+ const emissionClock=begin===null?clock:(begin-epoch)/1000;
+ for(let i=0;i<10;i++){
+  const offset=.7+i*1.23+Math.sin(i*2.4)*.25,cycle=Math.floor((emissionClock-offset)/13.5);
+  if(cycle<0)continue;
+  const birth=offset+cycle*13.5,age=clock-birth,life=7.2+(i%3)*.55;
+  if(age<0||age>life)continue;
+  const p=driftSources[(i*19+cycle*7)%driftSources.length],origin=center(birth),phase=p.phase;
+  const drift=(.16*age+.045*age*age)*(.85+(i%4)*.08);
+  const x=origin.x+p.x+Math.sin(birth*.9+phase)*.03+drift;
+  const y=origin.y+p.y+Math.cos(birth*.7+phase)*.018+age*.045+(Math.sin(age*.8+phase)-Math.sin(phase))*.1;
+  const z=p.z+Math.sin(age*.4)*.18;
+  const alpha=smooth(age/.35)*(1-smooth((age-life*.55)/(life*.45)))*.7*(t===null?1:1-smooth(t/.8));
+  glyph(x,y,z,p.ch,p.size*.9,alpha,.1*Math.sin(birth+phase)+age*.08,.12*Math.cos(birth+phase)+age*.2,.1*Math.sin(birth*.5+phase)+age*(i%2?.12:-.1));
+ }
+}
 if(gl){gl.uniform1f(gl.getUniformLocation(program,'uAspect'),W/H);gl.bufferData(gl.ARRAY_BUFFER,values.subarray(0,cursor),gl.DYNAMIC_DRAW);gl.drawArrays(gl.TRIANGLES,0,cursor/12)}
 }
 function resize(){W=innerWidth;H=innerHeight;D=Math.min(devicePixelRatio||1,1.7);VW=VH*W/H;for(const c of [canvas,stem]){c.width=Math.round(W*D);c.height=Math.round(H*D)}pen.setTransform(D,0,0,D,0,0);if(gl)gl.viewport(0,0,canvas.width,canvas.height);else fallback.setTransform(D,0,0,D,0,0)}
 function reveal(){if(done)return;done=true;cancelAnimationFrame(frame);main.hidden=false;main.classList.add('launch-content-enter');layer.classList.add('leaving');document.body.classList.remove('intro-active');timer=setTimeout(()=>{layer.hidden=true;document.querySelector('#invitation').focus({preventScroll:true})},1500)}
 function loop(now){if(done)return;const clock=(now-epoch)/1000,t=begin===null?null:(reduced?8.5:(now-begin)/1000);render(clock,t);if(t!==null){if(t>=5.6){announcement.classList.add('show');announcement.setAttribute('aria-hidden','false')}if(t>=11){reveal();return}}frame=requestAnimationFrame(loop)}
-function start(){if(begin!==null||done)return;begin=performance.now();trigger.disabled=true;layer.classList.add('playing');status.textContent='汉字随风飘散，汇成：我们结婚了。';if(reduced){begin-=7000;timer=setTimeout(reveal,3500)}}
+function start(){if(begin!==null||done)return;shuffleArrivals();begin=performance.now();trigger.disabled=true;layer.classList.add('playing');status.textContent='汉字随风飘散，汇成：我们结婚了。';if(reduced){begin-=7000;timer=setTimeout(reveal,3500)}}
 trigger.addEventListener('click',start);layer.addEventListener('click',e=>{if(e.target.closest('#skip'))return;if(begin===null)start()});document.querySelector('#skip').addEventListener('click',reveal);
 document.querySelector('#replay').addEventListener('click',()=>{clearTimeout(timer);cancelAnimationFrame(frame);begin=null;done=false;epoch=performance.now();layer.hidden=false;layer.classList.remove('playing','leaving');announcement.classList.remove('show');announcement.setAttribute('aria-hidden','true');main.hidden=true;main.classList.remove('launch-content-enter');document.body.classList.add('intro-active');trigger.disabled=false;status.textContent='';scrollTo(0,0);trigger.focus();frame=requestAnimationFrame(loop)});
 canvas.addEventListener('webglcontextlost',e=>{e.preventDefault();reveal()});document.addEventListener('visibilitychange',()=>{if(document.hidden){pausedAt=performance.now();cancelAnimationFrame(frame)}else if(!done&&pausedAt!==null){const delta=performance.now()-pausedAt;epoch+=delta;if(begin!==null)begin+=delta;pausedAt=null;frame=requestAnimationFrame(loop)}});

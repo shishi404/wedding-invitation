@@ -1,6 +1,8 @@
 // 修改引号里的内容即可更新请柬。留空时显示占位文字。
 // photo 可填写同一仓库中的图片路径，例如 "photos/us.jpg"。
 window.invitationData = {
+  // 选好音乐后填写文件路径，例如 "music/wedding.mp3"；留空可预览按钮切换。
+  music: "",
   partnerOne: "陈萌",
   partnerTwo: "叶倩芸",
   englishNames: "",
