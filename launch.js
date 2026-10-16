@@ -19,7 +19,47 @@ if(gl){
 const corners=[[-.5,-.5],[.5,-.5],[-.5,.5],[-.5,.5],[.5,-.5],[.5,.5]];
 function glyph(x,y,z,index,size,alpha,rx=0,ry=0,rz=0){if(alpha<.005)return;const u=(index%16)/16,v=Math.floor(index/16)/8;if(gl){for(const [cx,cy] of corners){values[cursor++]=x;values[cursor++]=y;values[cursor++]=z;values[cursor++]=cx;values[cursor++]=cy;values[cursor++]=u+(cx+.5)/16;values[cursor++]=v+(.5-cy)/8;values[cursor++]=rx;values[cursor++]=ry;values[cursor++]=rz;values[cursor++]=size;values[cursor++]=alpha}}else{const p=8/(8-z),px=W/2+x*H/VH*p,py=H/2-y*H/VH*p;fallback.save();fallback.translate(px,py);fallback.rotate(-rz);fallback.scale(Math.max(.08,Math.abs(Math.cos(ry))),1);fallback.globalAlpha=alpha;const s=size*H/VH*p;fallback.drawImage(atlas,(index%16)*64,Math.floor(index/16)*64,64,64,-s/2,-s/2,s,s);fallback.restore()}}
 function center(clock){const breeze=reduced?0:Math.sin(clock*.52)*.17+Math.sin(clock*.23+1.2)*.045;const swing=reduced?0:Math.sin(clock*.65)*.025;return {x:-VW*.235+breeze+swing,y:.85+(reduced?0:Math.sin(clock*.4)*.012)}}
-function drawStem(c){pen.clearRect(0,0,W,H);const to=(x,y)=>[W/2+x*H/VH,H/2-y*H/VH],head=to(c.x,c.y),root=to(-VW*.235-.58,-VH*.55);pen.lineCap='round';pen.lineWidth=Math.max(3,Math.min(4.5,H/230));let g=pen.createLinearGradient(...root,...head);g.addColorStop(0,'#2a3520');g.addColorStop(.65,'#617044');g.addColorStop(1,'#90946a');pen.strokeStyle=g;pen.beginPath();pen.moveTo(...root);pen.bezierCurveTo(root[0]+14,root[1]-H*.12,head[0]-H*.06,head[1]+H*.18,...head);pen.stroke();pen.strokeStyle='#8d996b66';pen.lineWidth=.5;pen.beginPath();pen.moveTo(root[0]+1,root[1]);pen.quadraticCurveTo(head[0]-15,head[1]+90,head[0]+1,head[1]+6);pen.stroke();pen.fillStyle='#8f9670';pen.beginPath();pen.ellipse(head[0],head[1]+4,4.8,7,-.2,0,Math.PI*2);pen.fill()}
+function drawStem(c){
+ pen.clearRect(0,0,W,H);
+ const to=(x,y)=>[W/2+x*H/VH,H/2-y*H/VH],head=to(c.x,c.y),root=to(-VW*.235-.58,-VH*.55);
+ // 保留原有花茎的起点、弯曲控制点、终点和粗细，只调整截面的受光方向。
+ const tip=[head[0]+1,head[1]+8],b1=[root[0]+14,root[1]-H*.12],b2=[head[0]-H*.06,head[1]+H*.18];
+ const point=t=>{const s=1-t;return [s*s*s*root[0]+3*s*s*t*b1[0]+3*s*t*t*b2[0]+t*t*t*tip[0],s*s*s*root[1]+3*s*s*t*b1[1]+3*s*t*t*b2[1]+t*t*t*tip[1]]};
+ const tangent=t=>{const s=1-t,dx=3*s*s*(b1[0]-root[0])+6*s*t*(b2[0]-b1[0])+3*t*t*(tip[0]-b2[0]),dy=3*s*s*(b1[1]-root[1])+6*s*t*(b2[1]-b1[1])+3*t*t*(tip[1]-b2[1]),length=Math.hypot(dx,dy);return [-dy/length,dx/length]};
+ const stemWidth=Math.max(4.2,Math.min(6,H/175)),edge=(t,side)=>{const p=point(t),n=tangent(t),w=stemWidth/2;return [p[0]+n[0]*w*side,p[1]+n[1]*w*side]};
+ // 左侧受光、右侧背光；渐变始终跟随花茎截面，不形成独立高光线。
+ for(let i=0;i<28;i++){
+  const t0=Math.max(0,(i-.18)/28),t1=Math.min(1,(i+1.18)/28),a=edge(t0,-1),b=edge(t0,1),d=edge(t1,-1),e=edge(t1,1);
+  const color=pen.createLinearGradient(a[0],a[1],b[0],b[1]);
+  color.addColorStop(0,'#999855');color.addColorStop(.22,'#7f8145');color.addColorStop(.55,'#5d6635');color.addColorStop(.82,'#394725');color.addColorStop(1,'#202d1a');
+  pen.fillStyle=color;pen.beginPath();pen.moveTo(...a);pen.lineTo(...b);pen.lineTo(...e);pen.lineTo(...d);pen.closePath();pen.fill();
+ }
+ // 花托下面是一小段暗棕色总苞和茎的连接，阴影向下逐渐并入绿色花茎。
+ const neck=pen.createLinearGradient(head[0],head[1]+3,head[0],head[1]+15);
+ neck.addColorStop(0,'#231b1bcc');neck.addColorStop(.55,'#332920aa');neck.addColorStop(1,'#302b1d00');
+ pen.fillStyle=neck;pen.beginPath();pen.moveTo(head[0]-4.1,head[1]+2.5);
+ pen.bezierCurveTo(head[0]-2.6,head[1]+5,head[0]-1.9,head[1]+10,head[0]+.2,head[1]+15);
+ pen.bezierCurveTo(head[0]+1.6,head[1]+10,head[0]+3.8,head[1]+7,head[0]+4.7,head[1]+2.5);
+ pen.closePath();pen.fill();
+ // 近处总苞片较长，左右两侧按透视缩短；根部藏在花托的暗面里。
+ const bracts=[[-6.2,4.3,-7.1],[-4.3,6.6,-5.1],[-2.2,9,-1.7],[.1,10.2,.6],[2.5,8.3,3],[5.1,5.5,5.9],[7,3.7,8]];
+ for(const [offset,length,lean] of bracts){
+  const x=head[0]+offset,y=head[1]+2.4,tipX=head[0]+lean,tipY=head[1]+length;
+  const bract=pen.createLinearGradient(x,y,tipX,tipY);
+  bract.addColorStop(0,offset<0?'#55583f':'#393c2f');bract.addColorStop(.55,offset<0?'#39392a':'#2d2525');bract.addColorStop(1,'#211b1b');
+  pen.fillStyle=bract;pen.beginPath();pen.moveTo(x-1.15,y);
+  pen.quadraticCurveTo(x-1.2,head[1]+5,tipX,tipY);
+  pen.quadraticCurveTo(x+.35,head[1]+5,x+1.05,y);
+  pen.closePath();pen.fill();
+ }
+ const cap=pen.createRadialGradient(head[0]-4.1,head[1]-1.8,.5,head[0]+1.6,head[1]+1.7,10);
+ cap.addColorStop(0,'#c8cab2');cap.addColorStop(.34,'#afb29a');cap.addColorStop(.69,'#808572');cap.addColorStop(1,'#4a5044');
+ pen.fillStyle=cap;pen.beginPath();pen.ellipse(head[0],head[1]+.8,9.2,4.2,-.1,0,Math.PI*2);pen.fill();
+ pen.save();pen.beginPath();pen.ellipse(head[0],head[1]+.8,9.2,4.2,-.1,0,Math.PI*2);pen.clip();
+ const underside=pen.createLinearGradient(head[0],head[1]+.5,head[0],head[1]+5);
+ underside.addColorStop(0,'#28251f00');underside.addColorStop(.45,'#28251f44');underside.addColorStop(1,'#201b1be0');
+ pen.fillStyle=underside;pen.fillRect(head[0]-10,head[1],20,6);pen.restore();
+}
 function render(clock,t){cursor=0;if(gl)gl.clear(gl.COLOR_BUFFER_BIT);else fallback.clearRect(0,0,W,H);const c=center(begin===null?clock:(begin-epoch)/1000);drawStem(c);const titleWidth=Math.min(VW*.54,3.6),titleSize=titleWidth/5*.96,titleX=VW*.155;
 seeds.forEach((p,i)=>{let x=c.x+p.x,y=c.y+p.y,z=p.z,rx=.1*Math.sin(clock+p.phase),ry=.12*Math.cos(clock+p.phase),rz=.1*Math.sin(clock*.5+p.phase),size=p.size,alpha=.72+.28*(p.z+.77)/1.54;
  const idle=t===null&&!reduced?1:t!==null&&!reduced?1-smooth(t/.7):0;if(idle){x+=idle*Math.sin(clock*.9+p.phase)*.03;y+=idle*Math.cos(clock*.7+p.phase)*.018;rz+=idle*Math.sin(clock*.6+p.phase)*.045}
