@@ -33,3 +33,7 @@
 
 GitHub 仓库保持私有，蒲公英方案已同步到 main 分支；网站尚未公开部署。公开托管网站后，拿到链接的人仍可访问。微信分享卡片及不同手机性能需实机验证。
 
+## 双 d10 检定原型
+
+打开 `dice.html` 可以体验独立的 d100 掷骰页面。十位使用透明冰晶与金纹 d10（00、10、…、90），个位使用带微弱星光的黑金 d10（0–9）；两个零面采用 `dice-old-seal-reference.png` 的正面旧印代替数字，数值仍分别为 00 和 0；`00 + 0` 计为 100。骰子模型由 Three.js 在浏览器中生成，数字字形取自 `dice-number-reference.png`，并与纹章、旧印统一处理为金色烫印；纹章取自用户提供的 `dice-engraving-reference.png`，并去除背景和说明文字后贴到每个面上。页面使用项目内 `vendor/` 的 Three.js 0.186.1 文件，离线部署时需一并复制 `dice.html`、`dice.css`、`dice.js`、`dice-engraving-reference.png`、`dice-old-seal-reference.png`、`dice-number-reference.png` 和整个 `vendor/` 文件夹。请通过本地 HTTP 服务预览 `dice.html`，以便浏览器加载 JavaScript 模块。
+

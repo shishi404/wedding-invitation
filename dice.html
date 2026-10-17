@@ -1,0 +1,46 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#080c13">
+  <meta name="description" content="双十面骰 d100 检定原型">
+  <title>命运检定 · 双 d10 掷骰</title>
+  <link rel="stylesheet" href="dice.css">
+  <script type="importmap">{"imports":{"three":"./vendor/three.module.js"}}</script>
+</head>
+<body>
+  <main class="app">
+    <header class="topbar">
+      <a class="back" href="index.html" aria-label="返回请柬">← 返回请柬</a>
+      <span class="topmark">THE KEEPER'S TABLE · 01</span>
+    </header>
+
+    <section class="hero" aria-labelledby="title">
+      <div class="eyebrow"><span class="line"></span> A CHANCE ENCOUNTER <span class="line"></span></div>
+      <h1 id="title">命运检定</h1>
+      <p class="intro">两枚十面骰，一次关于未知的邀请。</p>
+    </section>
+
+    <section class="table" aria-label="双十面骰掷骰台">
+      <div class="table-art" aria-hidden="true"><div class="sigil"><span>✧</span></div></div>
+      <div id="dice-stage" class="dice-stage" aria-hidden="true"></div>
+      <div class="dice-captions" aria-hidden="true"><span><i class="dot crystal"></i>十位 · 水晶</span><span><i class="dot obsidian"></i>个位 · 黑曜</span></div>
+    </section>
+
+    <section class="controls" aria-label="检定操作">
+      <div class="rule"><span class="rule-symbol">◇</span> D100 · PERCENTILE ROLL <span class="rule-symbol">◇</span></div>
+      <button id="roll-button" class="roll-button" type="button"><span class="button-sigil">✦</span><span id="button-label">抛掷命运</span><span class="button-sigil">✦</span></button>
+      <p id="hint" class="hint">点击掷骰，或按空格键。两枚骰子会给出 1–100 的结果。</p>
+      <div id="result" class="result" role="status" aria-live="polite" aria-atomic="true">
+        <div class="result-heading">检定结果</div>
+        <div class="result-number" id="result-number">—</div>
+        <div class="result-breakdown" id="result-breakdown">等待掷骰</div>
+      </div>
+      <p class="rules-note">十位骰的 00 与个位骰的 0 同时出现时，结果为 100。</p>
+    </section>
+    <footer>AN INVITATION WRITTEN IN THE STARS</footer>
+  </main>
+  <script type="module" src="dice.js"></script>
+</body>
+</html>
