@@ -1,0 +1,22 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="400" height="430" viewBox="0 0 400 430">
+ <defs>
+  <linearGradient id="leather" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#161c27"/><stop offset=".48" stop-color="#292532"/><stop offset="1" stop-color="#332630"/></linearGradient>
+  <linearGradient id="brass" x2="1" y2="1"><stop stop-color="#67563c"/><stop offset=".28" stop-color="#d0b57c"/><stop offset=".6" stop-color="#877047"/><stop offset="1" stop-color="#c4a875"/></linearGradient>
+  <filter id="grain"><feTurbulence type="fractalNoise" baseFrequency=".65" numOctaves="3" seed="23"/><feColorMatrix type="saturate" values="0"/><feComponentTransfer><feFuncA type="linear" slope=".035"/></feComponentTransfer><feBlend in="SourceGraphic" mode="soft-light"/></filter>
+  <path id="shape" d="M200 10C165 10 143 29 132 52H112C77 40 48 69 48 101V296C48 332 70 354 107 361C127 397 161 416 200 422C239 416 273 397 293 361C330 354 352 332 352 296V101C352 69 323 40 288 52H268C257 29 235 10 200 10Z"/>
+  <clipPath id="inside"><use href="#shape"/></clipPath>
+  <pattern id="knot" width="26" height="12" patternUnits="userSpaceOnUse"><path d="M0 6Q6-3 13 6T26 6M0 6Q6 15 13 6T26 6" fill="none" stroke="#b29863" stroke-width=".7"/></pattern>
+ </defs>
+ <g clip-path="url(#inside)"><use href="#shape" fill="url(#leather)" filter="url(#grain)"/></g>
+ <g clip-path="url(#inside)" fill="none" stroke="#abb3c8" opacity=".07" stroke-width=".7"><path d="m80 23 21 81-13 55 14 94-16 68M295 25l-19 64 22 58-14 99 25 68M48 186l57-9 79 14 43-16 125 19M87 340l90-7 52 13 70-7"/><circle cx="200" cy="241" r="95"/><circle cx="200" cy="241" r="69"/><path d="M200 136v210M95 241h210"/></g>
+ <use href="#shape" fill="none" stroke="#080d12" stroke-width="7"/>
+ <use href="#shape" fill="none" stroke="url(#brass)" stroke-width="1.7"/>
+ <use href="#shape" fill="none" stroke="#c2a771" stroke-width=".5" transform="translate(4 4) scale(.98)" opacity=".5"/>
+ <g fill="none" stroke="url(#brass)" stroke-width="1.1" stroke-linecap="square">
+  <path d="M27 141V59H67M27 59l-7-7 21 1M43 111C35 78 61 30 107 29M52 80C52 56 76 43 95 43M105 20l13-9M373 141V59H333M373 59l7-7-21 1M357 111C365 78 339 30 293 29M348 80c0-24-24-37-43-37M295 20l-13-9"/>
+  <path d="M27 292v79h40M27 371l-7 7 21-1M43 323c-8 33 18 68 64 77M373 292v79h-40M373 371l7 7-21-1M357 323c8 33-18 68-64 77M153 408l47 18 47-18"/>
+  <path d="M49 125h302M49 137h302" stroke-width=".65"/>
+ </g>
+ <path d="M50 127H350V135H50Z" fill="url(#knot)" opacity=".8"/>
+ <g fill="#bba06c"><path d="m27 56 4 4-4 4-4-4Zm346 0 4 4-4 4-4-4ZM25 368l4 4-4 4-4-4Zm348 0 4 4-4 4-4-4Z"/><path d="m200 416 3 5-3 5-3-5Z"/></g>
+</svg>

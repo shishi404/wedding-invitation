@@ -1,0 +1,40 @@
+/* An engraved brass frame and worn violet leather, around the existing 3D dice. */
+#check-dialog{width:min(440px,calc(100vw - 20px));max-height:calc(100svh - 20px);padding:14px 20px 18px;border:0;border-radius:0;background:radial-gradient(ellipse at 50% 32%,#16151ace,transparent 70%);box-shadow:none;overflow-x:hidden;text-align:center;color:#e6d6b7}
+#check-dialog::backdrop{background:#06070be0;backdrop-filter:blur(5px)}
+.check-heading{position:relative;padding:2px 0 12px}.check-heading:before,.check-heading:after{content:'';position:absolute;top:25px;width:58px;height:1px;background:linear-gradient(90deg,transparent,#9d8152)}.check-heading:before{left:10%}.check-heading:after{right:10%;transform:rotate(180deg)}
+#check-dialog h2{margin:0 0 5px;font-size:29px;letter-spacing:6px;line-height:1.35;text-indent:6px;color:#efe1c6;text-shadow:0 2px 2px #000,0 0 18px #d9bd7b25}
+#check-kind{margin:0;color:#c3b49d;font-size:14px;letter-spacing:2px;line-height:1.5}
+.check-frame{position:relative;height:384px;width:100%;background:url('assets/check-ornate-frame.svg') center/100% 100% no-repeat;padding:29px 43px 35px;filter:drop-shadow(0 9px 17px #0007)}
+.check-current{height:88px;display:flex;flex-direction:column;justify-content:center;align-items:center;gap:1px}.check-current-label{font-size:11px;line-height:1.35;color:#c8c1b2;letter-spacing:2px}.check-current-label span{display:block}.check-current strong{font-family:Georgia,serif;font-weight:400;line-height:1;font-size:43px;color:#f0e6d3;text-shadow:0 2px 3px #000;margin-top:4px}
+.check-dice-area{position:relative;height:222px;isolation:isolate}#check-dialog #dice-frame{position:absolute;inset:0;display:block;width:100%;height:100%;border:0;background:transparent;pointer-events:none;z-index:1}
+#check-roll{position:absolute;inset:0;z-index:2;display:flex;align-items:flex-end;justify-content:center;padding:0 8px 13px;border:0;background:transparent;color:#dfd1b1;cursor:pointer;opacity:1}#check-roll span{font-family:var(--study-type);font-size:14px;letter-spacing:2px;line-height:1.5;padding:5px 26px;background:linear-gradient(#272329,#12141c);border:1px solid #a88b55;box-shadow:inset 0 0 0 2px #080d1477,0 2px 6px #0007;border-radius:2px;text-shadow:0 1px #000}#check-roll:hover:not(:disabled) span{color:#fff0c9;border-color:#e4c485;box-shadow:0 0 12px #c2a56725}#check-roll:focus-visible{outline:0}#check-roll:focus-visible span{outline:2px solid #d8bf85;outline-offset:4px}#check-roll:disabled{cursor:default}#check-roll:disabled span{color:#a49b8b;border-color:#7b6a4b;opacity:.8}
+.check-fallback-dice{position:absolute;inset:16px 0 45px;display:flex;align-items:center;justify-content:center;gap:22px;opacity:.45;pointer-events:none}.check-fallback-dice svg{width:76px;height:90px;overflow:visible}.check-dice-area.models-ready .check-fallback-dice{display:none}.check-dice-area.numeric-fallback .check-fallback-dice{opacity:1}
+.check-bonus{position:relative;margin:0 auto;min-height:108px;display:flex;align-items:center;justify-content:center}.check-bonus:before,.check-bonus:after{content:'';height:1px;width:64px;margin:0 14px;background:linear-gradient(90deg,transparent,#8f774b77)}.check-bonus:after{transform:rotate(180deg)}
+.check-bonus-card{min-width:112px;position:relative;display:grid;justify-items:center;gap:3px;padding:5px 9px 8px;border:1px solid #a88e5b90;border-top-color:#cfb781;background:linear-gradient(135deg,#262733ed,#171922e8);border-radius:7px 7px 2px 2px;box-shadow:inset 0 0 0 2px #090f1555,0 4px 8px #0005}.check-bonus-card:before{content:'◆';position:absolute;top:-8px;font-size:9px;color:#b99e69;background:#171923;padding:0 7px;line-height:12px}.check-bonus-card strong{font:21px Georgia,serif;line-height:1.1;color:#e5d5b2}.check-bonus-card img{display:block;width:45px;height:34px;object-fit:contain;filter:saturate(.65) brightness(.9)}#check-bonus-item{font-size:11px;letter-spacing:1px;line-height:1.4}#check-bonus-attribute{font-size:10px;letter-spacing:2px;line-height:1.4;color:#a9a18f}.check-bonus-card.no-bonus{opacity:.65}.check-bonus-card.no-bonus img{display:none}
+.check-result-area{min-height:53px;position:relative;padding-top:3px}.check-result-area:before{content:'';position:absolute;top:0;left:18%;right:18%;height:1px;background:linear-gradient(90deg,transparent,#a78a55,transparent)}#check-dialog #check-verdict{margin:6px 0 3px;min-height:22px;font-size:18px;line-height:1.35;letter-spacing:2px;color:#ddcda5}#check-dialog #check-progress{margin:0;font-size:10px;line-height:1.5;letter-spacing:1px;color:#a69c88}
+#check-dialog[data-phase="ready"] #check-verdict{font-size:12px;letter-spacing:1px;color:#a8a195}#check-dialog[data-outcome="critical"] #check-verdict{color:#e8ca82;text-shadow:0 0 12px #b68d3f77}#check-dialog[data-outcome="fumble"] #check-verdict{color:#cf8d7e}
+@media(max-width:480px){#check-dialog{padding:10px 9px 13px}.check-heading{padding-bottom:7px}.check-heading:before,.check-heading:after{width:37px}.check-frame{height:354px;padding:26px 37px 30px}.check-current{height:82px}.check-dice-area{height:202px}.check-bonus{min-height:102px}.check-bonus:before,.check-bonus:after{width:41px;margin:0 10px}}
+@media(max-height:720px){#check-dialog{padding-top:6px;padding-bottom:8px}.check-heading{padding-bottom:3px}#check-dialog h2{font-size:25px}.check-frame{height:302px;padding-top:22px;padding-bottom:28px}.check-current{height:71px}.check-current strong{font-size:35px}.check-current-label{font-size:10px}.check-dice-area{height:176px}#check-roll{padding-bottom:6px}#check-roll span{font-size:12px;padding:4px 20px}.check-bonus{min-height:88px}.check-bonus-card{gap:1px;padding:5px 8px}.check-bonus-card strong{font-size:18px}.check-bonus-card img{height:26px}.check-result-area{min-height:45px}#check-dialog #check-verdict{font-size:16px;margin-top:5px}}
+@media(max-height:570px){.check-frame{height:256px;padding-top:18px}.check-current{height:60px}.check-dice-area{height:151px}.check-current strong{font-size:31px}.check-bonus{min-height:79px}.check-bonus-card img{height:22px}.check-heading:before,.check-heading:after{top:20px}#check-dialog h2{font-size:23px}#check-kind{font-size:12px}}
+
+/* The settled d100 sits between the attribute and the physical dice. */
+.check-result-number{position:absolute;top:12px;left:0;right:0;z-index:3;pointer-events:none;font:30px/1.1 Georgia,serif;letter-spacing:1px;color:#e4d4af;text-shadow:0 2px 3px #000;transform-origin:center}
+#check-dialog[data-passed="true"]{--check-outcome-color:#e7c371;--check-outcome-glow:#c69c4166}
+#check-dialog[data-passed="false"]{--check-outcome-color:#dd756b;--check-outcome-glow:#c24a4166}
+#check-dialog[data-phase="result"] :is(#check-title,#check-attribute-value,#check-result-number){color:var(--check-outcome-color);text-shadow:0 2px 3px #000,0 0 14px var(--check-outcome-glow)}
+#check-dialog[data-phase="result"] :is(#check-attribute-value,#check-result-number){animation:check-result-hop .62s cubic-bezier(.2,.65,.3,1) both}
+.check-result-area{min-height:30px;padding-top:8px}
+@keyframes check-result-hop{0%,100%{transform:translateY(0) scale(1)}30%{transform:translateY(-7px) scale(1.12)}58%{transform:translateY(0) scale(1)}76%{transform:translateY(-2px) scale(1.035)}}
+@media(max-height:720px){.check-result-number{top:8px;font-size:25px}}
+@media(max-height:570px){.check-result-number{top:7px;font-size:22px}}
+@media(prefers-reduced-motion:reduce){#check-dialog[data-phase="result"] :is(#check-attribute-value,#check-result-number){animation:none}}
+
+/* Increase supporting text without reducing the roll and target numerals. */
+#check-kind{font-size:16px}
+.check-current-label{font-size:13px;line-height:1.2}
+#check-roll span{font-size:16px}
+#check-bonus-item{font-size:13px}
+#check-bonus-attribute{font-size:12px}
+#check-dialog #check-progress{font-size:12px;line-height:1.65}
+@media(max-height:720px){.check-bonus{min-height:96px}.check-current{height:76px}.check-frame{height:307px}}
+@media(max-height:570px){.check-current{height:70px}.check-frame{height:266px}.check-bonus{min-height:90px}}

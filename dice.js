@@ -7,6 +7,8 @@ const resultNumber = document.querySelector('#result-number');
 const resultBreakdown = document.querySelector('#result-breakdown');
 const hint = document.querySelector('#hint');
 const reducedMotion = matchMedia('(prefers-reduced-motion: reduce)').matches;
+const embedded = new URLSearchParams(location.search).has('embed') && parent !== window;
+let embeddedRollId = null;
 
 // A pentagonal trapezohedron: ten planar kite faces, one number per face.
 const R = 1;
@@ -402,7 +404,7 @@ try {
     const {width, height} = stage.getBoundingClientRect();
     renderer.setSize(width, height, false);
     camera.aspect = width / height;
-    camera.position.z = width < 480 ? 11.8 : 11.4;
+    camera.position.z = embedded ? 8.3 : width < 480 ? 11.8 : 11.4;
     camera.updateProjectionMatrix();
     camera.lookAt(0, 0, 0);
     renderer.render(scene, camera);
@@ -458,6 +460,11 @@ function finishRoll() {
   resultNumber.textContent = String(total).padStart(2, '0');
   resultBreakdown.textContent = `${String(tens * 10).padStart(2, '0')} + ${ones}`;
   hint.textContent = '命运已落定。你可以再次掷骰。';
+  if (embedded && embeddedRollId !== null) {
+    parent.postMessage({type:'dice-result', id:embeddedRollId, total}, location.protocol==='file:'?'*':location.origin);
+    embeddedRollId = null;
+    button.disabled = true;
+  }
 }
 
 function roll() {
@@ -493,7 +500,15 @@ function roll() {
 
 button.addEventListener('click', roll);
 document.addEventListener('keydown', event => {
-  if (event.code === 'Space' && event.target === document.body) {
+  if (!embedded && event.code === 'Space' && event.target === document.body) {
     event.preventDefault(); roll();
   }
 });
+if (embedded) {
+  window.addEventListener('message', event => {
+    if (event.source !== parent || event.origin !== (location.protocol==='file:'?'null':location.origin) || event.data?.type !== 'study-roll' || rolling) return;
+    embeddedRollId = event.data.id;
+    roll();
+  });
+  parent.postMessage({type:'dice-ready',rendererAvailable:!!renderer}, location.protocol==='file:'?'*':location.origin);
+}

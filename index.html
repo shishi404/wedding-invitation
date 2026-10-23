@@ -1,83 +1,129 @@
 <!doctype html>
 <html lang="zh-CN">
 <head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<meta name="theme-color" content="#f6f0e7">
-<meta name="description" content="一封婚礼邀请，期待与你相见。">
-<title>陈萌 &amp; 叶倩芸 · 婚礼邀请</title>
-<link rel="stylesheet" href="style.css">
-<link rel="stylesheet" href="launch.css">
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+  <meta name="theme-color" content="#0d100e">
+  <meta name="description" content="一间无人书房。三件旧物。一封不该出现在这里的信。">
+  <title>旧印 · 无人书房</title>
+  <link rel="stylesheet" href="assets/fonts/study-gothic.css">
+  <link rel="stylesheet" href="study.css">
+  <link rel="stylesheet" href="check.css">
+  <link rel="preload" href="assets/study-source-plate-v21.webp" as="image" type="image/webp">
+  <link rel="preload" href="assets/musicbox-cleared-v1.webp" as="image" type="image/webp">
+  <link rel="preload" href="assets/windchime-cleared-v1.webp" as="image" type="image/webp">
+  <link rel="preload" href="assets/pendant-cleared-v1.webp" as="image" type="image/webp">
 </head>
 <body>
-<button class="skip music-toggle" id="music-toggle" type="button" aria-pressed="false" aria-controls="background-music">播放音乐</button>
-<audio id="background-music" loop preload="none"></audio>
-<p class="sr-only" id="music-status" role="status" aria-live="polite"></p>
-<div class="launch" id="launch" role="region" aria-label="汉字蒲公英婚礼开场">
-<canvas id="stem-canvas" aria-hidden="true"></canvas>
-<canvas id="launch-canvas" aria-hidden="true"></canvas>
-<button class="touch-prompt" id="launch-button" aria-label="轻触，吹散汉字蒲公英">轻触</button>
-<button class="skip" id="skip">跳过</button>
-<div class="launch-announcement" id="announcement" aria-hidden="true"><h1 class="sr-only">我们结婚了</h1><div class="launch-couple">陈萌 &amp; 叶倩芸</div><div class="launch-date">2026.11.21</div></div>
-<p class="sr-only" id="intro-status" role="status" aria-live="polite"></p>
-</div>
-<main>
-<section id="invitation" class="reveal" tabindex="-1">
-<div class="eyebrow">We are getting married</div>
-<div class="names"><span data-field="partnerOne">陈萌</span><span class="amp">&amp;</span><span data-field="partnerTwo">叶倩芸</span></div>
-<div class="optional-name" data-field="englishNames" data-optional hidden></div>
-<div class="divider"></div>
-<p class="copy" id="message">人生的这一场美好相遇<br>想与你一同见证<br>诚邀你参加我们的婚礼</p>
-</section>
-<section class="fold-section"><details class="guest-fold"><summary>我们的照片与故事</summary><section class="reveal">
-<div class="eyebrow">Our little forever</div>
-<h2>我们的故事</h2>
-<div class="photo" id="photo"><span>Our story</span><span>在这里放一张我们的照片</span></div>
-<p class="copy" data-field="story">在这里，写下我们的故事。</p>
-</section></details></section>
-<section class="reveal date-section">
-<div class="eyebrow">Save the date</div>
-<h2>期待相见</h2>
-<div class="date" data-field="date">2026.11.21</div>
-<div class="sub" data-field="weekday">星期六</div>
-<div class="note" data-field="lunarDate" data-optional hidden></div>
-<div class="note" data-field="banquetType" data-optional hidden></div>
-<div class="divider"></div>
-<div class="detail"><div class="label">到场时间</div><div class="value" data-field="time">具体时间待确认</div></div>
-<div class="detail"><div class="label">婚礼地点</div><div class="value" data-field="venue">深圳ÉPICE泷涎·高尔夫花园餐厅（南山沙河店）</div></div>
-<div class="detail"><div class="label">详细地址</div><div class="value" data-field="address">深圳市南山区 · 路名及门牌待确认</div></div>
-<div class="detail"><div class="label">具体厅名 / 区域</div><div class="value" data-field="hall">待确认</div></div>
-</section>
-<section class="fold-section"><details class="guest-fold"><summary>当日流程</summary><section class="reveal">
-<div class="eyebrow">The wedding day</div><h2>当日流程</h2>
-<p class="note">以下流程及时间待确认</p><ol class="schedule" id="schedule"></ol>
-</section></details></section>
-<section class="fold-section"><details class="guest-fold"><summary>赴约小贴士</summary><section class="reveal">
-<div class="eyebrow">For our guests</div><h2>赴约小贴士</h2>
-<p class="note">筹备中的信息将陆续补充</p>
-<div class="extras">
-<details open><summary>着装与色彩</summary><div class="value" data-field="dressCode">着装要求待确认</div><div class="swatches" id="swatches"></div><div class="value" data-field="weatherNote">天气与气温提示待补充</div></details>
-<details><summary>温馨提示</summary><div class="value" data-field="tips">到场、无烟及其他提示待确认</div></details>
-<details><summary>仪式与婚宴场地</summary><div class="label" style="margin-top:17px">仪式地址</div><div class="value" data-field="ceremonyAddress">是否与婚宴同一场地，待确认</div><div class="label" style="margin-top:17px">婚宴地址</div><div class="value" data-field="banquetAddress">具体区域与地址待确认</div></details>
-<details><summary>席位安排</summary><div class="value" data-field="seating">桌号与分组安排待确认</div></details>
-<details><summary>婚宴菜单</summary><div class="value" data-field="menu">菜单待确认</div></details>
-<details><summary>仪式前的小聚</summary><div class="value" data-field="activities">活动安排待确认</div></details>
-<details><summary>双方家长</summary><div class="parents"><div><div class="label">男方家长</div><div class="value" data-field="groomParents">待填写</div></div><div><div class="label">女方家长</div><div class="value" data-field="brideParents">待填写</div></div></div></details>
-</div>
-</section></details></section>
-<section class="closing reveal"><div class="eyebrow">With love</div><div class="heart" aria-hidden="true">♡</div><h2>有你，更圆满</h2><p class="copy">把这份喜悦，分享给你<br>期待与你相见</p><div class="footer">OUR WEDDING INVITATION</div><button class="replay" id="replay">重看蒲公英动画</button></section>
-</main>
-<script src="data.js"></script>
-<script>
-const data=window.invitationData||{};
-document.querySelectorAll('[data-field]').forEach(el=>{const value=data[el.dataset.field];if(value){el.textContent=value;el.hidden=false}});
-(data.schedule||[]).forEach(item=>{const li=document.createElement('li');const time=document.createElement('time');time.textContent=item.time||'待确认';const title=document.createElement('strong');title.textContent=item.title;li.append(time,title);document.querySelector('#schedule').append(li)});
-(data.dressColors||[]).forEach(color=>{if(!/^#[0-9a-f]{6}$/i.test(color))return;const swatch=document.createElement('span');swatch.className='swatch';swatch.style.backgroundColor=color;swatch.title=color;swatch.setAttribute('aria-label',`着装参考色 ${color}`);document.querySelector('#swatches').append(swatch)});
-if(data.message)document.querySelector('#message').textContent=data.message;
-if(data.photo){const img=document.createElement('img');img.src=data.photo;img.alt='我们的合影';document.querySelector('#photo').replaceChildren(img)}
-if('IntersectionObserver' in window){const observer=new IntersectionObserver(entries=>{entries.forEach(entry=>{if(entry.isIntersecting){entry.target.classList.add('visible');observer.unobserve(entry.target)}})},{threshold:.12});document.querySelectorAll('.reveal').forEach(el=>observer.observe(el))}else{document.querySelectorAll('.reveal').forEach(el=>el.classList.add('visible'))}
-</script>
-<script src="launch.js"></script>
-<script src="music.js"></script>
-</body>
-</html>
+  <section id="entry-screen" class="entry-screen" aria-label="探索入口">
+    <div class="entry-ornaments" aria-hidden="true">
+      <span class="entry-clear-oval"></span>
+      <div class="entry-marginalia"><div class="entry-flow-field"></div></div>
+    </div>
+    <div class="entry-content">
+      <img class="entry-seal" src="assets/elder-sign.png" width="64" height="51" alt="旧印">
+      <h1 class="entry-title" aria-label="欢迎来参加叶倩芸（之南）与陈萌（shishi）的婚礼">
+        <span class="entry-welcome">欢迎来参加</span>
+        <span class="entry-couple">
+          <span class="entry-person"><span class="entry-name">叶倩芸</span><span class="entry-nickname">之南</span></span>
+          <span class="entry-name-join">与</span>
+          <span class="entry-person"><span class="entry-name">陈萌</span><span class="entry-nickname">shishi</span></span>
+        </span>
+        <span class="entry-wedding">的婚礼</span>
+      </h1>
+      <p class="entry-intro">我们为你留了一封请柬。<br>若不赶时间，不妨来书房找找。</p>
+      <button id="start-exploration" class="primary-button" type="button">参观书房，寻找请柬</button>
+      <a class="entry-invitation-button" href="invitation.html">还是直接阅读婚礼请柬吧</a>
+    </div>
+  </section>
+  <main id="study" aria-label="书房探索" hidden>
+    <div id="world" aria-hidden="true"><div class="ambient-room"></div></div>
+    <div class="scene-artboard" id="scene-artboard">
+      <img id="scene-plate" class="scene-plate" src="assets/study-source-plate-v21.webp" width="1536" height="1024" alt="昏暗书房中的旧木书桌，桌上放着破损笔记、唱片机、球仪与书上的吊坠，中央抽屉上着锁。" fetchpriority="high" decoding="async">
+      <img id="scene-open-plate" class="scene-plate scene-open-plate" width="1536" height="1024" alt="" aria-hidden="true" decoding="async">
+      <svg class="scene-details" viewBox="0 0 1536 1024" aria-hidden="true">
+        <g class="keepsake-removals">
+          <image data-remove-object="musicbox" href="assets/musicbox-cleared-v1.webp" x="297" y="404" width="75" height="64" hidden/>
+          <image data-remove-object="windchime" href="assets/windchime-cleared-v1.webp" x="925" y="298" width="85" height="165" hidden/>
+          <image data-remove-object="pendant" href="assets/pendant-cleared-v1.webp" x="360" y="325" width="240" height="120" hidden/>
+        </g>
+        <defs><clipPath id="note-prop-edge"><path d="M704 499 L837 493 L853 576 L855 585 Q815 605 688 597 Z"/></clipPath><filter id="windchime-outline" x="-10%" y="-10%" width="120%" height="120%"><feComponentTransfer in="SourceAlpha" result="solid"><feFuncA type="discrete" tableValues="0 0 0 1"/></feComponentTransfer><feMorphology in="solid" operator="dilate" radius="1.1" result="expanded"/><feComposite in="expanded" in2="solid" operator="out" result="edge"/><feFlood flood-color="#d6be87" result="gold"/><feComposite in="gold" in2="edge" operator="in"/></filter></defs>
+        <g transform="translate(539 381.5) scale(.3)"><image href="assets/note-source-sprite-v2.png" x="660" y="470" width="220" height="146.667" preserveAspectRatio="none" clip-path="url(#note-prop-edge)"/></g>
+        <g class="interaction-outlines" fill="none" stroke="#c6ae77" stroke-width="1.7" stroke-linejoin="round">
+          <path data-outline="musicbox" hidden d="M314 427 L335 427 L347 431 L350 435 L349 444 L340 449 L316 450 L303 445 L300 438 L302 432Z"/>
+          <path data-outline="pendant" hidden d="M437 334 L429 343 L437 357 L464 401 M526 339 L519 351 L505 366 L475 401 M466 401 L472 401 L477 405 L479 410 L477 416 L472 420 L466 420 L460 416 L458 410 L461 404Z"/>
+          <image data-outline="windchime" hidden href="assets/windchime-source-desktop-v3.png" x="934" y="306" width="54" height="150" filter="url(#windchime-outline)"/>
+          <path data-outline="note" transform="translate(539 381.5) scale(.3)" d="M704 500 L837 494 L852 577 L854 585 Q810 604 689 596 Z"/>
+          <path data-outline="notebook" hidden d="M306 489 L453 471 L460 478 L512 550 L513 576 L340 603 L326 587 L305 505 Z"/>
+          <path data-outline="record" hidden d="M1092 389 L1366 376 L1378 377 L1510 470 L1495 555 L1161 555 L1088 468 Z"/>
+          <path data-outline="drawer" hidden d="M397 670 L1137 670 L1130 797 L406 797 Z"/>
+          <path data-outline="photo" hidden d="M637 334 L713 332 L718 425 L640 429 Z"/>
+        </g>
+      </svg>
+      <div class="record-motion" aria-hidden="true"></div>
+      <nav id="hotspots" aria-label="书桌上的互动物品" inert>
+        <button class="hotspot" data-object="musicbox" disabled style="--x:21.15%;--y:42.8%;--w:3.5%;--h:3%;min-width:44px" aria-label="查看陶瓷八音盒"></button>
+        <button class="hotspot" data-object="pendant" disabled style="--x:31.1%;--y:36.9%;--w:7%;--h:9%;min-width:44px" aria-label="查看小吊坠"></button>
+        <button class="hotspot" data-object="windchime" disabled style="--x:62.6%;--y:37.3%;--w:4.3%;--h:15%;min-width:44px" aria-label="查看风铃"></button>
+        <button class="hotspot" data-object="note" style="--x:50.1%;--y:53.2%;--w:3.15%;--h:3.1%;min-width:44px" aria-label="查看桌上的便签"></button>
+        <button class="hotspot" data-object="notebook" disabled style="--x:26.5%;--y:53%;--w:17%;--h:14%" aria-label="查看旧笔记"></button>
+        <button class="hotspot" data-object="record" disabled style="--x:85%;--y:45.5%;--w:28%;--h:19%" aria-label="查看唱片机"></button>
+        <button class="hotspot" data-object="drawer" disabled style="--x:50%;--y:72%;--w:48%;--h:14%" aria-label="查看上锁的抽屉"></button>
+        <button class="hotspot" data-object="photo" disabled style="--x:44.1%;--y:37.2%;--w:7%;--h:12%" aria-label="查看相框照片"></button>
+      </nav>
+    </div>
+    <div class="vignette" aria-hidden="true"></div>
+    <header class="study-header">
+      <div class="wordmark"><img src="assets/elder-sign.png" alt="" width="33" height="27"><span>寻找请柬</span></div>
+      <div class="top-actions">
+        <button id="music-toggle" type="button" aria-pressed="false" aria-controls="background-music">
+          <svg id="music-record-icon" class="music-record-icon" viewBox="0 0 64 64" aria-hidden="true" focusable="false">
+            <circle cx="32" cy="32" r="30" fill="#121512" stroke="#a69b79" stroke-width="1.2"/>
+            <g fill="none" stroke="#626250" stroke-width=".7" opacity=".7"><circle cx="32" cy="32" r="25"/><circle cx="32" cy="32" r="21"/><circle cx="32" cy="32" r="17"/></g>
+            <path d="M12 24 A22 22 0 0 1 25 12 M39 52 A22 22 0 0 0 52 39" fill="none" stroke="#b7b29a" stroke-width="2" opacity=".45"/>
+            <circle cx="32" cy="32" r="11" fill="#ad9563"/>
+            <path d="M25 28 H37 M27 36 H39" stroke="#4b4432" stroke-width="1.4"/>
+            <circle cx="32" cy="32" r="2.5" fill="#121512"/>
+          </svg>
+          <span id="music-toggle-label">播放音乐</span>
+        </button>
+      </div>
+    </header>
+    <footer class="study-footer"><div class="inventory-wrap"><span class="inventory-title">随身物品 <span id="inventory-count">0</span></span><div id="inventory" class="inventory" aria-label="物品栏"></div></div><a id="study-direct-invitation" class="study-direct-invitation" href="invitation.html">直接阅读婚礼请柬</a><span class="footer-index">CASE FILE / 001</span></footer>
+    <p class="sr-only" id="game-status" role="status" aria-live="polite"></p><p id="render-status" class="render-status" hidden></p>
+  </main>
+  <dialog id="choose-dialog" class="choose-dialog" aria-labelledby="choose-title">
+    <img class="note-closeup" src="assets/note-source-detail-v2.webp" width="1536" height="1024" alt="黄色便利贴上写着：可以从桌子上挑选一件纪念品，寻找请柬时可能帮得上忙">
+    <div class="note-choice-content">
+    <h2 id="choose-title">便签·留言</h2><p class="dialog-intro">可以从桌子上挑选一件纪念品，寻找请柬时可能帮得上忙</p>
+    <div class="keepsakes">
+      <button data-keepsake="strength"><span class="item-art" aria-hidden="true"><img src="assets/musicbox-source-detail-v1.webp" alt="" decoding="async"></span><strong>陶瓷质的八音盒</strong><span>转动发条有一种脚踏实地的沉稳感</span></button>
+      <button data-keepsake="intelligence"><span class="item-art" aria-hidden="true"><img src="assets/windchime-source-detail-v1.webp" alt="" decoding="async"></span><strong>一个悬挂的风铃</strong><span>风起时，杂乱的思绪被铃声理顺</span></button>
+      <button data-keepsake="will"><span class="item-art" aria-hidden="true"><img src="assets/pendant-books-source-detail-v1.webp" alt="" decoding="async"></span><strong>小吊坠</strong><span>被珍视的不起眼的吊坠，想必是持有者心中坚定的锚点</span></button>
+    </div>
+    </div>
+  </dialog>
+  <dialog id="gain-dialog" class="gain-dialog" aria-labelledby="gain-title"><div class="dialog-eyebrow">随身物品 / 已取得</div><h2 id="gain-title"></h2><p class="gain-stat" id="gain-value"></p><button id="gain-continue" class="primary-button" type="button">继续寻找请柬的线索</button></dialog>
+  <dialog id="interaction-dialog" class="interaction-dialog" aria-labelledby="interaction-title">
+    <div id="object-art" class="object-art" aria-hidden="true"></div>
+    <div class="inspection-content"><h2 id="interaction-title"></h2><p class="narrative" id="interaction-copy"></p><div id="interaction-actions" class="dialog-actions"></div></div>
+  </dialog>
+  <dialog id="check-dialog" class="check-dialog" aria-labelledby="check-title check-kind" aria-describedby="check-context" data-phase="ready">
+    <header class="check-heading"><h2 id="check-title">调查</h2><p id="check-kind">智力检定</p></header>
+    <p id="check-context" class="sr-only"></p>
+    <section class="check-frame" aria-label="检定数值与双十面骰">
+      <div class="check-current"><span class="check-current-label"><span>检定</span><span>数值</span></span><strong id="check-attribute-value">55</strong></div>
+      <div class="check-dice-area" id="check-dice-area">
+        <div id="check-result-number" class="check-result-number" aria-hidden="true" hidden></div>
+        <div class="check-fallback-dice" aria-hidden="true"><svg viewBox="0 0 80 96"><path d="M40 3 74 24 69 70 40 93 10 70 6 24Z" fill="#45505d" stroke="#b0b8bd"/><path d="m40 3-12 31 12 34 12-34ZM6 24l22 10-18 36m64-46L52 34l17 36M10 70l30-2 29 2M40 68v25" fill="none" stroke="#b0b8bd" stroke-opacity=".6"/><text x="40" y="53" text-anchor="middle" fill="#e2e8e8" font-size="17" font-family="Georgia">00</text></svg><svg viewBox="0 0 80 96"><path d="M40 3 74 24 69 70 40 93 10 70 6 24Z" fill="#171b20" stroke="#a78e5e"/><path d="m40 3-12 31 12 34 12-34ZM6 24l22 10-18 36m64-46L52 34l17 36M10 70l30-2 29 2M40 68v25" fill="none" stroke="#a78e5e" stroke-opacity=".6"/><text x="40" y="53" text-anchor="middle" fill="#e3ca92" font-size="20" font-family="Georgia">0</text></svg></div>
+        <iframe id="dice-frame" title="双十面骰检定动画" tabindex="-1"></iframe>
+        <button id="check-roll" type="button" aria-label="点击骰子，开始检定"><span id="check-roll-label">点击骰子</span></button>
+      </div>
+    </section>
+    <section class="check-bonus" aria-label="本次检定的纪念品加值"><div class="check-bonus-card" id="check-bonus-card"><strong id="check-bonus-value">+0</strong><img id="check-bonus-art" alt="" hidden><span id="check-bonus-item">无对应纪念品</span><span id="check-bonus-attribute">智力</span></div></section>
+    <div class="check-result-area"><p class="check-verdict sr-only" id="check-verdict" role="status" aria-live="polite">等待掷骰</p><p class="check-progress" id="check-progress">D100</p></div>
+  </dialog>
+  <audio id="background-music" loop preload="none"></audio><audio id="record-music" preload="none"></audio><audio id="bell-sound" preload="none"></audio><audio id="musicbox-music" preload="none"></audio><audio id="dice-sound" preload="none"></audio><p class="sr-only" id="music-status" role="status" aria-live="polite"></p>
+  <noscript><div class="noscript">书房探索需要启用 JavaScript。<a href="invitation.html">直接阅读婚礼请柬</a></div></noscript>
+  <script src="data.js"></script><script src="music.js"></script><script src="study-browser.js"></script>
+</body></html>

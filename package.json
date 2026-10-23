@@ -1,0 +1,12 @@
+{
+  "name": "wedding-study-invitation",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "build": "node build-browser.mjs",
+    "predev": "node build-browser.mjs",
+    "dev": "node preview.mjs",
+    "pretest": "node build-browser.mjs",
+    "test": "node check-study.mjs"
+  }
+}

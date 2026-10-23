@@ -1,0 +1,229 @@
+/* 参考色：旧蓝瓷、晚霞粉与暖杏纸；仅用于请柬内页。 */
+:root{--paper:#f6d6b2;--ink:#294f70;--muted:#526b80;--line:#46688d66;--olive:#0961b4;--blue:#46688d;--pink:#fd98a6;--apricot:#fbba76;--purple:#9677dc}
+body{background:#46688d}
+main{background:linear-gradient(125deg,#fd98a62b,transparent 42%,#9677dc20),var(--paper);box-shadow:0 12px 60px #18395255}
+main:before{inset:12px;border:1px solid var(--blue);outline:1px solid #46688d55;outline-offset:-5px}
+main:after{content:"";position:absolute;inset:0;pointer-events:none;z-index:5;opacity:.13;background-image:url("data:image/svg+xml,%3Csvg viewBox='0 0 180 180' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.8' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Cpath fill='%23604431' filter='url(%23n)' opacity='.45' d='M0 0h180v180H0z'/%3E%3C/svg%3E")}
+#invitation{padding:82px 30px 45px;background:linear-gradient(180deg,#46688d 0%,#46688d 72%,#385b82 100%);color:#ffcf98;border-bottom:8px solid var(--pink);margin:23px 23px 22px}
+#invitation:before{content:"囍";top:22px;color:var(--apricot);background:none;font-size:25px;padding:0 16px}
+#invitation:after{content:"良 辰 吉 日 · 敬 候 光 临";display:block;margin-top:24px;font-size:10px;letter-spacing:3px;color:#ffcf98;border-top:1px solid #fbba7670;padding-top:18px;width:100%}
+#invitation .eyebrow{color:#ffcf98;font-size:9px;letter-spacing:3px}
+.names{font-weight:600;letter-spacing:4px;margin:30px 0 12px;text-shadow:1px 1px #233f5b}
+.amp{color:var(--pink)}
+#invitation .divider{background:var(--pink);width:42px;height:1px;margin:22px auto}
+#invitation .copy{line-height:2.5;letter-spacing:2px;color:#ffe0ba}
+section:not(.cover):before{content:"◆";background:var(--paper);color:var(--blue);font-size:10px}
+.fold-section:before{display:none}
+.guest-fold{border-color:var(--line)}
+.guest-fold>summary{font-weight:600;color:#294f70;font-size:14px}
+.guest-fold>summary:after{color:#0961b4}
+.date-section{margin:14px 23px 22px;padding:30px 22px;background:#fbe4c6;border:1px solid var(--blue);box-shadow:4px 4px 0 #9677dc66}
+.date-section .eyebrow{color:#0961b4}
+.date{color:#0961b4;font-weight:600;letter-spacing:3px}
+.detail{border-color:#46688d44}.label{color:#46688d}.value{color:#294f70}
+.photo{border-radius:2px;background:linear-gradient(145deg,#9677dc55,#fd98a666,#fbba76);border:7px solid #fbe4c6;outline:1px solid var(--blue);box-shadow:5px 7px 0 #46688d22}
+.photo:before{color:#46688d}.photo span{color:#294f70}
+.closing{border-top:1px solid var(--line);margin:5px 30px 18px;padding:28px 0}
+.closing h2{letter-spacing:6px;color:#0961b4}.footer{color:#46688d;font-size:8px}
+body:not(.intro-active) .music-toggle{background:#fbe4c6f0;border:1px solid #46688d66;padding:9px 12px;font-size:11px;animation:none;letter-spacing:2px}
+body:not(.intro-active) .music-toggle:after{display:none}
+.replay{color:#46688d}.swatch{border-radius:2px}
+@media(max-width:360px){#invitation{margin:20px 20px 18px;padding-left:16px;padding-right:16px}.names{letter-spacing:1px}.date-section{margin-left:20px;margin-right:20px}.date{font-size:28px}}
+/* 模板的展开式叙事排版 */
+#invitation{padding-top:100px;padding-bottom:48px;overflow:hidden}#invitation:before{content:"囍";left:30px;transform:none}#invitation:after{content:"诚 邀 您 共 同 见 证"}.nicknames{display:flex;justify-content:space-around;width:100%;font-size:15px;letter-spacing:3px;color:#fd98a6}.ceremony-title{font:italic clamp(38px,11vw,62px)/1.05 Georgia,serif;letter-spacing:-2px;margin:38px 0 24px;padding:0}.cover-date{font:16px Georgia,serif;letter-spacing:5px}.manifesto{padding:45px 28px}.manifesto .copy{font-size:13px;line-height:2.7;margin:20px 0}.program{padding-top:40px;padding-bottom:40px;background:#9677dc22;margin:0 24px 30px}.program h2{font-size:24px}.program .schedule{max-width:340px}.schedule time{color:#0961b4;font-size:16px}.dress-section{padding-top:40px;padding-bottom:45px}.dress-section h2{font-size:22px}.outfits{display:flex;gap:19px;width:100%;max-width:330px;justify-content:space-between;margin:25px 0}.outfits>div{width:58px;display:flex;flex-direction:column;align-items:center;gap:5px}.outfits i{display:block;width:58px;height:54px;background:var(--top);clip-path:polygon(25% 0,40% 5%,60% 5%,75% 0,100% 25%,85% 43%,74% 33%,76% 100%,24% 100%,26% 33%,15% 43%,0 25%)}.outfits b{display:block;width:43px;height:64px;background:var(--bottom);clip-path:polygon(0 0,100% 0,96% 100%,57% 100%,50% 35%,43% 100%,4% 100%)}.dress-section .swatches{gap:14px}.dress-section .swatch{width:34px;height:34px;border:1px solid #46688d66}.color-labels{font-size:11px;letter-spacing:2px;color:var(--muted);margin-top:16px}.closing .copy,.closing .eyebrow{display:block}.closing{padding:40px 0}.closing .copy{line-height:2.7;margin:20px 0}.closing h2{margin:20px 0}.final-vow{color:#0961b4}.disco{position:absolute;right:20px;top:15px;width:58px;height:58px;border-radius:50%;transform:rotate(-15deg);background:repeating-linear-gradient(0deg,transparent 0 8px,#46688d88 8px 9px),repeating-linear-gradient(90deg,transparent 0 8px,#46688d88 8px 9px),radial-gradient(circle at 30% 25%,#fffbea,#a6bce0 45%,#9677dc 80%);box-shadow:0 0 24px #fd98a680,inset -9px -6px 14px #294f7066}.disco:before{content:"";position:absolute;width:1px;height:40px;background:#fbba76;top:-39px;left:29px}.disco:after{content:"✦";position:absolute;left:3px;top:0;color:white;font-size:23px}
+/* 参考长幅派对请柬的版式，沿用蓝、杏、粉配色。 */
+main{background:linear-gradient(155deg,#fd98a61c,transparent 48%,#9677dc18),var(--paper);overflow:hidden}
+main:before{display:none}
+#invitation{margin:0;padding:65px 35px 40px;min-height:490px!important;background:none;color:var(--ink);border:0;align-items:flex-start;text-align:left;overflow:visible}
+#invitation:before,#invitation:after{display:none}
+#invitation .eyebrow{font:italic bold clamp(25px,7vw,38px)/1.3 Georgia,serif;letter-spacing:1px;text-transform:none;color:var(--blue);margin-bottom:34px;position:relative;z-index:1}
+#invitation .names{display:flex;flex-direction:column;align-items:flex-start;gap:4px;width:66%;font-size:clamp(44px,13vw,70px);font-weight:700;letter-spacing:5px;line-height:1.35;margin:0;text-shadow:none;position:relative;z-index:1}
+#invitation .names .amp{display:none}
+#invitation .names>span:not(.amp){text-align:left}
+.nicknames{position:absolute;top:233px;right:35px;display:flex;flex-direction:column;align-items:flex-end;gap:9px;width:auto;font-size:14px;letter-spacing:2px;color:var(--blue)}
+.ceremony-title{align-self:center;text-align:center;font:italic bold clamp(26px,7vw,39px)/1.25 Georgia,serif;letter-spacing:-1px;margin:30px 0 12px;color:#0961b4}
+.ceremony-title br{display:none}.ceremony-title br:after{content:" "}
+.cover-date{align-self:center;color:var(--blue);font-size:17px;letter-spacing:4px}
+.disco{width:112px;height:112px;right:30px;top:98px;background:repeating-linear-gradient(0deg,transparent 0 16px,#46688daa 16px 18px),repeating-linear-gradient(90deg,transparent 0 16px,#46688daa 16px 18px),radial-gradient(circle at 30% 25%,#fff3d5,#fd98a6 55%,#9677dc 100%);border:2px solid var(--blue);box-shadow:0 0 25px #fd98a64d,inset -13px -8px 20px #46688d44}
+.disco:before{left:55px;top:-100px;height:98px;background:var(--blue)}.disco:after{content:"✧";left:auto;right:-12px;top:71px;font-size:49px;color:#0961b4}
+.manifesto{padding:20px 30px 38px}.manifesto:before,.program:before,.date-section:before,.dress-section:before{display:none!important}
+.manifesto .eyebrow{display:none}.manifesto .copy{line-height:2.5;font-size:13px;margin:12px 0}
+.program{margin:0;padding:26px 40px 16px;background:none}.program .eyebrow{display:none}.program h2{font-size:18px;letter-spacing:5px;margin:0 0 17px}.program .schedule{width:auto;min-width:260px;margin:0}.schedule li{grid-template-columns:65px 1fr;gap:25px;min-height:40px;padding:8px 0}.schedule li:before{display:none}.schedule li:after{content:"–";left:72px;top:9px;border:0;background:none;width:auto;height:auto;color:var(--blue)}.schedule strong{font-size:15px}.schedule time{font-weight:bold}
+.date-section{margin:0;padding:25px 35px 35px;background:none;border:0;box-shadow:none}.date-section .eyebrow{display:none}.date-section .date{font-size:23px;margin:0 0 8px}.date-section .detail{border:0;padding:20px 0 0}.date-section .label{font-size:11px}.date-section .value{font-size:15px;line-height:2;max-width:350px;margin:auto}
+.dress-section{padding:30px 35px}.dress-section h2{font-size:18px}.dress-section .eyebrow{font-style:italic;letter-spacing:2px}
+.closing{border:0;margin:10px 30px 0;padding:30px 0 55px}.closing .eyebrow{display:none}.closing h2{font-size:22px}.closing .copy{font-size:13px;line-height:2.5}.closing .divider{height:26px}.closing .footer{margin:35px 0 8px;padding:32px 20px;background:var(--blue);color:#ffcf98;border-radius:49% 38% 44% 32% / 34% 45% 38% 52%;transform:rotate(-5deg);font-size:12px;letter-spacing:2px;width:85%}.closing:after{content:"♪  ♫  ♪";color:#0961b4;font-size:28px;letter-spacing:28px;margin-top:28px}
+@media(max-width:380px){#invitation{padding-left:28px;padding-right:28px}.disco{width:88px;height:88px;right:23px;top:106px}.disco:before{left:43px}.nicknames{right:28px;top:220px}.ceremony-title{font-size:26px}.program{padding-left:28px;padding-right:28px}}
+/* 姓名与对应 ID 成组呈现。 */
+#invitation .names{gap:24px}
+.person{display:flex;flex-direction:column;align-items:flex-start;gap:5px}
+.person-id{display:block;font-size:clamp(23px,6vw,30px);font-weight:400;line-height:1.35;letter-spacing:3px;color:var(--blue)}
+.person:first-child .person-id{font-family:Georgia,serif;font-style:italic;letter-spacing:2px}
+/* 整体色卡：严格使用参考图的六个主题色。 */
+:root{--paper:#46688d;--ink:#fbba76;--muted:#fbba76;--line:#fbba7680;--olive:#fbba76;--blue:#46688d;--pink:#fd98a6;--apricot:#fbba76;--purple:#9677dc;--yale:#0961b4;--electric:#057cf4}
+body{background:#0961b4;color:var(--ink)}
+main{background:#46688d;box-shadow:0 12px 60px #0961b4}
+main:after{opacity:.09}
+#invitation{background:#46688d;color:#fbba76}
+#invitation .eyebrow,#invitation .names,.person-id{color:#fbba76}
+#invitation .person-id{color:#fd98a6}
+.ceremony-title{color:#fd98a6}.cover-date{color:#fbba76}
+.manifesto{background:#0961b4;color:#fbba76}
+.manifesto .copy{color:#fbba76}
+.program{background:#fd98a6;color:#46688d;padding-top:35px;padding-bottom:30px}
+.program h2,.program .schedule time,.program .schedule strong,.program .schedule li:after{color:#46688d}
+.date-section{background:#fd98a6;color:#46688d;padding-top:10px;padding-bottom:40px}
+.date-section .date,.date-section .sub,.date-section .label,.date-section .value{color:#46688d}
+.dress-section{background:#46688d;color:#fbba76;padding-top:40px;padding-bottom:40px}
+.dress-section .eyebrow,.dress-section h2,.dress-section .note,.color-labels{color:#fbba76}
+.dress-section .swatch{border-color:#fbba76}
+.closing{background:#0961b4;margin:0;padding:40px 30px 55px;color:#fbba76}
+.closing h2,.closing .copy,.final-vow{color:#fbba76}.closing .divider{background:#9677dc}
+.closing .footer{background:#9677dc;color:#fbba76}
+.closing:after{color:#fd98a6}.replay{color:#fbba76;border-color:#fbba7680}
+.disco{background:repeating-linear-gradient(0deg,transparent 0 16px,#46688d 16px 18px),repeating-linear-gradient(90deg,transparent 0 16px,#46688d 16px 18px),conic-gradient(from 30deg,#fbba76,#fd98a6,#9677dc,#057cf4,#fd98a6,#fbba76);border-color:#fbba76;box-shadow:0 0 30px #9677dc80}
+.disco:before{background:#fbba76}.disco:after{color:#fbba76}
+body:not(.intro-active) .music-toggle{background:#46688d;color:#fbba76;border-color:#fbba7680}
+/* 梦核桌面：朦胧环境与清晰的窗口阅读层。 */
+html{background:#46688d}
+body{background:radial-gradient(ellipse at 15% 12%,#fd98a6aa,transparent 42%),radial-gradient(ellipse at 85% 38%,#9677dccc,transparent 48%),radial-gradient(ellipse at 20% 78%,#057cf4aa,transparent 45%),linear-gradient(155deg,#46688d,#0961b4 48%,#9677dc);background-attachment:fixed;padding:24px 12px 45px}
+body:before{content:"";position:fixed;inset:0;pointer-events:none;background:linear-gradient(#fbba7610 1px,transparent 1px),linear-gradient(90deg,#fbba7610 1px,transparent 1px);background-size:65px 65px;mask-image:linear-gradient(transparent,#0008);z-index:0}
+main{max-width:560px;margin:20px auto;background:radial-gradient(ellipse at 0 0,#fd98a680,transparent 40%),radial-gradient(ellipse at 100% 58%,#9677dc88,transparent 50%),linear-gradient(160deg,#46688dc9,#0961b4a6);border:1px solid #fbba7699;border-radius:12px;box-shadow:0 25px 80px #17344e55,inset 0 0 65px #fd98a622;backdrop-filter:blur(18px);overflow:hidden;padding:0 18px 18px}
+main:before{display:block;content:"✦  wedding.exe";position:relative;inset:auto;padding:12px 15px;margin:0 -18px 0;border:0;border-bottom:1px solid #fbba7666;outline:none;text-align:left;font:12px/1.4 'Courier New',monospace;letter-spacing:1px;color:#fbba76;background:#46688dcc;pointer-events:none}
+main:after{z-index:0;opacity:.07}main>section{z-index:1}
+#invitation{margin:0 -18px 25px;padding-top:65px;background:radial-gradient(ellipse at 80% 35%,#fd98a666,transparent 48%),radial-gradient(ellipse at 5% 80%,#9677dc88,transparent 52%),linear-gradient(150deg,#46688d55,#0961b455);border-bottom:1px solid #fbba7633}
+#invitation .names{filter:drop-shadow(0 2px 12px #46688d66)}
+.disco{box-shadow:0 0 45px #fd98a699,0 0 85px #9677dc88}
+.manifesto,.program,.date-section,.dress-section,.closing{position:relative;margin:0 0 24px;border:1px solid #fbba7699;border-radius:7px;box-shadow:6px 8px 0 #46688d25,0 12px 35px #294f7022;overflow:hidden;padding-left:24px;padding-right:24px}
+.manifesto:before,.program:before,.date-section:before,.dress-section:before,.closing:before{display:block!important;position:relative;content:var(--window-title);inset:auto;transform:none;align-self:stretch;text-align:left;margin:-1px -24px 24px;padding:10px 12px;background:#46688d;color:#fbba76;font:11px/1.4 'Courier New',monospace;letter-spacing:1px;border-bottom:1px solid #fbba7666}
+.manifesto{--window-title:'01 / 此刻.txt';padding-top:0;padding-bottom:25px;background:linear-gradient(135deg,#fbba76f5,#f6dbbff0 60%,#fd98a6ed);color:#294f70}
+.manifesto .copy{color:#294f70;font-size:14px;line-height:2.6}
+.program{--window-title:'02 / wedding day';padding-top:0;padding-bottom:25px;background:linear-gradient(135deg,#fd98a6f5,#f9c0baeF)}
+.date-section{--window-title:'03 / save the date';padding-top:0;padding-bottom:28px;background:linear-gradient(140deg,#f6dbbff2,#fbba76ed)}
+.dress-section{--window-title:'04 / dress code';padding-top:0;padding-bottom:28px;background:linear-gradient(140deg,#46688df2,#0961b4d9)}
+.closing{--window-title:'05 / forever.txt';padding-top:0;padding-bottom:30px;background:radial-gradient(ellipse at 90% 80%,#9677dc77,transparent 60%),linear-gradient(145deg,#46688df2,#0961b4e8)}
+.closing .footer{background:linear-gradient(125deg,#9677dc,#46688d);box-shadow:0 0 25px #9677dc66}
+body:not(.intro-active) .music-toggle{backdrop-filter:blur(12px);background:#46688ddd;border-radius:5px;top:12px;right:12px}
+@media(min-width:700px){main{margin:25px auto}body{padding-top:15px}}
+@media(max-width:380px){body{padding-left:8px;padding-right:8px}main{padding-left:12px;padding-right:12px}main:before{margin-left:-12px;margin-right:-12px}#invitation{margin-left:-12px;margin-right:-12px}.manifesto,.program,.date-section,.dress-section,.closing{padding-left:16px;padding-right:16px}.manifesto:before,.program:before,.date-section:before,.dress-section:before,.closing:before{margin-left:-16px;margin-right:-16px}.manifesto .copy{font-size:12px}.schedule{min-width:230px!important}}
+/* 手机阅读：正文至少 16px，辅助信息至少 14px。 */
+.manifesto .copy,.closing .copy{font-size:16px;line-height:2.2;letter-spacing:.5px}
+.program .schedule strong,.program .schedule time{font-size:18px;line-height:1.6}
+.program .schedule li{min-height:49px}
+.program h2,.dress-section h2{font-size:23px;letter-spacing:2px}
+.date-section .value{font-size:18px;line-height:1.9}
+.date-section .date{font-size:29px;letter-spacing:1px}
+.date-section .sub{font-size:16px;letter-spacing:2px}
+.date-section .label,.dress-section .note,.color-labels{font-size:15px;line-height:1.8;letter-spacing:1px}
+.dress-section .eyebrow{font-size:15px}
+.manifesto:before,.program:before,.date-section:before,.dress-section:before,.closing:before,main:before{font-size:14px}
+.closing .footer{font-size:14px;line-height:1.8;letter-spacing:1px}
+.replay{display:inline-block;font-size:15px;min-height:44px;padding:12px}
+body:not(.intro-active) .music-toggle{font-size:14px;min-height:44px;padding:10px 12px}
+@media(max-width:600px){
+body{padding-left:8px;padding-right:8px}
+main{padding-left:10px;padding-right:10px}
+main:before{margin-left:-10px;margin-right:-10px}
+#invitation{margin-left:-10px;margin-right:-10px}
+.manifesto,.program,.date-section,.dress-section,.closing{padding-left:14px;padding-right:14px}
+.manifesto:before,.program:before,.date-section:before,.dress-section:before,.closing:before{margin-left:-14px;margin-right:-14px}
+.manifesto .copy,.closing .copy{font-size:16px;line-height:2.2;letter-spacing:0;overflow-wrap:anywhere}
+.program .schedule{min-width:0!important;width:100%;max-width:300px}
+.schedule li{grid-template-columns:65px minmax(0,1fr);gap:22px}
+.color-labels{letter-spacing:0;font-size:14px}
+.closing .footer{width:95%;font-size:13px}
+}
+@media(max-width:360px){.manifesto .copy,.closing .copy{font-size:16px}.program .schedule strong,.program .schedule time{font-size:17px}.date-section .value{font-size:17px}.ceremony-title{font-size:25px}}
+/* 角落里的棋子彩蛋，原生 details 支持触摸与键盘操作。 */
+.secret-note{align-self:flex-end;max-width:100%;text-align:right;margin:8px 0 0}
+.secret-note>summary{display:inline-flex;align-items:center;justify-content:center;list-style:none;cursor:pointer;min-width:44px;min-height:44px;font-size:23px;color:#fd98a6;opacity:.7}
+.secret-note>summary::-webkit-details-marker{display:none}
+.secret-note>summary:focus-visible{outline:2px solid #fbba76;outline-offset:2px;border-radius:4px}
+.secret-note[open]>summary{opacity:1}
+.secret-message{text-align:center;padding:20px 12px;margin-top:5px;border:1px solid #fbba7670;border-radius:5px;background:#46688de8;color:#fbba76;font-size:16px;line-height:2.2;overflow-wrap:anywhere}
+/* 请柬唱片按钮：沿用实际播放状态，音乐仍来自独立的 music 配置。 */
+body:not(.intro-active) .music-toggle{display:flex;flex-direction:column;align-items:center;gap:5px;padding:8px 10px;font-size:13px;letter-spacing:1px}
+#music-toggle-label{white-space:nowrap}
+.music-record-icon{display:block;width:42px;height:42px;flex:none;animation:invitation-record-spin 5s linear infinite;animation-play-state:paused;filter:drop-shadow(0 2px 4px #294f7066)}
+.music-record-icon.is-playing{animation-play-state:running}
+@keyframes invitation-record-spin{to{transform:rotate(360deg)}}
+@media(prefers-reduced-motion:reduce){.music-record-icon{animation:none}.music-record-icon.is-playing{filter:drop-shadow(0 0 6px #fbba76)}}
+/* 细长签条色卡与四种独立服装轮廓。 */
+.dress-section .outfits{gap:10px;max-width:360px;align-items:flex-start}
+.outfits>.outfit{width:25%;gap:10px;min-width:0}
+.outfit svg{display:block;width:100%;height:135px;fill:#fbba76;filter:drop-shadow(0 3px 2px #294f7044)}
+.outfit svg .seam{fill:none;stroke:#46688d;stroke-width:1.2;opacity:.6}
+.outfit>span{font-size:13px;line-height:1.6;letter-spacing:0;color:#fbba76;white-space:nowrap}
+.dress-section .swatches{display:flex;justify-content:center;gap:7px;flex-wrap:nowrap;width:100%;max-width:310px;margin-top:18px;margin-bottom:12px;padding-top:12px}
+.dress-section .swatch{position:relative;display:flex;align-items:flex-end;justify-content:center;width:44px;height:152px;border:0;border-radius:0;padding:12px 0 8px;writing-mode:vertical-rl;font:12px/1.2 'Courier New',monospace;letter-spacing:1px;color:#294f70;clip-path:polygon(50% 0,100% 15px,100% 100%,0 100%,0 15px);box-shadow:none}
+.dress-section .swatch:nth-child(4),.dress-section .swatch:nth-child(5){color:#fff9ed}
+.color-labels{font-size:13px;letter-spacing:1px}
+@media(max-width:360px){.outfit>span{font-size:12px}.outfit svg{height:115px}.dress-section .swatches{gap:6px}.dress-section .swatch{width:40px;height:145px}}
+/* 着装示意与色卡作为紧凑的补充信息。 */
+.dress-section .outfits{max-width:260px;gap:10px;margin:16px 0 18px}
+.outfit svg{height:86px;filter:none}
+.outfits>.outfit{gap:6px}
+.outfit>span{font-size:11px;line-height:1.5}
+.dress-section .swatches{max-width:190px;gap:6px;margin-top:10px;margin-bottom:5px;padding-top:0}
+.dress-section .swatch{width:27px;height:96px;padding:10px 0 5px;font-size:9px;letter-spacing:.4px;clip-path:polygon(50% 0,100% 10px,100% 100%,0 100%,0 10px)}
+.dress-section .note,.color-labels{font-size:12px;line-height:1.7;letter-spacing:.5px}
+.color-labels{margin-top:9px}
+@media(max-width:360px){.outfit svg{height:78px}.outfit>span{font-size:11px}.dress-section .outfits{max-width:240px}.dress-section .swatch{width:26px;height:90px}}
+/* 再缩小一档辅助示意。 */
+.dress-section .outfits{max-width:210px;gap:8px;margin:12px 0}
+.outfit svg{height:64px}
+.outfits>.outfit{gap:4px}
+.outfit>span{font-size:10px}
+.dress-section .swatches{max-width:155px;gap:5px;margin-top:8px}
+.dress-section .swatch{width:22px;height:76px;font-size:8px;letter-spacing:0;padding:8px 0 4px;clip-path:polygon(50% 0,100% 8px,100% 100%,0 100%,0 8px)}
+@media(max-width:360px){.dress-section .outfits{max-width:200px}.outfit svg{height:60px}.outfit>span{font-size:10px}.dress-section .swatch{width:22px;height:76px}}
+/* 每组依次为色值、小色块，窄屏自然换行。 */
+.dress-section .swatches{max-width:350px;width:100%;display:flex;flex-wrap:wrap;justify-content:center;gap:12px 16px;margin:12px 0 6px;padding:0}
+.dress-section .swatch,.dress-section .swatch:nth-child(4),.dress-section .swatch:nth-child(5){display:inline-flex;flex-direction:row;align-items:center;justify-content:flex-start;gap:7px;width:auto;height:auto;min-height:24px;padding:0;writing-mode:horizontal-tb;font:14px/1.5 'Courier New',monospace;letter-spacing:0;color:#fbba76;clip-path:none;background:none;border:0;white-space:nowrap}
+.color-chip{display:inline-block;flex:none;width:17px;height:21px;border:1px solid #fbba7666;border-radius:1px}
+@media(max-width:360px){.dress-section .swatch{width:auto;height:auto;font-size:14px}.dress-section .swatches{gap:10px 12px}}
+/* 竖排色值搭配菱形与细长矩形。 */
+.dress-section .swatches{max-width:300px;gap:14px;flex-wrap:nowrap;align-items:flex-start;margin-top:18px}
+.dress-section .swatch,.dress-section .swatch:nth-child(4),.dress-section .swatch:nth-child(5){position:relative;display:flex;flex-direction:row;align-items:flex-end;gap:5px;width:auto;height:111px;min-height:0;padding:0;writing-mode:vertical-rl;font:13px/1 'Courier New',monospace;letter-spacing:.3px;color:#fbba76;overflow:visible}
+.color-chip{position:relative;display:block;flex:none;width:17px;height:87px;border:0;border-radius:0;margin-top:24px;background:var(--chip-color)}
+.color-chip:before{content:"";position:absolute;top:-20px;left:2px;width:13px;height:13px;background:inherit;transform:rotate(45deg);border-radius:1px}
+@media(max-width:360px){.dress-section .swatches{gap:10px}.dress-section .swatch{width:auto;height:111px;font-size:13px}.color-chip{width:15px}.color-chip:before{left:1px}}
+.dress-section .swatch,.dress-section .swatch:nth-child(4),.dress-section .swatch:nth-child(5){writing-mode:horizontal-tb}
+.color-hex{writing-mode:vertical-rl;white-space:nowrap;font:13px/1 'Courier New',monospace;letter-spacing:.3px}
+/* 参考图轮廓：独立菱形 + 尖顶长条，色值落在色条内。 */
+.dress-section .swatches{gap:3px;max-width:210px;justify-content:center;margin:16px 0 8px}
+.dress-section .swatch,.dress-section .swatch:nth-child(4),.dress-section .swatch:nth-child(5){display:block;position:relative;width:30px;height:103px;padding:0;flex:0 0 30px;color:#46688d}
+.color-chip{position:absolute;inset:0;display:block;width:30px;height:103px;margin:0;border:0;background:none}
+.color-chip:before{content:"";position:absolute;top:1px;left:8px;width:14px;height:14px;border-radius:0;background:var(--chip-color);transform:rotate(45deg)}
+.color-chip:after{content:"";position:absolute;left:0;right:0;top:22px;bottom:0;background:var(--chip-color);clip-path:polygon(50% 0,100% 13px,100% 100%,0 100%,0 13px)}
+.color-hex{position:absolute;z-index:1;right:4px;bottom:5px;writing-mode:vertical-rl;font:10px/1 'Courier New',monospace;letter-spacing:0;color:#46688d}
+.swatch:nth-child(4) .color-hex,.swatch:nth-child(5) .color-hex{color:#fff9ed}
+@media(max-width:360px){.dress-section .swatches{gap:3px}.dress-section .swatch{width:30px;height:103px}.color-chip{width:30px}.color-chip:before{left:8px}}
+/* 等宽直条，色值独立放在左侧，避免尖顶造成上细下粗。 */
+.dress-section .swatches{gap:9px;max-width:290px;align-items:flex-start}
+.dress-section .swatch,.dress-section .swatch:nth-child(4),.dress-section .swatch:nth-child(5){width:42px;height:103px;flex:0 0 42px;color:#fbba76}
+.color-chip{left:19px;right:auto;top:0;bottom:auto;width:23px;height:103px}
+.color-chip:before{top:2px;left:4px;width:15px;height:15px;transform:rotate(45deg);border-radius:0}
+.color-chip:after{left:0;right:0;top:24px;bottom:0;clip-path:none;width:23px;background:var(--chip-color)}
+.color-hex,.swatch:nth-child(4) .color-hex,.swatch:nth-child(5) .color-hex{left:0;right:auto;bottom:0;color:#fbba76;font:12px/1 'Courier New',monospace;writing-mode:vertical-rl;letter-spacing:0}
+@media(max-width:360px){.dress-section .swatches{gap:7px}.dress-section .swatch{width:42px;height:103px}.color-chip{width:23px}.color-chip:before{left:4px}}
+/* 顶部短尖角，主体两侧平行等宽；色值保留在外侧。 */
+.color-chip:after{top:23px;bottom:0;width:23px;clip-path:polygon(50% 0,100% 9px,100% 100%,0 100%,0 9px)}
+/* 保留轮廓，缩小色块；外侧色值保持可读。 */
+.dress-section .swatches{gap:8px;max-width:250px}
+.dress-section .swatch,.dress-section .swatch:nth-child(4),.dress-section .swatch:nth-child(5){width:36px;height:85px;flex-basis:36px}
+.color-chip{left:19px;width:17px;height:85px}
+.color-chip:before{top:2px;left:3px;width:11px;height:11px}
+.color-chip:after{top:18px;width:17px;clip-path:polygon(50% 0,100% 7px,100% 100%,0 100%,0 7px)}
+@media(max-width:360px){.dress-section .swatches{gap:7px}.dress-section .swatch{width:36px;height:85px}.color-chip{width:17px;height:85px}.color-chip:before{left:3px}}
+/* 色块在上一版基础上再缩小 1/4。 */
+.color-chip{width:12.75px;height:63.75px;top:auto;bottom:0}
+.color-chip:before{top:1.5px;left:2.25px;width:8.25px;height:8.25px}
+.color-chip:after{top:13.5px;width:12.75px;clip-path:polygon(50% 0,100% 5.25px,100% 100%,0 100%,0 5.25px)}
+@media(max-width:360px){.color-chip{width:12.75px;height:63.75px}.color-chip:before{left:2.25px}}
+/* 移除各窗口顶部的伪元素，避免旧装饰与标题栏叠加遮字。 */
+main section::before,
+main section:not(.cover)::before{display:none!important;content:none!important}
+.manifesto,.program,.date-section,.dress-section,.closing{padding-top:24px}
+.couple-portrait{width:100%;max-width:400px;margin:0 auto 28px;padding:5px;background:#fbba7655;border:1px solid #46688d55;box-shadow:0 5px 18px #46688d22}
+.couple-portrait img{display:block;width:100%;height:auto;aspect-ratio:3/4;object-fit:contain}
+.couple-portrait img{aspect-ratio:auto;height:auto}

@@ -7,9 +7,9 @@
   <meta name="description" content="双十面骰 d100 检定原型">
   <title>命运检定 · 双 d10 掷骰</title>
   <link rel="stylesheet" href="dice.css">
-  <script type="importmap">{"imports":{"three":"./vendor/three.module.js"}}</script>
 </head>
 <body>
+  <script>if(new URLSearchParams(location.search).has('embed')){document.body.classList.add('embedded');document.documentElement.classList.add('embedded-root');}</script>
   <main class="app">
     <header class="topbar">
       <a class="back" href="index.html" aria-label="返回请柬">← 返回请柬</a>
@@ -41,6 +41,6 @@
     </section>
     <footer>AN INVITATION WRITTEN IN THE STARS</footer>
   </main>
-  <script type="module" src="dice.js"></script>
+  <script src="dice-browser.js"></script>
 </body>
 </html>

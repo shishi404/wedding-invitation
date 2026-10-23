@@ -2,7 +2,11 @@
 // photo 可填写同一仓库中的图片路径，例如 "photos/us.jpg"。
 window.invitationData = {
   // 选好音乐后填写文件路径，例如 "music/wedding.mp3"；留空可预览按钮切换。
-  music: "",
+  music: "assets/study-ambient.wav",
+  studyMusic: "assets/study-clair-de-lune.ogg",
+  recordMusic: "assets/record-nocturne.wav",
+  // 唱片机歌单：上一首、下一首会首尾循环；可继续添加音乐路径。
+  recordPlaylist: ["assets/record-nocturne.wav"],
   partnerOne: "陈萌",
   partnerTwo: "叶倩芸",
   englishNames: "",
@@ -11,7 +15,7 @@ window.invitationData = {
   lunarDate: "",
   banquetType: "",
   time: "",
-  venue: "深圳ÉPICE泷涎·高尔夫花园餐厅（南山沙河店）",
+  venue: "深圳南山沙河高尔夫泷涎花园餐厅",
   address: "",
   message: "",
   story: "",
@@ -20,7 +24,7 @@ window.invitationData = {
   ceremonyAddress: "",
   banquetAddress: "",
   dressCode: "",
-  dressColors: [],
+  dressColors: ["#fff9ed", "#b9bfc8", "#e8c69d", "#46688d", "#687e69"],
   weatherNote: "",
   tips: "",
   seating: "",
@@ -28,12 +32,7 @@ window.invitationData = {
   activities: "",
   groomParents: "",
   brideParents: "",
-  // 这些是待确认的流程位置，不代表婚礼已经安排了这些环节。
-  schedule: [
-    { time: "待确认", title: "迎宾与签到" },
-    { time: "待确认", title: "合影" },
-    { time: "待确认", title: "婚礼仪式" },
-    { time: "待确认", title: "婚宴" },
-    { time: "待确认", title: "欢聚与送客" }
-  ]
+  // 婚礼日程，来自请柬模板。
+  schedule: [{ time: "16:00", title: "签到合影" }, { time: "17:30", title: "婚礼仪式" }, { time: "18:30", title: "婚礼晚宴" }, { time: "20:00", title: "After party" }]
 };
+
