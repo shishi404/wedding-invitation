@@ -10,6 +10,7 @@
   const sharedPlaylist = isStudy || document.body?.dataset?.musicPlaylist === 'study';
   const autoplay = document.body?.hasAttribute?.('data-autoplay-music') || false;
   let retryAutoplay = false;
+  let studyRoomReady = false;
   const source = sharedPlaylist ? (config.studyMusic || config.music) : config.music;
   const record = document.querySelector('#record-music');
   const bell = document.querySelector('#bell-sound');
@@ -47,7 +48,9 @@
       const blob=await response.blob();
       const objectURL=URL.createObjectURL(blob);
       preparedBackground={objectURL,url:objectURL+'#'+original.split('/').pop()};
-      if(recordIndex===0)audio.src=preparedBackground.url;
+      // Keep the source that was unlocked in the entry click. Replacing it with
+      // a blob after fetching can discard media permission in mobile WebViews.
+      if(recordIndex===0&&!isStudy)audio.src=preparedBackground.url;
     })().catch(error=>{backgroundPreparation=null;throw error;});
     return backgroundPreparation;
   }
@@ -98,7 +101,7 @@
       if (sharedPlaylist) recordError = true;
       update();
       syncPlayback();
-      retryAutoplay = autoplay && error.name === 'NotAllowedError';
+      retryAutoplay = (autoplay || (isStudy && studyRoomReady)) && error.name === 'NotAllowedError';
       status.textContent = retryAutoplay ? '点击音乐按钮播放音乐。' : '音乐暂时无法播放，请稍后重试。';
     }
   }
@@ -227,24 +230,42 @@
       audio.pause(); record?.pause(); syncPlayback(); update();
       status.textContent = '唱片已损坏，无法继续播放音乐。';
     },
-    leaveStudy() { window.InvitationStudySounds?.stop(); ++request; ++recordRequest; ++musicBoxRequest; musicBoxPhase='idle';musicBoxResumeBackground=false;enabled = false; record?.pause(); bell?.pause(); if (bell) bell.currentTime = 0; musicBox?.pause(); if (musicBox) musicBox.currentTime = 0; diceSound?.pause(); if (diceSound) diceSound.currentTime = 0; audio.pause(); recordPlaying = false; resumeBackground = false; update(); syncPlayback(); notifyRecord(); }
+    leaveStudy() { studyRoomReady=false;retryAutoplay=false;window.InvitationStudySounds?.stop(); ++request; ++recordRequest; ++musicBoxRequest; musicBoxPhase='idle';musicBoxResumeBackground=false;enabled = false; record?.pause(); bell?.pause(); if (bell) bell.currentTime = 0; musicBox?.pause(); if (musicBox) musicBox.currentTime = 0; diceSound?.pause(); if (diceSound) diceSound.currentTime = 0; audio.pause();audio.muted=false; recordPlaying = false; resumeBackground = false; update(); syncPlayback(); notifyRecord(); }
   };
   if (!sharedPlaylist) {
     record?.addEventListener('ended', stopRecord);
     record?.addEventListener('error', () => { recordError = true; if (recordPlaying) stopRecord(); });
   }
   window.addEventListener('pagehide', () => window.InvitationAudio.leaveStudy());
-  if (isStudy) window.addEventListener('study-room-enter', () => window.InvitationAudio.startBackground());
-  if (autoplay) {
+  if (isStudy) {
+    const primeBackground = () => {
+      if(studyRoomReady||recordBroken)return;
+      // Call play synchronously in the user's entry/retry click, then keep the
+      // same media element silent and running until the room is revealed.
+      audio.muted=true;
+      try{audio.play().catch(()=>{});}catch{}
+    };
+    window.addEventListener('study-enter',primeBackground);
+    document.querySelector('#scene-retry')?.addEventListener('click',primeBackground);
+    window.addEventListener('study-room-enter',() => {
+      if(studyRoomReady)return;
+      studyRoomReady=true;audio.currentTime=0;audio.muted=false;
+      window.InvitationAudio.startBackground();
+    });
+    window.addEventListener('study-room-failed',() => window.InvitationAudio.leaveStudy());
+  }
+  if (autoplay || isStudy) {
     // Browsers may require a gesture; a later deliberate pause must never be undone.
     const resumeAutoplay = event => {
-      if (!retryAutoplay || event.target?.closest?.('#music-toggle')) return;
+      if (!retryAutoplay || (isStudy&&!studyRoomReady) || event.target?.closest?.('#music-toggle')) return;
       if (event.type === 'keydown' && !['Enter',' ','ArrowDown','PageDown'].includes(event.key)) return;
       window.InvitationAudio.startBackground();
     };
-    document.addEventListener('pointerdown', resumeAutoplay, {capture:true});
+    document.addEventListener('click', resumeAutoplay, {capture:true});
+    document.addEventListener('touchend', resumeAutoplay, {capture:true,passive:true});
     document.addEventListener('keydown', resumeAutoplay, {capture:true});
-    window.InvitationAudio.startBackground();
+    document.addEventListener('WeixinJSBridgeReady',resumeAutoplay);
+    if(autoplay)window.InvitationAudio.startBackground();
   }
   update();
 })();

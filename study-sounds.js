@@ -23,7 +23,7 @@
     'record-break':['record-break','action-result'],
     'record-search':['record-search','action-result'],
   };
-  const channels=new Map(),buffers=new Map();let context,ambient,ambientToken=0,ambientWanted=false,stopGeneration=0;
+  const channels=new Map(),buffers=new Map();let context,ambient,ambientToken=0,ambientWanted=false,stopGeneration=0,roomReady=false;
   const src=name=>`assets/sfx/${name}.ogg`;
   let preparedCampfire,campfirePreparation;
   async function prepareCampfire(){
@@ -90,21 +90,37 @@
     const choices=Array.isArray(definition[0])?definition[0]:[definition[0]];
     try{await Promise.all(choices.map(stem=>bufferFor(src(stem),ctx)));return true;}catch{return false;}
   }
+  function campfireMedia(){
+    if(!ambient){ambient=document.createElement('audio');ambient.id='study-campfire';ambient.preload='none';ambient.loop=true;ambient.volume=.2;ambient.src=preparedCampfire?.url||src('campfire');document.body.append(ambient);}
+    return ambient;
+  }
+  function primeCampfire(){
+    if(roomReady)return;
+    audioContext();
+    const media=campfireMedia();media.muted=true;
+    try{media.play().catch(()=>{});}catch{}
+  }
   async function startCampfire(){
     if(ambientWanted)return;ambientWanted=true;const token=++ambientToken;
     audioContext();
     // Keep the encoded loop; the loader downloads it without decoding a large PCM buffer.
-    if(!ambient){ambient=document.createElement('audio');ambient.id='study-campfire';ambient.preload='none';ambient.loop=true;ambient.volume=.2;ambient.src=preparedCampfire?.url||src('campfire');document.body.append(ambient);}
+    campfireMedia();ambient.muted=false;
     try{await ambient.play();if(token!==ambientToken){if(!ambientWanted)ambient.pause();return;}notify('campfire',ambient.src);}
     catch{if(token===ambientToken)ambientWanted=false;}
   }
   function stop(){
-    ++stopGeneration;++ambientToken;ambientWanted=false;ambient?.pause();
+    ++stopGeneration;++ambientToken;ambientWanted=false;roomReady=false;ambient?.pause();
     for(const slot of channels.values()){++slot.token;slot.finish?.(false);slot.stopped=true;try{slot.node?.stop();}catch{}slot.media?.pause();}
   }
   window.InvitationStudySounds={play,playSequence,prepare,prepareCampfire,stop};
-  // Unlock the effects context in the entry gesture without playing the room ambience.
-  window.addEventListener('study-enter',audioContext);
-  window.addEventListener('study-room-enter',startCampfire);
+  // Both media channels need their own gesture-bound play in mobile WebViews.
+  window.addEventListener('study-enter',primeCampfire);
+  document.querySelector?.('#scene-retry')?.addEventListener('click',primeCampfire);
+  window.addEventListener('study-room-enter',()=>{if(roomReady)return;roomReady=true;if(ambient)ambient.currentTime=0;return startCampfire();});
+  const retryCampfire=()=>{if(roomReady&&!ambientWanted)startCampfire();};
+  document.addEventListener?.('click',retryCampfire,{capture:true});
+  document.addEventListener?.('touchend',retryCampfire,{capture:true,passive:true});
+  document.addEventListener?.('WeixinJSBridgeReady',retryCampfire);
+  window.addEventListener('study-room-failed',stop);
   window.addEventListener('pagehide',stop);
 })();

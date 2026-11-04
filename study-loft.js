@@ -213,7 +213,7 @@ async function boot(){
     world.dataset.layoutSource='assets/study-loft-layout.json';syncGame();props.setRecordPlaying(!!window.InvitationAudio?.recordPlaying);
     window.dispatchEvent(new Event('study-room-enter'));
     window.dispatchEvent(new Event('study-scene-ready'));requestRender();
-  }catch(error){console.error('3D 房间载入失败',error);loadingText.textContent='房间暂时未能载入，请重试。';retry.hidden=false;window.InvitationTerminal?.fail();world.dataset.sceneLoaded='error';hotspots.classList.add('scene-fallback');}
+  }catch(error){console.error('3D 房间载入失败',error);loadingText.textContent='房间暂时未能载入，请重试。';retry.hidden=false;window.InvitationTerminal?.fail();world.dataset.sceneLoaded='error';hotspots.classList.add('scene-fallback');window.dispatchEvent(new Event('study-room-failed'));}
   finally{booting=false;}
 }
 retry.onclick=()=>boot();

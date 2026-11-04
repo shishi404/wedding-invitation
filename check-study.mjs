@@ -41,16 +41,16 @@ async function audioContext(){const els=Object.fromEntries(['music-toggle','back
 // In the study, background playback and the 3D turntable share one channel.
 async function studyAudioContext(){
   const els=Object.fromEntries(['study','music-toggle','music-toggle-label','music-record-icon','background-music','record-music','music-status'].map(k=>[k,element()]));
-  const events=[];
+  const events=[],handlers={},documentHandlers={};
   for(const el of Object.values(els)){
     el.readyState=4;el.ended=false;el.error=null;
     el.classList={toggle(){}};
     el.play=function(){this.paused=false;this.listeners.play?.();this.listeners.playing?.();return Promise.resolve();};
     el.pause=function(){this.paused=true;this.listeners.pause?.();};
   }
-  const w={invitationData:{studyMusic:'study.ogg',recordPlaylist:['record.wav']},dispatchEvent(){events.push(w.InvitationAudio?.recordPlaying);},addEventListener(){}};
-  vm.runInNewContext(await readFile('music.js','utf8'),{window:w,document:{querySelector:s=>els[s.slice(1)]},Event:class{}});
-  return {els,events,api:w.InvitationAudio};
+  const w={invitationData:{studyMusic:'study.ogg',recordPlaylist:['record.wav']},dispatchEvent(){events.push(w.InvitationAudio?.recordPlaying);},addEventListener(type,fn){handlers[type]=fn;}};
+  vm.runInNewContext(await readFile('music.js','utf8'),{window:w,document:{querySelector:s=>els[s.slice(1)],addEventListener(type,fn){documentHandlers[type]=fn;}},Event:class{}});
+  return {els,events,handlers,documentHandlers,api:w.InvitationAudio};
 }
 {
   const {els,events,api}=await studyAudioContext(),bg=els['background-music'],button=els['music-toggle'];
@@ -84,4 +84,31 @@ async function studyAudioContext(){
   const pending=api.startBackground();await api.breakRecord();finish();await pending;
   assert.equal(bg.paused,true);assert.equal(api.recordPlaying,false);assert.equal(els['music-toggle'].disabled,true);
 }
-console.log('Passed: 600 roll evaluations, optional keepsakes, notebook/drawer routes, legacy audio, shared study music, track controls, buffering, autoplay failure and permanent record damage.');
+// A WebView may reject later playback unless this exact media element was
+// started in the entry gesture. Priming must stay silent through room loading.
+{
+  const {els,handlers,documentHandlers,api}=await studyAudioContext(),bg=els['background-music'];
+  let gesture=false,unlocked=false;
+  bg.play=()=>{
+    if(!gesture&&!unlocked)return Promise.reject(Object.assign(new Error('Gesture required'),{name:'NotAllowedError'}));
+    unlocked=true;bg.paused=false;bg.listeners.playing();return Promise.resolve();
+  };
+  gesture=true;handlers['study-enter']();gesture=false;await Promise.resolve();
+  assert.equal(bg.muted,true);assert.equal(bg.paused,false);assert.equal(api.recordPlaying,false);
+  handlers['study-room-enter']();await Promise.resolve();await Promise.resolve();
+  assert.equal(bg.muted,false);assert.equal(bg.paused,false);assert.equal(api.recordPlaying,true);
+  await els['music-toggle'].listeners.click();
+  documentHandlers.click({target:{closest:()=>null}});handlers['study-room-enter']();
+  assert.equal(bg.paused,true,'Later clicks and duplicate readiness must preserve deliberate pause');
+  handlers['study-room-failed']();assert.equal(bg.paused,true);
+}
+{
+  const {els,handlers,documentHandlers}=await studyAudioContext(),bg=els['background-music'];
+  let allowed=false;
+  bg.play=()=>{if(!allowed)return Promise.reject(Object.assign(new Error('Gesture required'),{name:'NotAllowedError'}));bg.paused=false;bg.listeners.playing();return Promise.resolve();};
+  handlers['study-enter']();handlers['study-room-enter']();await new Promise(resolve=>setImmediate(resolve));
+  assert.equal(bg.paused,true);allowed=true;
+  documentHandlers.click({target:{closest:()=>null}});await new Promise(resolve=>setImmediate(resolve));
+  assert.equal(bg.paused,false,'If entry priming is blocked, the next room gesture retries');
+}
+console.log('Passed: 600 roll evaluations, music controls, silent gesture priming, blocked-play recovery, deliberate pause, buffering and permanent record damage.');
