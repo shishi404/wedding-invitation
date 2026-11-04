@@ -15,7 +15,7 @@ import {MeshoptDecoder} from './vendor/meshopt_decoder.js';
 import {notebookPageLabel} from './notebook-page-copy.js';
 import {setJewelryLockVisible} from './模型库/14_彩绘漆面首饰盒_Source/青蓝写实旧铜锁版_v7/jewelry-box-controller.js';
 import {inspectionAssetCatalog} from './loft-inspection-assets.js';
-import {createMobileSceneView} from './study-mobile-view.js';
+import {createMobileSceneView} from './study-mobile-view.js?v=object-tap-2';
 
 const study=document.querySelector('#study'),world=document.querySelector('#world');
 const loading=document.querySelector('#scene-loading'),loadingText=document.querySelector('#scene-loading-text'),retry=document.querySelector('#scene-retry');
@@ -107,6 +107,7 @@ function hit(event){
   camera.updateMatrixWorld();scene.updateMatrixWorld(true);raycaster.setFromCamera(pointer,camera);return props?.findHit(raycaster);
 }
 function installInput(canvas){
+  let pendingTap=null;
   const blocked=()=>!ready||suspended()||modalOpen()||hotspots.inert;
   if(profile==='mobile'){
     reset.textContent='还原画面';
@@ -123,6 +124,7 @@ function installInput(canvas){
     canvas.addEventListener('keydown',event=>mobileView.key(event));return;
   }
   canvas.addEventListener('pointerdown',event=>{
+    pendingTap=null;
     if(event.button!==0||blocked())return;drag={id:event.pointerId,x:event.clientX,y:event.clientY,yaw,pitch,canLook:event.pointerType==='touch',moved:false};canvas.setPointerCapture(event.pointerId);
   });
   canvas.addEventListener('pointermove',event=>{
@@ -136,10 +138,16 @@ function installInput(canvas){
     if(drag?.id!==event.pointerId)return;const moved=drag.moved;drag=null;
     if(canvas.hasPointerCapture(event.pointerId))canvas.releasePointerCapture(event.pointerId);
     if(moved||blocked())return;
+    pendingTap={x:event.clientX,y:event.clientY};
+  });
+  canvas.addEventListener('click',event=>{
+    const tap=pendingTap;pendingTap=null;
+    if(!tap||blocked()||Math.hypot(event.clientX-tap.x,event.clientY-tap.y)>8)return;
+    event.preventDefault();event.stopPropagation();
     const id=hit(event);if(canUseLoftObject(id,game))window.dispatchEvent(new CustomEvent('study-object',{detail:LOFT_INTERACTIONS[id]}));
   });
-  canvas.addEventListener('pointercancel',()=>{drag=null;});
-  canvas.addEventListener('lostpointercapture',()=>{drag=null;});
+  canvas.addEventListener('pointercancel',()=>{drag=null;pendingTap=null;});
+  canvas.addEventListener('lostpointercapture',()=>{if(drag){drag=null;pendingTap=null;}});
   canvas.addEventListener('keydown',event=>{
     if(blocked())return;
     if(event.key==='ArrowLeft')yaw+=.12;else if(event.key==='ArrowRight')yaw-=.12;else if(event.key==='ArrowUp')pitch+=.08;else if(event.key==='ArrowDown')pitch-=.08;else if(event.key==='Home'){yaw=baseYaw;pitch=basePitch;}else return;

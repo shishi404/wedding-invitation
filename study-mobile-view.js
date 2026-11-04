@@ -1,6 +1,6 @@
 // Scale only the rendered room. The camera and sibling dialogs stay unchanged.
 export function createMobileSceneView({surface,canvas,blocked,onTap,onChange}){
-  let width=0,height=0,zoom=1,pan=0,maxZoom=1,gesture=null;
+  let width=0,height=0,zoom=1,pan=0,maxZoom=1,gesture=null,pendingTap=null;
   const points=new Map();
   const listeners=new AbortController(),listen=(type,handler)=>surface.addEventListener(type,handler,{signal:listeners.signal});
   const clamp=(value,min,max)=>Math.min(max,Math.max(min,value));
@@ -22,8 +22,9 @@ export function createMobileSceneView({surface,canvas,blocked,onTap,onChange}){
     }else if(values.length){gesture={pan,x:values[0].x};}
     else gesture=null;
   }
-  function cancel(){points.clear();gesture=null;}
+  function cancel(){points.clear();gesture=null;pendingTap=null;}
   listen('pointerdown',event=>{
+    pendingTap=null;
     if(event.button!==0||blocked())return;
     event.preventDefault();
     points.set(event.pointerId,{x:event.clientX,y:event.clientY,startX:event.clientX,startY:event.clientY,moved:false});
@@ -47,8 +48,15 @@ export function createMobileSceneView({surface,canvas,blocked,onTap,onChange}){
     points.delete(event.pointerId);
     if(surface.hasPointerCapture(event.pointerId))surface.releasePointerCapture(event.pointerId);
     rebase();update(points.size===0);
-    if(!cancelled&&!point.moved&&!blocked())onTap(event);
+    if(!cancelled&&!point.moved&&!blocked())pendingTap={x:event.clientX,y:event.clientY};
   }
+  // Opening a modal on pointerup can retarget the following native click onto
+  // its new buttons. Wait until that click already has its scene target.
+  listen('click',event=>{
+    const tap=pendingTap;pendingTap=null;
+    if(!tap||blocked()||Math.hypot(event.clientX-tap.x,event.clientY-tap.y)>8)return;
+    event.preventDefault();event.stopPropagation();onTap(event);
+  });
   listen('pointerup',event=>end(event,false));
   listen('pointercancel',event=>end(event,true));
   listen('lostpointercapture',event=>end(event,true));

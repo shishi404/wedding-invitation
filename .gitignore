@@ -70,6 +70,7 @@
 !/audit-runtime.mjs
 !/build-browser.mjs
 !/build-static-site.mjs
+!/check-mobile-scene-view.mjs
 !/check-study-loft.mjs
 !/check-study.mjs
 !/check.css
