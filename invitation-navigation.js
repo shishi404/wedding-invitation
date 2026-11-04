@@ -10,7 +10,7 @@
     window.InvitationAudio.startInvitation();
     entry.hidden=true;study.hidden=true;
     reader=document.createElement('iframe');reader.id='invitation-reader-frame';reader.title='婚礼请柬';
-    reader.style.cssText='position:fixed;inset:0;z-index:100;width:100%;height:100%;height:100dvh;border:0;background:#a8bfca';
+    reader.style.cssText='position:fixed;inset:0;z-index:100;width:100%;height:100%;height:100dvh;border:0;background:#fff7ea';
     const frameURL=new URL(url);frameURL.searchParams.set('reader','1');reader.src=frameURL.href;
     reader.addEventListener('load',()=>{if(reader?.isConnected)document.title=reader.contentDocument?.title||previous.title;});
     document.body.append(reader);reader.focus();

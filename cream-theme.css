@@ -1,0 +1,151 @@
+/* Shared light cream palette. Load after the scene and component styles. */
+:root{
+  color-scheme:light;
+  --cream-base:#fffaf3;
+  --cream-room:#fff7e9;
+  --cream-ink:#5c483a;
+  --cream-muted:#856b50;
+  --cream-border:#ebdcc6;
+  --paper:var(--cream-ink);
+  --muted:#8a725a;
+  --gold:#c6a57b;
+  --line:#ecddc8;
+  --night:var(--cream-base);
+}
+body.study-3d{background:var(--cream-base);color:var(--cream-ink)}
+.study-3d :is(button,a):focus-visible{outline-color:#a77a42}
+
+/* Original welcome ornaments, with the final approved oval/flower balance. */
+.entry-screen{
+  background:radial-gradient(ellipse at 50% 43%,#fffdf9 0%,#fffaf2 48%,#fff1df 100%);
+  color:var(--cream-ink);
+}
+.entry-screen::before{border-color:#ead4b6;box-shadow:inset 0 0 0 5px #fff8ed,inset 0 0 0 6px #eddec755}
+.entry-clear-oval{border-color:#f3e7d4;box-shadow:none}
+.entry-marginalia{animation:none;opacity:1}
+.entry-flow-field{opacity:.19;filter:grayscale(1) sepia(.8) saturate(1.2) brightness(.9)}
+.entry-content .entry-seal{filter:sepia(.8) saturate(.9);opacity:.68}
+.entry-content .entry-title{color:var(--cream-ink);text-shadow:none}
+.entry-nickname,.entry-name-join{color:#a78b69}
+.entry-intro{color:#8b7158}
+.entry-content #start-exploration,.entry-content .entry-invitation-button{
+  background-image:none;
+  border:1px solid #e6c9a1;
+  filter:none;
+  box-shadow:none;
+}
+.entry-content #start-exploration{
+  background:linear-gradient(120deg,#fff0da,#fce5c5);
+  color:#66482d;
+  box-shadow:0 2px 10px #dcb98710,inset 0 1px #fff9;
+}
+.entry-content .entry-invitation-button{background:#fffcf6;border-color:#e8d4b8;color:#8b6747}
+.entry-content :is(#start-exploration,.entry-invitation-button):hover{filter:brightness(.99);border:1px solid #cda575}
+.entry-content :is(#start-exploration,.entry-invitation-button):focus-visible{outline-color:#a77a42}
+
+/* Keep the terminal sequence and timing; render it on an ivory paper surface. */
+#scene-loading{background:var(--cream-room);color:var(--cream-ink)}
+.scene-loading-mark{border-color:#ead9be;border-top-color:#b49163}
+#scene-loading.terminal-loading{
+  --terminal-ink:#604b38;
+  background:#fffcf5;
+  color:#604b38;
+  border-color:#fff2df;
+  box-shadow:0 0 0 100vmax #fff8ed,inset 0 0 0 1px #ecdbbf;
+}
+.terminal-screen{background:linear-gradient(150deg,#fffefa,#fff7e9);border-color:#e6d1b2;box-shadow:none;text-shadow:none}
+.terminal-loading::after{background:none;box-shadow:none}
+.terminal-heading,#scene-loading.terminal-loading #scene-loading-text{color:#806a50}
+.terminal-footer{border-top-color:#eddec7}
+.terminal-meter{border-color:#e6cfad;box-shadow:none}
+.terminal-fill{background:repeating-linear-gradient(90deg,#cdb18b 0,#cdb18b 14px,transparent 14px,transparent 17px)}
+.terminal-cursor{box-shadow:none}
+.terminal-sweep{display:none}
+#scene-loading.terminal-loading #scene-retry{background:#fffcf6;border-color:#dfc4a0;color:#785a3d}
+
+/* The mobile room matte changes independently of model materials and lights. */
+.study-3d #study,.study-3d #world,.study-3d #world[data-letterbox="true"]{background:var(--cream-room)}
+.study-3d #world[data-letterbox="true"]::before{background:linear-gradient(to bottom,var(--cream-room) calc(100% - 16px),transparent)}
+.study-3d #world[data-letterbox="true"]::after{background:linear-gradient(to top,var(--cream-room) calc(100% - 16px),transparent)}
+.study-3d .vignette{background:none}
+.study-3d :is(.wordmark,.top-actions,.inventory-wrap),#scene-hint,#scene-reset{
+  background:#fffdf8f5;
+  color:#785a3d;
+  border:1px solid #ecddc7;
+  box-shadow:none;
+}
+.study-3d :is(.wordmark,.inventory-title,.inventory-slot small,.footer-index),#music-toggle{color:#785a3d}
+.study-3d .wordmark img{filter:grayscale(1) sepia(.8);opacity:.7}
+.study-3d .inventory-slot{background:#fffaf1;border-color:#eddfcc;color:#9a7b56}
+.study-3d .study-direct-invitation{background:#fffdf8;border-color:#ead7bd;color:#785a3d;box-shadow:none;filter:none}
+.study-3d .study-direct-invitation:hover{background:#fff5e5;border-color:#cda575}
+#scene-reset,#scene-retry,.study-3d #hotspots button{background:#fffcf6;border-color:#dfc4a0;color:#785a3d}
+.render-status{background:#fffcf6eb;color:#856b50}
+
+/* All interaction surfaces share a light overlay and warm, readable copy. */
+dialog{background:linear-gradient(140deg,#fffef9,#fff8ed);color:var(--cream-ink);border-color:#ead6b8;box-shadow:0 8px 32px #dbb2750a}
+dialog::backdrop{background:#fff7e9ef;backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px)}
+.study-3d :is(#interaction-dialog,#choose-dialog)::backdrop{background:#fff8edef;backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px)}
+.study-3d :is(#interaction-dialog,#choose-dialog)[open]{color:var(--cream-ink)}
+.study-3d :is(.inspection-content,.note-choice-content){background:linear-gradient(145deg,#fffefa,#fffaf2);border-color:var(--cream-border);box-shadow:0 6px 22px #dbb27508}
+.interaction-dialog .narrative,.dialog-intro,.choose-note,.dialog-eyebrow{color:var(--cream-muted)}
+.model-inspection::after{color:#806b55;text-shadow:none}
+.inspection-stage.is-loading::after,.inspection-stage.art-error::after{background:var(--cream-base);color:var(--cream-muted)}
+.dialog-actions button,.gain-dialog .primary-button,.keepsakes button{
+  background:#fffdf7;
+  border-color:var(--cream-border);
+  color:var(--cream-ink);
+  box-shadow:none;
+  filter:none;
+}
+.dialog-actions button:first-child,.dialog-actions button:not(.secondary),.gain-dialog .primary-button{
+  background:linear-gradient(120deg,#fff0da,#fce5c5);
+  border-color:#e6c9a1;
+  color:#66482d;
+  box-shadow:0 2px 10px #dcb98710,inset 0 1px #fff9;
+}
+.dialog-actions button.secondary{background:#fffcf6;border-color:#e8d4b8;color:#8b6747;box-shadow:none}
+.dialog-actions button:hover,.gain-dialog .primary-button:hover,.keepsakes button:hover{filter:brightness(.99);border-color:#cda575}
+.dialog-actions button:focus-visible,.gain-dialog .primary-button:focus-visible{outline-color:#a77a42}
+.keepsakes button>span:not(.item-art),.keepsakes small{color:#8d7357}
+.gain-stat{color:#a77a42;border-color:#edddc5}
+.gain-dialog .dialog-eyebrow{color:#806a50}
+.narrative .clue-emphasis,.dialog-actions .clue-emphasis{color:#99692f;text-shadow:none;text-decoration-color:#d3aa73}
+.close-dialog{background:#fffcf6;border-color:#dfc4a0;color:#785a3d}
+.noscript{background:var(--cream-base);color:var(--cream-ink)}
+
+/* Direct reading and the game unfolding sequence use the same opening palette. */
+.letter-foreground{background:radial-gradient(ellipse at 50% 44%,#fffdf8fa,#fff6e8f7 85%);backdrop-filter:blur(14px)}
+html.invitation-opening{background:#fff7ea}
+html.invitation-opening.invitation-color-transition{background-color:#a8bfca}
+.invitation-opening body{background:transparent}
+.invitation-intro{background:#fff7ea;color:var(--cream-ink);outline:0;box-shadow:none}
+.invitation-intro::before{background:radial-gradient(ellipse at 50% 45%,#fffefa 0%,#fffaf2 45%,#fff0db 100%)}
+.invitation-intro .letter-foreground{background:transparent}
+.invitation-music-toggle,.letter-reader-music{background:#fffdf6ee;color:#785a3d;border-color:#ecdbc2}
+a.invitation-download{background:#fffdf6ee;border-color:#ecdbc2;color:#785a3d;box-shadow:0 2px 12px #b68d5320}
+a.invitation-download:hover{background:#fff5e5}
+
+/* The 3D dice remain intact; the frame and surrounding controls become ivory. */
+#check-dialog{background:transparent;color:var(--cream-ink)}
+#check-dialog::backdrop{background:#fff9eff5;backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px)}
+#check-dialog h2,.check-current strong{color:#654d35;text-shadow:none}
+#check-kind,.check-current-label,#check-dialog #check-progress{color:#806a50}
+.check-frame{filter:none}
+#check-dialog #dice-frame{color-scheme:light;background:#fffbf2}
+#check-roll span{background:linear-gradient(#fff3e0,#fce8cb);color:#70502e;border-color:#e3c9a4;box-shadow:inset 0 1px #fff8;text-shadow:none}
+#check-roll:hover:not(:disabled) span{color:#66482d;border-color:#cda575;box-shadow:0 0 12px #dcb98720}
+#check-roll:focus-visible span{outline-color:#a77a42}
+.check-bonus-card{background:#fffdf7;border-color:#e9d6b9;box-shadow:none}
+.check-bonus-card::before{background:#fffbf3;color:#a78454}
+.check-bonus-card strong{color:#94703f}
+.check-bonus-card.no-bonus{opacity:1}
+#check-bonus-item,#check-bonus-attribute{color:#806a50}
+#check-dialog #check-verdict,#check-dialog[data-phase="ready"] #check-verdict{color:var(--cream-muted);text-shadow:none}
+#check-dialog[data-outcome="critical"] #check-verdict{color:#527448;text-shadow:none}
+#check-dialog[data-outcome="fumble"] #check-verdict{color:#ab4b3e;text-shadow:none}
+#check-dialog[data-passed="true"]{--check-outcome-color:#527448;--check-outcome-glow:#75956420}
+#check-dialog[data-passed="false"]{--check-outcome-color:#ab4b3e;--check-outcome-glow:#ab4b3e20}
+#check-dialog[data-phase="result"] :is(#check-title,#check-attribute-value,#check-result-number){text-shadow:none}
+html.embedded-root{color-scheme:light;background:#fffbf2}
+body.embedded{background:#fffbf2;color:var(--cream-ink)}
