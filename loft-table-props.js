@@ -49,6 +49,12 @@ export function createTableProps({desk,scene,renderer,loader,saved,onChange,ligh
       // Optimized/mobile geometry can differ slightly from placementBounds.
       // Seat the actual rest-pose geometry on the surface, including chain instances.
       normalized.position.y-=new THREE.Box3().setFromObject(normalized).min.y;
+      // Fill the chain's empty interior for picking without adding geometry to
+      // the rendered model, its contact shadow or the inspection copy.
+      const pendantBounds=id==='little-prince-pendant'?new THREE.Box3().setFromObject(normalized):null;
+      const hitArea=pendantBounds?{x:(pendantBounds.min.x+pendantBounds.max.x)/2,z:(pendantBounds.min.z+pendantBounds.max.z)/2,
+        radiusX:Math.max(.001,(pendantBounds.max.x-pendantBounds.min.x)*.58),radiusZ:Math.max(.001,(pendantBounds.max.z-pendantBounds.min.z)*.58),
+        plane:new THREE.Plane(new THREE.Vector3(0,1,0),-pendantBounds.max.y)}:null;
       content.traverse(object=>{if(!object.isMesh)return;object.userData.thinContactPaper=id==='single-sticky-note';for(const material of Array.isArray(object.material)?object.material:[object.material]){
         applyTabletopMaterial(material,renderer,{...lighting?.getState(),yaw:desk.root.rotation.y});
         // Resolve coplanar paper/wood depth without lifting the paper off the table.
@@ -57,7 +63,7 @@ export function createTableProps({desk,scene,renderer,loader,saved,onChange,ligh
       const root=new THREE.Group();root.name=entry.asset.name;root.userData.tablePropId=id;root.add(normalized);desk.surface.add(root);
       const footprint={width:size.x*factor,depth:size.z*factor};
       const shadow=new THREE.Mesh(new THREE.PlaneGeometry(footprint.width*1.12,footprint.depth*1.12),new THREE.MeshBasicMaterial({map:shadowTexture,transparent:true,opacity:.35,depthWrite:false,polygonOffset:true,polygonOffsetFactor:-1,polygonOffsetUnits:-1}));shadow.name='桌面接触阴影';shadow.rotation.x=-Math.PI/2;shadow.raycast=()=>{};root.add(shadow);
-      Object.assign(entry,{root,content:normalized,footprint,height:size.y*factor,clips:gltf.animations,status:'ready'});
+      Object.assign(entry,{root,content:normalized,footprint,hitArea,height:size.y*factor,clips:gltf.animations,status:'ready'});
       if(id==='windchime')entry.breeze=createWindchimeBreeze(content,{enabled:()=>!reducedMotion?.matches});
       lighting?.prepare(root);
       apply(id,entry.layout);
@@ -91,7 +97,19 @@ export function createTableProps({desk,scene,renderer,loader,saved,onChange,ligh
     const shadow=entry.root.children.find(child=>child.name==='桌面接触阴影');if(shadow){shadow.geometry.dispose();shadow.geometry=new THREE.PlaneGeometry(bounds.x*1.12,bounds.z*1.12);}
     lighting?.prepare(entry.root);notify();return true;
   }
-  function findHit(raycaster){const hits=raycaster.intersectObjects([...entries.values()].filter(e=>e.status==='ready'&&e.root.visible).map(e=>e.content),true);for(const hit of hits){let object=hit.object;while(object&&!object.userData.tablePropId)object=object.parent;if(object)return object.userData.tablePropId;}return null;}
+  const hitRay=new THREE.Ray(),hitInverse=new THREE.Matrix4(),hitPoint=new THREE.Vector3();
+  function findHit(raycaster){
+    const hits=raycaster.intersectObjects([...entries.values()].filter(e=>e.status==='ready'&&e.root.visible).map(e=>e.content),true);
+    for(const hit of hits){let object=hit.object;while(object&&!object.userData.tablePropId)object=object.parent;if(object)return object.userData.tablePropId;}
+    // Real item surfaces keep priority over the expanded pendant area.
+    const pendant=entries.get('little-prince-pendant'),area=pendant?.hitArea;
+    if(pendant?.status!=='ready'||!area||!pendant.root.visible||!desk.root.visible)return null;
+    hitRay.copy(raycaster.ray).applyMatrix4(hitInverse.copy(pendant.root.matrixWorld).invert());
+    if(!hitRay.intersectPlane(area.plane,hitPoint))return null;
+    if(((hitPoint.x-area.x)/area.radiusX)**2+((hitPoint.z-area.z)/area.radiusZ)**2>1)return null;
+    const distance=raycaster.ray.origin.distanceTo(hitPoint.applyMatrix4(pendant.root.matrixWorld));
+    return distance>=raycaster.near&&distance<=raycaster.far?'little-prince-pendant':null;
+  }
   function inspectionModel(id){
     const entry=entries.get(id==='envelope'?'painted-lacquer-jewelry-box':id);
     if(entry?.status!=='ready')return null;

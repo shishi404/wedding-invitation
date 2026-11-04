@@ -5,7 +5,7 @@ import {createFireplace} from './loft-fireplace.js';
 import {createDesk} from './loft-desk.js';
 import {createFirewood} from './loft-firewood.js';
 import {createHearthAsh} from './loft-hearth-ash.js';
-import {createTableProps} from './loft-table-props.js';
+import {createTableProps} from './loft-table-props.js?v=pendant-hit-5';
 import {applyRoomFinishes} from './loft-room-finishes.js';
 import {createTableLighting,preserveRoomLighting} from './loft-table-lighting.js';
 import {LOFT_INTERACTIONS,TAKEN_MODELS,canUseLoftObject} from './study-loft-mapping.js';
