@@ -1,6 +1,8 @@
 (() => {
   'use strict';
   const definitions={
+    'ui-click':[['assets/ui-button-1.ogg','assets/ui-button-2.ogg'],'ui'],
+    'ui-record':['assets/record-button.ogg','ui'],
     'notebook-open':['notebook-open','mechanism'],
     'notebook-tear':['notebook-tear','mechanism'],
     'notebook-pickup':['notebook-pickup','object'],
@@ -24,7 +26,7 @@
     'record-search':['record-search','action-result'],
   };
   const channels=new Map(),buffers=new Map();let context,ambient,ambientToken=0,ambientWanted=false,stopGeneration=0,roomReady=false;
-  const src=name=>`assets/sfx/${name}.ogg`;
+  const src=name=>name.startsWith('assets/')?name:`assets/sfx/${name}.ogg`;
   let preparedCampfire,campfirePreparation;
   async function prepareCampfire(){
     if(preparedCampfire)return;
@@ -41,7 +43,7 @@
   function audioContext(){
     const Constructor=window.AudioContext||window.webkitAudioContext;
     if(!Constructor)return null;
-    context ||= new Constructor();
+    context ||= new Constructor({latencyHint:'interactive'});
     if(context.state==='suspended')context.resume().catch(()=>{});
     return context;
   }
@@ -90,6 +92,15 @@
     const choices=Array.isArray(definition[0])?definition[0]:[definition[0]];
     try{await Promise.all(choices.map(stem=>bufferFor(src(stem),ctx)));return true;}catch{return false;}
   }
+  let effectsPreparation;
+  function prepareEffects(){
+    if(effectsPreparation)return effectsPreparation;
+    const pending=Object.keys(definitions);
+    // Decode only short cues, two at a time. Keep long ambience/music streamed.
+    effectsPreparation=Promise.all([0,1].map(async()=>{while(pending.length)await prepare(pending.shift());}));
+    return effectsPreparation;
+  }
+  function playUI(record=false){return play(record?'ui-record':'ui-click');}
   function campfireMedia(){
     if(!ambient){ambient=document.createElement('audio');ambient.id='study-campfire';ambient.preload='none';ambient.loop=true;ambient.volume=.2;ambient.src=preparedCampfire?.url||src('campfire');document.body.append(ambient);}
     return ambient;
@@ -112,7 +123,7 @@
     ++stopGeneration;++ambientToken;ambientWanted=false;roomReady=false;ambient?.pause();
     for(const slot of channels.values()){++slot.token;slot.finish?.(false);slot.stopped=true;try{slot.node?.stop();}catch{}slot.media?.pause();}
   }
-  window.InvitationStudySounds={play,playSequence,prepare,prepareCampfire,stop};
+  window.InvitationStudySounds={play,playUI,playSequence,prepare,prepareEffects,prepareCampfire,stop};
   // Both media channels need their own gesture-bound play in mobile WebViews.
   window.addEventListener('study-enter',primeCampfire);
   document.querySelector?.('#scene-retry')?.addEventListener('click',primeCampfire);

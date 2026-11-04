@@ -31,6 +31,14 @@ function setup({web=true,deferred=false}={}){
   const f=setup({deferred:true}),pending=f.api.play('cup');f.api.stop();f.release();assert.equal(await pending,false);assert.equal(f.nodes.length,0,'Leaving must cancel a pending decode');
 }
 {
+  const f=setup();await f.api.prepareEffects();const before=f.requests.length;
+  for(const name of ['cup','photo','sticky-note','notebook-open','unlock','box-open'])await f.api.play(name);
+  await f.api.playUI();await f.api.playUI(true);
+  assert.equal(f.requests.length,before,'Ready effects and UI clicks must play without network requests');
+  assert.ok(f.nodes.at(-1).buffer.url.endsWith('/record-button.ogg'));
+  await f.api.prepareEffects();assert.equal(f.requests.length,before,'Preparation must reuse decoded cues');
+}
+{
   const f=setup({web:false});await f.handlers['study-enter']();assert.equal(f.media[0].muted,true);await f.handlers['study-room-enter']();await f.api.play('cup');await f.api.play('photo');
   assert.equal(f.media.length,2,'Native fallback must reuse one object channel alongside ambience');assert.ok(f.media[1].src.endsWith('/photo.ogg'));
   f.handlers.pagehide();assert.ok(f.media.every(a=>a.paused));

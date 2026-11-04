@@ -24,7 +24,7 @@ export function createInspection({getModel,mobile=false}){
   function resetView(){const distance=camera.position.length();camera.position.set(.3,.7,1).setLength(distance);controls.target.set(0,0,0);controls.update();fit();}
   const visible=()=>host?.isConnected&&host.closest('dialog')?.open&&!document.hidden;
   function stop(){cancelAnimationFrame(frame);clearTimeout(timer);frame=timer=0;}
-  function request(){if(visible()&&!frame)frame=requestAnimationFrame(render);}
+  function request(){if(visible()&&renderer&&!frame)frame=requestAnimationFrame(render);}
   function init(){
     if(renderer)return;
     renderer=new THREE.WebGLRenderer({alpha:true,antialias:true});
@@ -85,6 +85,9 @@ export function createInspection({getModel,mobile=false}){
     host.classList.add('model-inspection');host.dataset.modelState='loading';
     host.setAttribute('aria-busy','true');
     try{
+      // Paint the dialog before model cloning, material setup and shader work.
+      await new Promise(resolve=>requestAnimationFrame(()=>setTimeout(resolve,0)));
+      if(sequence!==token||!visible())return;
       init();host.replaceChildren(renderer.domElement);resizeObserver.observe(host);
       renderer.domElement.setAttribute('aria-label',art==='record'?'留声机模型。拖动或使用方向键查看上方与侧面，无法翻看底部。':'物品模型。拖动或使用方向键旋转调查，Home 键重置。');
       if(!same){
@@ -160,7 +163,7 @@ export function createInspection({getModel,mobile=false}){
     }
   }
   function render(now){
-    frame=0;clearTimeout(timer);timer=0;if(!visible())return;
+    frame=0;clearTimeout(timer);timer=0;if(!visible()||!renderer||!model)return;
     const dt=Math.min(Math.max(0,(now-last)/1000),.05);last=now;
     if(mixer&&art==='record'&&window.InvitationAudio?.recordPlaying)mixer.update(dt);
     if(mixer&&bookPlaying)mixer.update(dt);

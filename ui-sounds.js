@@ -4,6 +4,9 @@
   const recordSource='assets/record-button.ogg';
   let channel;
   function play(src){
+    if(window.InvitationStudySounds?.playUI&& (window.AudioContext||window.webkitAudioContext)){
+      window.InvitationStudySounds.playUI(src===recordSource);return;
+    }
     if(!channel){channel=document.createElement('audio');channel.id='ui-click-sound';channel.preload='none';channel.volume=.65;document.body.append(channel);}
     channel.pause();channel.src=src;channel.currentTime=0;
     channel.play().catch(()=>{});

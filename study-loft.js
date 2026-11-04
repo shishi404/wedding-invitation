@@ -15,7 +15,7 @@ import {MeshoptDecoder} from './vendor/meshopt_decoder.js';
 import {notebookPageLabel} from './notebook-page-copy.js';
 import {setJewelryLockVisible} from './模型库/14_彩绘漆面首饰盒_Source/青蓝写实旧铜锁版_v7/jewelry-box-controller.js';
 import {inspectionAssetCatalog} from './loft-inspection-assets.js';
-import {createMobileSceneView} from './study-mobile-view.js?v=object-tap-2';
+import {createMobileSceneView,mobileRenderSize} from './study-mobile-view.js?v=mobile-performance-3';
 
 const study=document.querySelector('#study'),world=document.querySelector('#world');
 const loading=document.querySelector('#scene-loading'),loadingText=document.querySelector('#scene-loading-text'),retry=document.querySelector('#scene-retry');
@@ -31,10 +31,14 @@ let game={choice:null,drawerOpen:false,envelope:false},lastBoxOpen=null,lastEnve
 let request=0,timer=0,lastFrame=0,frames=0,drag=null,baseYaw=0,basePitch=0,yaw=0,pitch=0;
 let poseChanged=false;
 let mobileView=null;
+let sceneGesturing=false;
 const loader=new GLTFLoader().setMeshoptDecoder(MeshoptDecoder);
 const queue=[];let decoding=0;
 function load(url){return new Promise((resolve,reject)=>{queue.push({url,resolve,reject});pump();});}
-function pump(){while(decoding<2&&queue.length){const task=queue.shift();decoding++;loader.loadAsync(task.url).then(task.resolve,task.reject).finally(()=>{decoding--;pump();});}}
+function pump(){while(decoding<2&&queue.length){const task=queue.shift();decoding++;loader.loadAsync(task.url).then(gltf=>{
+  gltf.scene.traverse(object=>{if(object.geometry&&!object.geometry.boundingBox)object.geometry.computeBoundingBox();});
+  task.resolve(gltf);
+},task.reject).finally(()=>{decoding--;pump();});}}
 const inspectionAssets=new Map();
 const inspectionIds={...Object.fromEntries(Object.entries(LOFT_INTERACTIONS).map(([id,art])=>[art,id])),'drawer-open':'painted-lacquer-jewelry-box','drawer-empty':'painted-lacquer-jewelry-box',envelope:'envelope',invitation:'envelope'};
 const inspectionExtras=inspectionAssetCatalog(profile);
@@ -50,7 +54,7 @@ async function getInspectionModel(art){
 window.InvitationInspection=createInspection({mobile:profile==='mobile',getModel:getInspectionModel});
 let notebookSyncing=false,lastNotebookState='';
 const modalOpen=()=>!!document.querySelector('dialog[open]');
-function suspended(){return document.hidden||study.hidden;}
+function suspended(){return document.hidden||study.hidden||sceneGesturing||modalOpen();}
 function stop(){clearTimeout(timer);timer=0;if(request)cancelAnimationFrame(request);request=0;}
 function requestRender(){if(renderer&&!request&&!suspended())request=requestAnimationFrame(render);}
 function activity(){if(suspended())stop();else requestRender();}
@@ -88,7 +92,7 @@ function resize(){
   camera.aspect=width/height;
   camera.fov=letterbox?layout.fov:THREE.MathUtils.radToDeg(2*Math.atan(Math.tan(THREE.MathUtils.degToRad(layout.fov)/2)*Math.max(1,layout.aspect/camera.aspect)));
   camera.updateProjectionMatrix();renderer.setPixelRatio(Math.min(devicePixelRatio,profile==='mobile'?1.5:2));
-  renderer.setSize(Math.round(width),Math.round(height),false);
+  setSceneSize(width,height);
   renderer.domElement.style.width=width+'px';renderer.domElement.style.height=height+'px';
   world.dataset.letterbox=String(letterbox);
   world.style.setProperty('--scene-bar-y',(bounds.height-height)/2+'px');
@@ -96,6 +100,11 @@ function resize(){
   mobileView?.resize(width,height);requestRender();
 }
 new ResizeObserver(resize).observe(world);
+function setSceneSize(width,height,zoom=1){
+  const size=profile==='mobile'?mobileRenderSize(width,height,zoom,renderer.getPixelRatio()):{width:Math.round(width),height:Math.round(height)};
+  const ratio=renderer.getPixelRatio(),canvas=renderer.domElement;
+  if(canvas.width!==Math.floor(size.width*ratio)||canvas.height!==Math.floor(size.height*ratio))renderer.setSize(size.width,size.height,false);
+}
 function applyLook(){
   camera.lookAt(camera.position.clone().add(new THREE.Vector3(Math.sin(yaw)*Math.cos(pitch),Math.sin(pitch),Math.cos(yaw)*Math.cos(pitch))));
   poseChanged=Math.abs(yaw-baseYaw)+Math.abs(pitch-basePitch)>.005;reset.hidden=!poseChanged;requestRender();
@@ -108,17 +117,20 @@ function hit(event){
 }
 function installInput(canvas){
   let pendingTap=null;
-  const blocked=()=>!ready||suspended()||modalOpen()||hotspots.inert;
+  const blocked=()=>!ready||document.hidden||study.hidden||modalOpen()||hotspots.inert;
   if(profile==='mobile'){
     reset.textContent='还原画面';
     mobileView=createMobileSceneView({surface:world,canvas,blocked,onTap:event=>{
       const id=hit(event);if(canUseLoftObject(id,game))window.dispatchEvent(new CustomEvent('study-object',{detail:LOFT_INTERACTIONS[id]}));
-    },onChange:({zoom,width,height,settled})=>{
+    },onChange:({zoom,width,height,settled,gesturing})=>{
+      sceneGesturing=gesturing;
       reset.hidden=zoom<=1.001;
       const bounds=world.getBoundingClientRect();
       world.style.setProperty('--scene-bar-y',Math.max(0,(bounds.height-height*zoom)/2)+'px');
       world.style.setProperty('--scene-bar-x',Math.max(0,(bounds.width-width*zoom)/2)+'px');
-      if(settled&&width&&height)renderer.setSize(Math.round(width*zoom),Math.round(height*zoom),false);
+      // Pinch/pan moves the existing canvas on the compositor; no scene redraw.
+      if(gesturing){stop();return;}
+      if(settled&&width&&height)setSceneSize(width,height,zoom);
       requestRender();
     }});
     canvas.addEventListener('keydown',event=>mobileView.key(event));return;
@@ -167,6 +179,7 @@ function repairBakedUV(root){root.traverse(object=>{
   if(constant)object.geometry.setAttribute('uv',uv1.clone());
 });}
 function clearScene(){
+  sceneGesturing=false;
   mobileView?.destroy();
   stop();if(scene)scene.traverse(object=>{object.geometry?.dispose();for(const material of object.material?(Array.isArray(object.material)?object.material:[object.material]):[]){for(const value of Object.values(material))if(value?.isTexture)value.dispose();material.dispose();}});
   renderer?.dispose();renderer?.domElement.remove();mobileView=null;renderer=null;props=null;desk=null;firewood=null;lighting=null;lastNotebookState='';lastChoice=undefined;lastBoxOpen=lastEnvelope=lastLockBroken=null;ready=false;
@@ -178,7 +191,7 @@ async function boot(){
     await window.InvitationTerminal?.intro();
     clearScene();layout=await fetch('./assets/study-loft-layout.json').then(response=>{if(!response.ok)throw Error('布局加载失败');return response.json();});
     // Download both complete tracks while the scene loads. Playback begins after entry.
-    const roomAudio=Promise.all([window.InvitationAudio?.prepareBackground(),window.InvitationStudySounds?.prepareCampfire()]).then(()=>({ok:true}),error=>({error}));
+    const roomAudio=Promise.all([window.InvitationAudio?.prepareBackground(),window.InvitationStudySounds?.prepareCampfire(),window.InvitationStudySounds?.prepareEffects()]).then(()=>({ok:true}),error=>({error}));
     scene=new THREE.Scene();scene.background=new THREE.Color('#e3e2db');scene.add(new THREE.AmbientLight(0xffffff,.3));
     camera=new THREE.PerspectiveCamera(layout.fov,layout.aspect,.03,100);camera.position.fromArray(layout.position);camera.quaternion.fromArray(layout.quaternion);
     const direction=camera.getWorldDirection(new THREE.Vector3());baseYaw=yaw=Math.atan2(direction.x,direction.z);basePitch=pitch=Math.asin(direction.y);

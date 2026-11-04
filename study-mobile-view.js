@@ -1,4 +1,9 @@
 // Scale only the rendered room. The camera and sibling dialogs stay unchanged.
+// Keep zoomed phone views within a fixed GPU pixel budget.
+export function mobileRenderSize(width,height,zoom=1,pixelRatio=1.5){
+  const scale=Math.min(zoom,Math.sqrt(786432/(width*height*pixelRatio**2)));
+  return {width:Math.max(1,Math.floor(width*scale)),height:Math.max(1,Math.floor(height*scale))};
+}
 export function createMobileSceneView({surface,canvas,blocked,onTap,onChange}){
   let width=0,height=0,zoom=1,pan=0,maxZoom=1,gesture=null,pendingTap=null;
   const points=new Map();
@@ -12,7 +17,7 @@ export function createMobileSceneView({surface,canvas,blocked,onTap,onChange}){
     pan=clamp(pan,-limit,limit);
     canvas.style.transform=`translate(-50%,-50%) translateX(${pan}px) scale(${zoom})`;
     surface.dataset.sceneZoom=String(zoom);surface.dataset.scenePan=String(pan);surface.dataset.sceneMaxZoom=String(maxZoom);
-    onChange({zoom,pan,width,height,settled});
+    onChange({zoom,pan,width,height,settled,gesturing:points.size>0});
   }
   function rebase(){
     const values=[...points.values()];
@@ -28,11 +33,11 @@ export function createMobileSceneView({surface,canvas,blocked,onTap,onChange}){
     if(event.button!==0||blocked())return;
     event.preventDefault();
     points.set(event.pointerId,{x:event.clientX,y:event.clientY,startX:event.clientX,startY:event.clientY,moved:false});
-    surface.setPointerCapture(event.pointerId);rebase();
+    surface.setPointerCapture(event.pointerId);rebase();update();
   });
   listen('pointermove',event=>{
     const point=points.get(event.pointerId);if(!point)return;
-    if(blocked()){cancel();return;}
+    if(blocked()){cancel();update(true);return;}
     event.preventDefault();point.x=event.clientX;point.y=event.clientY;
     if(Math.hypot(point.x-point.startX,point.y-point.startY)>8)point.moved=true;
     const values=[...points.values()];

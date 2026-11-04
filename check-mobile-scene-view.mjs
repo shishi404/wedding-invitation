@@ -1,5 +1,5 @@
 import assert from 'node:assert/strict';
-import {createMobileSceneView} from './study-mobile-view.js';
+import {createMobileSceneView,mobileRenderSize} from './study-mobile-view.js';
 
 class Surface extends EventTarget{
   dataset={};captures=new Set();
@@ -40,4 +40,11 @@ blocked=true;gesture(100,200);assert.equal(last.zoom,1);assert.equal(taps,1);
 blocked=false;gesture(100,200);view.resize(320,180);assert.ok(last.zoom>=1);
 view.reset();assert.equal(last.zoom,1);assert.equal(last.pan,0);
 view.destroy();gesture(100,200);assert.equal(last.zoom,1);
+for(const [width,height]of [[390,390*9/16],[844,844*9/16],[320,180]]){
+  for(const zoom of [1,2,4]){
+    const size=mobileRenderSize(width,height,zoom,1.5);
+    assert.ok(Math.floor(size.width*1.5)*Math.floor(size.height*1.5)<=786432,'Zoom must respect the GPU pixel budget');
+    assert.ok(Math.abs(size.width/size.height-16/9)<.02,'Rendering must preserve the scene aspect ratio');
+  }
+}
 console.log('Mobile scene view passed: pinch limits, horizontal bounds, tap/gesture separation, cancellation, modal blocking, resize, reset and disposal.');
