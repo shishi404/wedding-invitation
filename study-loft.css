@@ -1,0 +1,102 @@
+/* The final loft is the environment; dialogs and game rules retain their UI. */
+.letter-foreground{position:fixed;inset:0;z-index:1000;pointer-events:auto;background:#0c1711d9;backdrop-filter:blur(14px)}
+.letter-foreground canvas{display:block;width:100%;height:100%}
+.letter-reader{position:absolute;inset:0;display:grid;place-items:center}
+.letter-reader[hidden]{display:none}
+.letter-reader-sheet{position:relative;width:min(100%,900px);height:100dvh;box-shadow:0 18px 60px #0005}
+.letter-reader-toolbar{position:fixed;z-index:2;right:max(16px,env(safe-area-inset-right));top:max(16px,env(safe-area-inset-top));display:flex;flex-direction:column;align-items:flex-end;gap:12px;color:#e1e6df;font-size:11px}
+.letter-reader-music{flex:none;border:1px solid #aab7ac77;background:#17251df2;color:#eeeade;padding:7px 11px;font:inherit;cursor:pointer;min-height:36px}
+.letter-reader-music[disabled]{opacity:.6;cursor:default}
+.letter-reader-scroll{width:100%;height:100%;overflow-y:auto;overflow-x:hidden;overscroll-behavior:contain;touch-action:pan-y;scrollbar-width:none;-ms-overflow-style:none;outline-offset:5px;background:#adc7d3}
+.letter-reader-scroll::-webkit-scrollbar{display:none;width:0;height:0}
+.letter-reader-scroll img{display:block;width:100%;height:auto}
+/* Match the welcome screen across all room copy, controls and check numerals. */
+body.study-3d,body.study-3d *{font-family:var(--study-type);font-weight:900;font-synthesis:weight}
+body.study-3d{height:100dvh;overflow:hidden}
+.study-3d .sr-only{margin:0;top:0}
+.study-3d #study{height:100svh;height:100dvh;min-height:0;background:#d6d3c9}
+.study-3d #world{position:absolute;inset:0;background:#d6d3c9;opacity:1}
+.study-3d #world canvas{display:block;width:100%;height:100%;touch-action:none;cursor:default;outline-offset:-4px}
+.study-3d #world[data-letterbox="true"]{background:#050505;overflow:hidden;touch-action:none}
+.study-3d #world[data-letterbox="true"] canvas{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%)}
+.study-3d #world[data-letterbox="true"]::before,.study-3d #world[data-letterbox="true"]::after{content:'';position:absolute;left:0;right:0;height:calc(var(--scene-bar-y,0px) + 16px);z-index:1;pointer-events:none}
+.study-3d #world[data-letterbox="true"]::before{top:0;background:linear-gradient(to bottom,#050505 calc(100% - 16px),transparent)}
+.study-3d #world[data-letterbox="true"]::after{bottom:0;background:linear-gradient(to top,#050505 calc(100% - 16px),transparent)}
+.study-3d .vignette{pointer-events:none;background:linear-gradient(#0004,transparent 18%,transparent 78%,#0007);z-index:1}
+.study-3d .study-header{top:max(16px,env(safe-area-inset-top));left:20px;right:20px;pointer-events:none}
+.study-3d .study-header>*{pointer-events:auto}
+.study-3d .wordmark{padding:9px 13px;background:#17251de0;border:1px solid #c4c9ac44;border-radius:3px;color:#eeeade}
+.study-3d .top-actions{padding:8px 12px;background:#17251de0;border-radius:3px}
+.study-3d .study-footer{left:20px;right:20px;bottom:max(16px,env(safe-area-inset-bottom));pointer-events:none}
+.study-3d .study-footer>*{pointer-events:auto}
+.study-3d .inventory-wrap{position:relative;left:auto;transform:none;bottom:auto;padding:8px 10px;background:#17251de8;border:1px solid #c4c9ac44;border-radius:3px}
+.study-3d .inventory{min-height:44px}
+.study-3d .inventory-slot{width:44px;height:44px}
+.study-3d .inventory-slot .inventory-photo{height:26px}
+.study-3d .inventory-slot small{font-size:8px}
+.study-3d .footer-index{display:none}
+.study-3d .study-direct-invitation{bottom:0;min-height:40px;font-size:11px}
+.scene-controls{position:absolute;z-index:4;left:50%;top:max(20px,env(safe-area-inset-top));transform:translateX(-50%);display:flex;align-items:center;gap:8px;max-width:calc(100% - 400px);pointer-events:none}
+#scene-hint{margin:0;padding:9px 14px;background:#17251dcf;border-radius:3px;color:#f1eee3;font-size:12px;line-height:1.7;text-align:center;letter-spacing:1px}
+#scene-reset,#scene-retry{pointer-events:auto;flex:none;border:1px solid #c4c9ac66;border-radius:3px;background:#17251de8;color:#eeeade;padding:9px 13px;min-height:40px;font:inherit;font-size:12px;cursor:pointer}
+#scene-reset[hidden],#scene-retry[hidden]{display:none}
+#scene-loading{position:absolute;inset:0;z-index:8;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:18px;color:#eeeade;background:#17211df2;text-align:center;padding:24px}
+#scene-loading[hidden]{display:none}
+#scene-loading-text{font-size:15px;letter-spacing:2px}
+.scene-loading-mark{width:28px;height:28px;border:1px solid #d5c7a255;border-top-color:#d5c7a2;border-radius:50%;animation:scene-loading-spin 1.2s linear infinite}
+@keyframes scene-loading-spin{to{transform:rotate(360deg)}}
+.study-3d #hotspots{position:absolute;z-index:10;left:20px;top:100px;display:flex;flex-wrap:wrap;gap:8px;max-width:min(500px,calc(100% - 40px));pointer-events:none}
+.study-3d #hotspots button{position:fixed;left:-10000px;pointer-events:auto;padding:10px 14px;background:#17251df5;border:1px solid #c4c9ac88;border-radius:3px;color:#eeeade;font:inherit;font-size:13px;cursor:pointer}
+.study-3d #hotspots button:focus,.study-3d #hotspots.scene-fallback button{position:static}
+.study-3d #hotspots button:disabled{opacity:.5;cursor:default}
+.study-3d .object-art:is(.drawer,.drawer-open,.drawer-empty){height:min(42svh,420px);max-height:none;aspect-ratio:auto;background:#555957}
+.study-3d .object-art:is(.drawer,.drawer-open,.drawer-empty) .inspection-stage{height:100%;aspect-ratio:auto}
+.study-3d .object-art:is(.drawer,.drawer-open,.drawer-empty) .inspection-image{inset:0;width:100%;height:100%;object-fit:contain;filter:none}
+@media(max-width:700px){
+  .study-3d .study-header{left:12px;right:12px;top:max(12px,env(safe-area-inset-top))}
+  .study-3d .wordmark{padding:8px 10px;gap:8px;font-size:12px}
+  .study-3d .top-actions{padding:6px 9px}
+  .study-3d .music-record-icon{width:2.4em;height:2.4em}
+  .study-3d #music-toggle-label{font-size:10px}
+  .scene-controls{top:auto;bottom:calc(max(14px,env(safe-area-inset-bottom)) + 106px);max-width:calc(100% - 24px);width:max-content;justify-content:center}
+  #scene-hint{padding:7px 10px;font-size:10px;letter-spacing:0;max-width:270px}
+  #scene-reset{font-size:10px;padding:7px 9px}
+  .study-3d .study-footer{left:12px;right:12px;bottom:max(12px,env(safe-area-inset-bottom));height:auto;display:flex;align-items:flex-end;gap:8px}
+  .study-3d .inventory-wrap{padding:8px 10px;min-width:0;max-width:calc(100% - 105px)}
+  .study-3d .inventory-title{font-size:10px}
+  .study-3d .inventory{max-width:100%;gap:5px}
+  .study-3d .inventory-slot{width:40px;height:40px;flex:none}
+  .study-3d .study-direct-invitation{position:static;margin-left:auto;max-width:100px;padding:8px;font-size:10px}
+}
+@media(prefers-reduced-motion:reduce){.scene-loading-mark{animation:none}}
+
+/* A clear, rotatable model floats over the defocused room. */
+.study-3d :is(#interaction-dialog,#choose-dialog)::backdrop{background:#10181396;backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px)}
+.study-3d :is(#interaction-dialog,#choose-dialog)[open]{display:flex;flex-direction:column;align-items:center;width:100vw;height:100dvh;max-width:none;max-height:none;margin:0;padding:4svh 20px 24px;border:0;border-radius:0;background:transparent;box-shadow:none;overflow-x:hidden;overflow-y:auto;color:#eeeade}
+.study-3d #object-art,.study-3d #object-art:is(.note,.invitation,.drawer,.drawer-open,.drawer-empty){width:min(960px,100%);height:52svh;min-height:260px;max-height:none;flex:none;aspect-ratio:auto;overflow:visible;background:none}
+.study-3d #object-art .inspection-stage,.study-3d #note-inspection{position:relative;width:100%;height:100%;aspect-ratio:auto;background:none}
+.study-3d #note-inspection{width:min(960px,100%);height:52svh;min-height:260px;flex:none}
+.model-inspection canvas{display:block;width:100%;height:100%;touch-action:none;cursor:grab;outline-offset:-4px}
+.model-inspection canvas:active{cursor:grabbing}
+.model-inspection:after{content:'拖动模型旋转调查 · 方向键也可操作';position:absolute;bottom:8px;left:12px;right:12px;color:#e3dfcd;font-size:12px;text-align:center;letter-spacing:1px;pointer-events:none;text-shadow:0 1px 4px #000}
+.model-inspection[data-inspection-art="record"]:after{content:'留声机太重了，只能查看上方和侧面'}
+.model-inspection[data-model-state="loading"]:after{content:'正在拿起物品…'}
+.model-inspection[data-model-state="error"]:after{content:none}
+.model-inspection[data-inspection-busy="true"] canvas{cursor:wait}
+.model-inspection[data-inspection-busy="true"]:after{content:none;display:none}
+.study-3d #interaction-dialog[aria-busy="true"] #interaction-actions{visibility:hidden}
+.check-dialog[data-phase="rolling"] :is(#check-progress,#check-roll-label){visibility:hidden}
+.key-pickup-overlay{position:fixed;inset:0;z-index:100;pointer-events:none;overflow:hidden}
+.key-pickup-model{position:absolute;left:50%;top:50%;margin-left:calc(min(260px,60vw) / -2);margin-top:calc(min(260px,60vw) / -2);width:min(260px,60vw);height:min(260px,60vw);filter:drop-shadow(0 0 18px #dfbd6380);will-change:transform,opacity}
+.key-pickup-model canvas{display:block;width:100%;height:100%}
+.key-pickup-destination{position:fixed;border:1px solid #e3c282;box-shadow:0 0 18px #d7b46d80;background:#d5b46a26;border-radius:3px}
+.study-3d :is(.inspection-content,.note-choice-content){flex:none;width:min(860px,100%);padding:24px 30px;background:#101a15df;border:1px solid #b4b99a38;border-radius:5px;box-shadow:0 12px 40px #0003}
+.study-3d #object-art.record:after{display:none}
+.study-3d #interaction-dialog .narrative{margin:12px 0 18px}
+.study-3d .note-choice-content .keepsakes{margin-top:18px}
+@media(max-width:700px){
+  .study-3d :is(#interaction-dialog,#choose-dialog)[open]{padding:12px 12px max(20px,env(safe-area-inset-bottom))}
+  .study-3d #object-art,.study-3d #object-art:is(.note,.invitation,.drawer,.drawer-open,.drawer-empty),.study-3d #note-inspection{height:44svh;min-height:240px}
+  .study-3d :is(.inspection-content,.note-choice-content){padding:20px}
+  .model-inspection:after{font-size:11px;letter-spacing:0}
+}

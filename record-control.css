@@ -1,0 +1,14 @@
+/* Shared vinyl control for the game reader and the standalone invitation. */
+button.record-toggle{position:relative;display:grid;place-items:center;flex:none;width:48px;height:48px;min-height:48px;padding:0;border:0;border-radius:50%;background:#17191b;box-shadow:0 2px 12px #0006;cursor:pointer}
+button.record-toggle::before{content:'';position:absolute;inset:0;border:1px solid #ffffff50;border-radius:50%;background:radial-gradient(circle,#e9e1ce 0 2px,#84242a 2px 9px,#c3a77d 9px 10px,transparent 10px),repeating-radial-gradient(circle,#202326 0 1px,#363a3d 1px 2px,#202326 2px 4px),conic-gradient(#fff3,transparent,#fff2,transparent,#fff3);background-blend-mode:normal,screen,normal;animation:invitation-record-spin 5s linear infinite;animation-play-state:paused}
+button.record-toggle[aria-pressed="true"]::before{animation-play-state:running}
+button.record-toggle:focus-visible{outline:2px solid #c3a77d;outline-offset:4px}
+button.record-toggle:disabled{opacity:.6;cursor:default}
+button.record-toggle>span{position:absolute;width:1px;height:1px;overflow:hidden;clip-path:inset(50%);white-space:nowrap}
+/* Both invitation views use the same 48px circular download control. */
+a.invitation-download{display:grid;place-items:center;flex:0 0 48px;box-sizing:border-box;width:48px;height:48px;min-width:48px;min-height:48px;max-width:48px;max-height:48px;aspect-ratio:1;padding:0;border:1px solid #aab7ac77;border-radius:50%;background:#17251df2;color:#eeeade;text-decoration:none;box-shadow:0 2px 12px #0006;cursor:pointer}
+a.invitation-download:hover{background:#304537}
+a.invitation-download:focus-visible{outline:2px solid #c3a77d;outline-offset:4px}
+a.invitation-download svg{display:block;width:22px;height:22px;flex:none}
+@keyframes invitation-record-spin{to{transform:rotate(360deg)}}
+@media(prefers-reduced-motion:reduce){button.record-toggle::before{animation:none}}

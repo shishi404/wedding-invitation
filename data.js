@@ -5,8 +5,16 @@ window.invitationData = {
   music: "assets/study-ambient.wav",
   studyMusic: "assets/study-clair-de-lune.ogg",
   recordMusic: "assets/record-nocturne.wav",
+  musicBoxWinding: "assets/musicbox-winding.ogg",
+  musicBoxMusic: "assets/musicbox-nop.ogg",
   // 唱片机歌单：上一首、下一首会首尾循环；可继续添加音乐路径。
-  recordPlaylist: ["assets/record-nocturne.wav"],
+  recordPlaylist: [
+    "assets/study-clair-de-lune.ogg",
+    "assets/record-a-familiar-room.ogg",
+    "assets/record-burning-memory.ogg",
+    "assets/record-rise-up-dead-man.ogg",
+    "assets/record-world-on-fire.ogg"
+  ],
   partnerOne: "陈萌",
   partnerTwo: "叶倩芸",
   englishNames: "",

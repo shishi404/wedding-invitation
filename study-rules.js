@@ -8,7 +8,7 @@ export function initialState(choice=null) {
   if (choice!==null&&!keepsakes[choice]) throw new Error('Unknown keepsake');
   const attributes = {strength:55,intelligence:55,will:55};
   if(choice) attributes[choice] += 5;
-  return {choice,attributes,notebook:null,key:false,knife:false,recordBroken:false,drawerOpen:false,drawerAttempted:false,envelope:false,seal:null,opened:false};
+  return {choice,attributes,noteRead:false,notebook:null,key:false,knife:false,recordBroken:false,drawerOpen:false,drawerLockBroken:false,drawerAttempted:false,envelope:false,seal:null,opened:false};
 }
 export function checkThreshold(attribute,difficulty='normal') {
   return difficulty==='extreme' ? Math.floor(attribute/5) : attribute;

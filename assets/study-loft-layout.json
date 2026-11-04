@@ -1,0 +1,272 @@
+{
+  "version": 6,
+  "model": "VR_apartment_loft_interior_baked.glb",
+  "coordinateSystem": "Three.js glTF / Y up",
+  "savedAt": "2026-10-28T17:24:25.221Z",
+  "position": [
+    4.918218047843526,
+    1.215123342319682,
+    0.440680702619187
+  ],
+  "quaternion": [
+    -0.08772060289501134,
+    0.42897245935290657,
+    0.04190059591068174,
+    0.898071302852276
+  ],
+  "target": [
+    -0.15669367414387203,
+    -0.0716989764877154,
+    -3.659546039142061
+  ],
+  "fov": 49,
+  "aspect": 1.7777777777777777,
+  "viewFormat": "wide",
+  "mode": "look",
+  "tableLighting": {
+    "enabled": true,
+    "strength": 1,
+    "shadows": true,
+    "reflection": 0.38,
+    "areaLights": 2,
+    "shadowMapSize": 2048,
+    "shadowMode": "cached PCF / window key",
+    "reflectionCapturesPerFrame": 0
+  },
+  "tableProps": {
+    "version": 1,
+    "coordinateSystem": "DeskSurface local / Y up",
+    "selected": "octagonal-music-box",
+    "items": {
+      "coffee-cup": {
+        "x": 0.655,
+        "z": 0.19,
+        "rotation": 0,
+        "size": 1,
+        "visible": true
+      },
+      "windchime": {
+        "x": -0.81,
+        "z": -0.345,
+        "rotation": 0,
+        "size": 0.74,
+        "visible": true
+      },
+      "alchemical-book": {
+        "x": -0.575,
+        "z": 0.145,
+        "rotation": 39,
+        "size": 0.7,
+        "visible": true
+      },
+      "gramophone": {
+        "x": 0.575,
+        "z": -0.225,
+        "rotation": -43,
+        "size": 1.29,
+        "visible": true
+      },
+      "octagonal-music-box": {
+        "x": -0.355,
+        "z": -0.2,
+        "rotation": 20,
+        "size": 0.7,
+        "visible": true
+      },
+      "little-prince-pendant": {
+        "x": -0.295,
+        "z": 0.09,
+        "rotation": 36,
+        "size": 1,
+        "visible": true
+      },
+      "painted-lacquer-jewelry-box": {
+        "x": 0.04,
+        "z": 0.21,
+        "rotation": 0,
+        "size": 1,
+        "visible": true
+      },
+      "white-3ds-xl": {
+        "x": 0.415,
+        "z": 0.17,
+        "rotation": -26,
+        "size": 1,
+        "visible": true
+      },
+      "square-wood-photo-frame": {
+        "x": -0.595,
+        "z": -0.29,
+        "rotation": 38,
+        "size": 0.7,
+        "visible": true
+      },
+      "single-sticky-note": {
+        "x": -0.18,
+        "z": 0.305,
+        "rotation": 12,
+        "size": 1,
+        "visible": true
+      }
+    },
+    "interactions": {
+      "jewelryBox": {
+        "state": "locked",
+        "busy": false,
+        "open": false,
+        "envelopeLoaded": true
+      }
+    }
+  },
+  "fireplace": {
+    "asset": "fireplace_ujdjcjxga_mid.glb",
+    "along": 3.25,
+    "width": 1.7,
+    "gap": 0.015,
+    "visible": true,
+    "position": [
+      3.25,
+      0.01,
+      -5.024100000000001
+    ],
+    "rotation": [
+      0,
+      0,
+      0,
+      "XYZ"
+    ],
+    "scale": [
+      1.23300154823785,
+      1.23300154823785,
+      1.23300154823785
+    ],
+    "firewood": {
+      "asset": "firewood-burned-web.glb",
+      "visible": true,
+      "size": 1.46,
+      "glow": 3,
+      "arrangement": "small-campfire-cone-v2",
+      "logCount": 8,
+      "localPosition": [
+        0,
+        0.09153393857959388,
+        0.26505874639245985
+      ],
+      "effectsAnchor": {
+        "name": "FireEffectsAnchor",
+        "localPosition": [
+          0,
+          0.1,
+          0
+        ]
+      },
+      "effects": {
+        "flame": {
+          "enabled": true,
+          "intensity": 1.2,
+          "light": 1
+        },
+        "audio": false
+      }
+    },
+    "ash": {
+      "asset": "hearth-ash-web.glb",
+      "localBounds": {
+        "min": [
+          -0.29,
+          0.071,
+          0.10400000000000001
+        ],
+        "max": [
+          0.29,
+          0.095,
+          0.42800000000000005
+        ]
+      },
+      "clearanceToGrate": 0.014999999999999958
+    }
+  },
+  "desk": {
+    "asset": "drawer-desk-realistic-web.glb",
+    "side": 0.32000000000000006,
+    "distance": 1.5800000000000023,
+    "rotation": 4,
+    "width": 1.87,
+    "visible": true,
+    "frame": {
+      "origin": [
+        4.987300102303544,
+        0,
+        1.0580207857752901
+      ],
+      "forward": [
+        -0.7444574924005244,
+        0,
+        -0.6676698600421641
+      ]
+    },
+    "position": [
+      4.024711619524206,
+      0.01,
+      -0.23512399065949874
+    ],
+    "rotationEuler": [
+      0,
+      0.9095351039802739,
+      0,
+      "XYZ"
+    ],
+    "scale": [
+      1.000666611083635,
+      1.000666611083635,
+      1.000666611083635
+    ],
+    "surface": {
+      "name": "DeskSurface",
+      "coordinateSystem": "desk-local",
+      "worldPosition": [
+        4.024711619524206,
+        0.7181440559834624,
+        -0.23512399065949874
+      ],
+      "worldQuaternion": [
+        0,
+        0.4392535029468652,
+        0,
+        0.8983631560504405
+      ],
+      "width": 1.7499200066699638,
+      "depth": 0.8682860384121277,
+      "localBounds": {
+        "min": [
+          -0.8743771338462829,
+          0,
+          -0.4338538074493408
+        ],
+        "max": [
+          0.8743771338462829,
+          0,
+          0.4338538074493408
+        ]
+      },
+      "matrixWorld": [
+        0.6145220946437685,
+        0,
+        -0.7897444281109188,
+        0,
+        0,
+        1.000666611083635,
+        0,
+        0,
+        0.7897444281109188,
+        0,
+        0.6145220946437685,
+        0,
+        4.024711619524206,
+        0.7181440559834624,
+        -0.23512399065949874,
+        1
+      ]
+    }
+  }
+}

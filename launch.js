@@ -1,41 +1,59 @@
 /* 轻量 WebGL 文字粒子。真实三维坐标、独立旋转、透视；无引擎或外部运行依赖。 */
-(()=>{
-'use strict';
-const layer=document.querySelector('#launch'),canvas=document.querySelector('#launch-canvas'),stem=document.querySelector('#stem-canvas'),pen=stem.getContext('2d'),main=document.querySelector('main'),trigger=document.querySelector('#launch-button'),announcement=document.querySelector('#announcement'),status=document.querySelector('#intro-status');
+export function mountDandelionEnding(host){
+ // Inline readers can open in an already loaded room; ensure their own current styles.
+ const href=new URL('./launch.css?v=dandelion-mist-blue-4',import.meta.url).href;
+ let stylesheet=[...document.querySelectorAll('link[rel="stylesheet"]')].find(link=>new URL(link.href).pathname===new URL(href).pathname);
+ if(!stylesheet){stylesheet=document.createElement('link');stylesheet.rel='stylesheet';document.head.append(stylesheet);}
+ if(stylesheet.href!==href)stylesheet.href=href;
+ const layer=document.createElement('section');layer.className='dandelion-ending';layer.tabIndex=-1;layer.setAttribute('aria-label','汉字蒲公英 · 期待 婚礼见');
+ layer.innerHTML='<canvas class="dandelion-stem" aria-hidden="true"></canvas><canvas class="dandelion-seeds" aria-hidden="true"></canvas><button class="dandelion-touch" type="button" aria-label="轻触，吹散汉字蒲公英">轻触</button><h2 class="sr-only dandelion-title">期待 婚礼见</h2><div class="dandelion-announcement" aria-hidden="true"><div class="dandelion-couple"></div><div class="dandelion-date"></div></div><p class="sr-only dandelion-status" role="status" aria-live="polite"></p>';
+ host.append(layer);let animation;
+ const observer=new IntersectionObserver(entries=>{
+  const visible=entries[0].isIntersecting;
+  if(visible&&!animation)animation=animateDandelion(layer);
+  animation?.setVisible(visible);
+ });observer.observe(layer);
+ return ()=>{observer.disconnect();animation?.dispose();layer.remove();};
+}
+function animateDandelion(layer){
+const canvas=layer.querySelector('.dandelion-seeds'),stem=layer.querySelector('.dandelion-stem'),pen=stem.getContext('2d'),trigger=layer.querySelector('.dandelion-touch'),announcement=layer.querySelector('.dandelion-announcement'),status=layer.querySelector('.dandelion-status');
 const reduced=matchMedia('(prefers-reduced-motion: reduce)').matches;
 const gl=canvas.getContext('webgl',{alpha:true,antialias:false,premultipliedAlpha:false});
-let fallback=gl?null:canvas.getContext('2d'),W=390,H=844,D=1,VW=3.5,VH=7.6,frame=0,begin=null,epoch=performance.now(),done=false,timer=0,pausedAt=null;
-const chars=Array.from('我们结婚了永爱心之与你相遇光风花月日木水山云白飞梦禾亻彳氵忄扌艹宀辶纟灬阝彡丿丨乀丶夕竹言雨羽人一二三十口小大子女生长久'),phrase=Array.from('我们结婚了');
+let fallback=gl?null:canvas.getContext('2d'),W=390,H=422,D=1,VW=4.25,VH=4.6,frame=0,begin=null,epoch=performance.now(),done=false,pausedAt=null;
+const chars=Array.from('期待婚礼见永爱心之与你相遇光风花月日木水山云白飞梦禾亻彳氵忄扌艹宀辶纟灬阝彡丿丨乀丶夕竹言雨羽人一二三十口小大子女生长久'),phrase=Array.from('期待 婚礼见');
+const phraseWidths=phrase.map(ch=>ch===' '?.5:1),phraseUnits=phraseWidths.reduce((sum,width)=>sum+width,0);
+const phraseOffsets=phrase.map((ch,i)=>phraseWidths.slice(0,i).reduce((sum,width)=>sum+width,0)+phraseWidths[i]/2-phraseUnits/2);
 let seed=417;function rand(){seed=(seed*1664525+1013904223)>>>0;return seed/4294967296}const mix=(a,b,t)=>a+(b-a)*t,clamp=x=>Math.max(0,Math.min(1,x)),smooth=x=>{x=clamp(x);return x*x*(3-2*x)};
 const seeds=Array.from({length:460},(_,i)=>{let y=1-2*(i+.5)/460,a=i*2.3999632297,r=Math.sqrt(1-y*y);return {x:r*Math.cos(a)*.77,y:y*.77,z:r*Math.sin(a)*.77,ch:Math.floor(rand()*chars.length),delay:rand()*2.7,speed:.7+rand()*.8,spin:(rand()-.5)*4,phase:rand()*6.28,size:.095+rand()*.045}});
 // 每个字符独立放大 15%～25%，只在初始化时取值，避免动画中字号闪动。
 seeds.forEach(p=>{p.size*=1.15+rand()*.1});
-// 五个标题字符就是花冠上的五颗种子，分布在可见的不同高度。
+// 标题汉字来自花冠种子；中间保留一个空格的位置。
 phrase.forEach((ch,slot)=>{
- const targetY=.5-slot*.25;
+ if(ch===' ')return;
+ const targetY=.5-slot*.2;
  const p=seeds.filter(p=>p.z>.25&&p.phraseIndex===undefined).sort((a,b)=>Math.abs(a.y-targetY)-Math.abs(b.y-targetY))[0];
  p.ch=chars.indexOf(ch);p.phraseIndex=slot;
 });
-let arrivalOrder=[],arrivalTimes=Array(5).fill(5.2);
+let arrivalOrder=[],arrivalTimes=Array(phrase.length).fill(5.2);
 function shuffleArrivals(){
  const previous=arrivalOrder.join('');
  do{
-  arrivalOrder=[0,1,2,3,4];
+  arrivalOrder=phrase.map((ch,i)=>ch===' '?null:i).filter(i=>i!==null);
   for(let i=4;i>0;i--){const j=Math.floor(Math.random()*(i+1));[arrivalOrder[i],arrivalOrder[j]]=[arrivalOrder[j],arrivalOrder[i]]}
- }while(arrivalOrder.join('')==='01234'||arrivalOrder.join('')===previous);
+ }while(arrivalOrder.join('')==='01345'||arrivalOrder.join('')===previous);
  arrivalOrder.forEach((slot,rank)=>{arrivalTimes[slot]=3.2+rank*.5});
 }
-const atlas=document.createElement('canvas');atlas.width=1024;atlas.height=512;const ink=atlas.getContext('2d');ink.fillStyle='#fff';ink.font='bold 46px "Songti SC","Noto Serif CJK SC","SimSun",serif';ink.textAlign='center';ink.textBaseline='middle';chars.forEach((c,i)=>ink.fillText(c,(i%16)*64+32,Math.floor(i/16)*64+33));
+const atlas=document.createElement('canvas');atlas.width=1024;atlas.height=512;const ink=atlas.getContext('2d');ink.fillStyle='#fff';ink.font=`400 46px ${getComputedStyle(layer).getPropertyValue('--invitation-type').trim()||'"SimSun","Songti SC","STSong",serif'}`;ink.textAlign='center';ink.textBaseline='middle';chars.forEach((c,i)=>ink.fillText(c,(i%16)*64+32,Math.floor(i/16)*64+33));
 let program,buffer,texture,locations,values=new Float32Array((seeds.length+70)*6*12),cursor=0;
 if(gl){
- const vs=`attribute vec3 aCenter;attribute vec2 aCorner;attribute vec2 aUV;attribute vec3 aAngle;attribute float aSize;attribute float aAlpha;uniform float uAspect;varying vec2 vUV;varying float vAlpha;varying float vBlur;void main(){vec3 p=vec3(aCorner*aSize,0.0);float c=cos(aAngle.x),s=sin(aAngle.x);p.yz=mat2(c,s,-s,c)*p.yz;c=cos(aAngle.y);s=sin(aAngle.y);p.xz=mat2(c,s,-s,c)*p.xz;c=cos(aAngle.z);s=sin(aAngle.z);p.xy=mat2(c,s,-s,c)*p.xy;p+=aCenter;float perspective=8.0/(8.0-p.z);gl_Position=vec4(p.x*2.0/(7.6*uAspect)*perspective,p.y*2.0/7.6*perspective,0.0,1.0);vUV=aUV;vAlpha=aAlpha;vBlur=max(0.0,abs(p.z)-0.65)*0.00065;}`;
+ const vs=`attribute vec3 aCenter;attribute vec2 aCorner;attribute vec2 aUV;attribute vec3 aAngle;attribute float aSize;attribute float aAlpha;uniform float uAspect;uniform float uViewHeight;varying vec2 vUV;varying float vAlpha;varying float vBlur;void main(){vec3 p=vec3(aCorner*aSize,0.0);float c=cos(aAngle.x),s=sin(aAngle.x);p.yz=mat2(c,s,-s,c)*p.yz;c=cos(aAngle.y);s=sin(aAngle.y);p.xz=mat2(c,s,-s,c)*p.xz;c=cos(aAngle.z);s=sin(aAngle.z);p.xy=mat2(c,s,-s,c)*p.xy;p+=aCenter;float perspective=8.0/(8.0-p.z);gl_Position=vec4(p.x*2.0/(uViewHeight*uAspect)*perspective,p.y*2.0/uViewHeight*perspective,0.0,1.0);vUV=aUV;vAlpha=aAlpha;vBlur=max(0.0,abs(p.z)-0.65)*0.00065;}`;
  const fs=`precision mediump float;uniform sampler2D uAtlas;varying vec2 vUV;varying float vAlpha;varying float vBlur;void main(){float a=texture2D(uAtlas,vUV).a;if(vBlur>0.0){a=a*.5+.125*(texture2D(uAtlas,vUV+vec2(vBlur,0.0)).a+texture2D(uAtlas,vUV-vec2(vBlur,0.0)).a+texture2D(uAtlas,vUV+vec2(0.0,vBlur)).a+texture2D(uAtlas,vUV-vec2(0.0,vBlur)).a);}gl_FragColor=vec4(1.0,1.0,1.0,a*vAlpha);}`;
  function shader(type,source){const sh=gl.createShader(type);gl.shaderSource(sh,source);gl.compileShader(sh);if(!gl.getShaderParameter(sh,gl.COMPILE_STATUS))throw Error(gl.getShaderInfoLog(sh));return sh}
  program=gl.createProgram();gl.attachShader(program,shader(gl.VERTEX_SHADER,vs));gl.attachShader(program,shader(gl.FRAGMENT_SHADER,fs));gl.linkProgram(program);if(!gl.getProgramParameter(program,gl.LINK_STATUS))throw Error('WebGL program failed');gl.useProgram(program);buffer=gl.createBuffer();gl.bindBuffer(gl.ARRAY_BUFFER,buffer);locations=[['aCenter',3,0],['aCorner',2,3],['aUV',2,5],['aAngle',3,7],['aSize',1,10],['aAlpha',1,11]];locations.forEach(([name,n,offset])=>{const loc=gl.getAttribLocation(program,name);gl.enableVertexAttribArray(loc);gl.vertexAttribPointer(loc,n,gl.FLOAT,false,48,offset*4)});texture=gl.createTexture();gl.bindTexture(gl.TEXTURE_2D,texture);gl.texImage2D(gl.TEXTURE_2D,0,gl.RGBA,gl.RGBA,gl.UNSIGNED_BYTE,atlas);gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_MIN_FILTER,gl.LINEAR);gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_MAG_FILTER,gl.LINEAR);gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_WRAP_S,gl.CLAMP_TO_EDGE);gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_WRAP_T,gl.CLAMP_TO_EDGE);gl.enable(gl.BLEND);gl.blendFunc(gl.SRC_ALPHA,gl.ONE_MINUS_SRC_ALPHA);
 }
 const corners=[[-.5,-.5],[.5,-.5],[-.5,.5],[-.5,.5],[.5,-.5],[.5,.5]];
 function glyph(x,y,z,index,size,alpha,rx=0,ry=0,rz=0){if(alpha<.005)return;const u=(index%16)/16,v=Math.floor(index/16)/8;if(gl){for(const [cx,cy] of corners){values[cursor++]=x;values[cursor++]=y;values[cursor++]=z;values[cursor++]=cx;values[cursor++]=cy;values[cursor++]=u+(cx+.5)/16;values[cursor++]=v+(.5-cy)/8;values[cursor++]=rx;values[cursor++]=ry;values[cursor++]=rz;values[cursor++]=size;values[cursor++]=alpha}}else{const p=8/(8-z),px=W/2+x*H/VH*p,py=H/2-y*H/VH*p;fallback.save();fallback.translate(px,py);fallback.rotate(-rz);fallback.scale(Math.max(.08,Math.abs(Math.cos(ry))),1);fallback.globalAlpha=alpha;const s=size*H/VH*p;fallback.drawImage(atlas,(index%16)*64,Math.floor(index/16)*64,64,64,-s/2,-s/2,s,s);fallback.restore()}}
-function center(clock){const breeze=reduced?0:Math.sin(clock*.52)*.17+Math.sin(clock*.23+1.2)*.045;const swing=reduced?0:Math.sin(clock*.65)*.025;return {x:-VW*.235+breeze+swing,y:.85+(reduced?0:Math.sin(clock*.4)*.012)}}
+function center(clock){const breeze=reduced?0:Math.sin(clock*.52)*.17+Math.sin(clock*.23+1.2)*.045;const swing=reduced?0:Math.sin(clock*.65)*.025;return {x:-VW*.235+breeze+swing,y:.05+(reduced?0:Math.sin(clock*.4)*.012)}}
 function drawStem(c){
  pen.clearRect(0,0,W,H);
  const to=(x,y)=>[W/2+x*H/VH,H/2-y*H/VH],head=to(c.x,c.y),root=to(-VW*.235-.58,-VH*.55);
@@ -77,15 +95,9 @@ function drawStem(c){
  underside.addColorStop(0,'#28251f00');underside.addColorStop(.45,'#28251f44');underside.addColorStop(1,'#201b1be0');
  pen.fillStyle=underside;pen.fillRect(head[0]-10,head[1],20,6);pen.restore();
 }
-let announcementAt=null,outroAt=null;
-const outroLetters=[];
-function outroMotion(age,index){
- const delay=(index*7%11)*.045,elapsed=Math.max(0,age-delay),progress=smooth(elapsed/2.8),phase=index*1.7;
- return {x:(W+120)*progress,y:((Math.sin(elapsed*1.4+phase)-Math.sin(phase))*22-35*progress)*smooth(elapsed/.4),rotation:elapsed*(index%2?-.24:.3),alpha:1-smooth((elapsed-1.6)/1.2)};
-}
-function renderOutro(age){outroLetters.forEach((letter,i)=>{const motion=outroMotion(age,i+5);letter.style.transform=`translate(${motion.x}px,${motion.y}px) rotate(${motion.rotation}rad)`;letter.style.opacity=motion.alpha})}
+let announcementAt=null;
 const driftSources=seeds.filter(p=>p.x>.35&&Math.abs(p.z)<.45);
-function render(clock,t){cursor=0;if(gl)gl.clear(gl.COLOR_BUFFER_BIT);else fallback.clearRect(0,0,W,H);const c=center(begin===null?clock:(begin-epoch)/1000);drawStem(center(clock));const titleWidth=Math.min(VW*.54,3.6),titleSize=titleWidth/5*.96,titleX=VW*.155;
+function render(clock,t){cursor=0;if(gl)gl.clear(gl.COLOR_BUFFER_BIT);else fallback.clearRect(0,0,W,H);const c=center(begin===null?clock:(begin-epoch)/1000);drawStem(center(clock));const titleWidth=Math.min(VW*.54,3.6),titleSize=titleWidth/phraseUnits*.96,titleX=VW*.155;
 seeds.forEach((p,i)=>{let x=c.x+p.x,y=c.y+p.y,z=p.z,rx=.1*Math.sin(clock+p.phase),ry=.12*Math.cos(clock+p.phase),rz=.1*Math.sin(clock*.5+p.phase),size=p.size,alpha=.72+.28*(p.z+.77)/1.54;
  const idle=t===null&&!reduced?1:t!==null&&!reduced?1-smooth(t/.7):0;if(idle){x+=idle*Math.sin(clock*.9+p.phase)*.03;y+=idle*Math.cos(clock*.7+p.phase)*.018;rz+=idle*Math.sin(clock*.6+p.phase)*.045}
  if(t!==null&&p.phraseIndex!==undefined){
@@ -94,12 +106,11 @@ seeds.forEach((p,i)=>{let x=c.x+p.x,y=c.y+p.y,z=p.z,rx=.1*Math.sin(clock+p.phase
   const sourceX=c.x+p.x+(reduced?0:Math.sin(at*.9+p.phase)*.03),sourceY=c.y+p.y+(reduced?0:Math.cos(at*.7+p.phase)*.018);
   const sourcePerspective=8/(8-p.z);
   z=mix(p.z,0,gather);const perspective=8/(8-z);
-  x=mix(sourceX*sourcePerspective,titleX+(slot-2)*titleWidth/5,gather)/perspective;
-  y=mix(sourceY*sourcePerspective,.59,gather)/perspective;
+  x=mix(sourceX*sourcePerspective,titleX+phraseOffsets[slot]*titleWidth/phraseUnits,gather)/perspective;
+  y=mix(sourceY*sourcePerspective,.05,gather)/perspective;
   rx=.1*Math.sin(at+p.phase)*(1-gather);ry=.12*Math.cos(at+p.phase)*(1-gather);
   rz=(.1*Math.sin(at*.5+p.phase)+(reduced?0:Math.sin(at*.6+p.phase)*.045))*(1-gather);
   size=mix(p.size*sourcePerspective,titleSize,gather)/perspective;alpha=mix(alpha,1,gather);
-  if(outroAt!==null){const motion=outroMotion(clock-outroAt,slot);x+=motion.x*VH/H;y-=motion.y*VH/H;rz-=motion.rotation;alpha*=motion.alpha}
  }else if(t!==null){const age=Math.max(0,t-p.delay),flow=smooth(age/5.5);x+=flow*(VW*1.35+2+p.speed);y+=Math.sin(age*p.speed+p.phase)*flow*.9+flow*(p.phase-3)*.20;z+=Math.sin(age*.8+p.phase)*flow*2.1;rx+=age*p.spin*.25*flow;ry+=age*p.spin*.7*flow;rz+=age*p.spin*.4*flow;alpha*=1-smooth((age-4.2)/1.6);
  }
  glyph(x,y,z,p.ch,size,alpha,rx,ry,rz);
@@ -121,29 +132,39 @@ if(!reduced&&(t===null||t<.8)){
   glyph(x,y,z,p.ch,p.size*.9,alpha,.1*Math.sin(birth+phase)+age*.08,.12*Math.cos(birth+phase)+age*.2,.1*Math.sin(birth*.5+phase)+age*(i%2?.12:-.1));
  }
 }
-if(gl){gl.uniform1f(gl.getUniformLocation(program,'uAspect'),W/H);gl.bufferData(gl.ARRAY_BUFFER,values.subarray(0,cursor),gl.DYNAMIC_DRAW);gl.drawArrays(gl.TRIANGLES,0,cursor/12)}
+if(gl){gl.uniform1f(gl.getUniformLocation(program,'uViewHeight'),VH);gl.uniform1f(gl.getUniformLocation(program,'uAspect'),W/H);gl.bufferData(gl.ARRAY_BUFFER,values.subarray(0,cursor),gl.DYNAMIC_DRAW);gl.drawArrays(gl.TRIANGLES,0,cursor/12)}
 }
-function resize(){W=innerWidth;H=innerHeight;D=Math.min(devicePixelRatio||1,1.7);VW=VH*W/H;for(const c of [canvas,stem]){c.width=Math.round(W*D);c.height=Math.round(H*D)}pen.setTransform(D,0,0,D,0,0);if(gl)gl.viewport(0,0,canvas.width,canvas.height);else fallback.setTransform(D,0,0,D,0,0)}
-function reveal(){if(done)return;done=true;cancelAnimationFrame(frame);main.hidden=false;main.classList.add('launch-content-enter');layer.classList.add('leaving');document.body.classList.remove('intro-active');timer=setTimeout(()=>{layer.hidden=true;document.querySelector('#invitation').focus({preventScroll:true})},1500)}
+function resize(){const bounds=layer.getBoundingClientRect();W=bounds.width;H=bounds.height;D=Math.min(devicePixelRatio||1,1.7);VW=VH*W/H;for(const c of [canvas,stem]){c.width=Math.round(W*D);c.height=Math.round(H*D)}pen.setTransform(D,0,0,D,0,0);if(gl)gl.viewport(0,0,canvas.width,canvas.height);else fallback.setTransform(D,0,0,D,0,0)}
+function finish(){
+ done=true;layer.dataset.state='complete';
+ status.textContent='期待 婚礼见';
+}
 function loop(now){
- if(done)return;
+ if(pausedAt!==null)return;
+ if(done){
+  drawStem(center((now-epoch)/1000));
+  if(!reduced)frame=requestAnimationFrame(loop);
+  return;
+ }
  const clock=(now-epoch)/1000,t=begin===null?null:(reduced?8.5:(now-begin)/1000);
  if(t!==null&&t>=5.6&&announcementAt===null){announcementAt=clock;announcement.classList.add('show');announcement.setAttribute('aria-hidden','false')}
- // 日期延迟 .8 秒并渐显 1.2 秒，完全显示后再停留两秒。
- if(!reduced&&announcementAt!==null&&clock>=announcementAt+4&&outroAt===null)outroAt=clock;
  render(clock,t);
- if(outroAt!==null){renderOutro(clock-outroAt);if(clock-outroAt>=3.5){reveal();return}}
- frame=requestAnimationFrame(loop);
+ if(t!==null&&(reduced||t>=8))finish();
+ if(!done||!reduced)frame=requestAnimationFrame(loop);
 }
-function start(){if(begin!==null||done)return;shuffleArrivals();begin=performance.now();trigger.disabled=true;layer.classList.add('playing');status.textContent='汉字随风飘散，汇成：我们结婚了。';if(reduced){begin-=7000;timer=setTimeout(reveal,3500)}}
-trigger.addEventListener('click',start);layer.addEventListener('click',e=>{if(e.target.closest('#skip'))return;if(begin===null)start()});document.querySelector('#skip').addEventListener('click',reveal);
-document.querySelector('#replay').addEventListener('click',()=>{clearTimeout(timer);cancelAnimationFrame(frame);begin=null;done=false;epoch=performance.now();layer.hidden=false;layer.classList.remove('playing','leaving');announcement.classList.remove('show');announcement.setAttribute('aria-hidden','true');main.hidden=true;main.classList.remove('launch-content-enter');document.body.classList.add('intro-active');trigger.disabled=false;status.textContent='';scrollTo(0,0);trigger.focus();frame=requestAnimationFrame(loop)});
-canvas.addEventListener('webglcontextlost',e=>{e.preventDefault();reveal()});document.addEventListener('visibilitychange',()=>{if(document.hidden){pausedAt=performance.now();cancelAnimationFrame(frame)}else if(!done&&pausedAt!==null){const delta=performance.now()-pausedAt;epoch+=delta;if(begin!==null)begin+=delta;pausedAt=null;frame=requestAnimationFrame(loop)}});
-const d=window.invitationData||{};document.querySelector('.launch-couple').textContent=`${d.partnerOne||'陈萌'} & ${d.partnerTwo||'叶倩芸'}`;document.querySelector('.launch-date').textContent=d.date||'2026.11.21';
-for(const selector of ['.launch-couple','.launch-date']){
- const line=document.querySelector(selector),text=line.textContent;line.setAttribute('aria-label',text);
- line.replaceChildren(...Array.from(text,ch=>{const letter=document.createElement('span');letter.className='outro-char';letter.textContent=ch;letter.setAttribute('aria-hidden','true');outroLetters.push(letter);return letter}));
+function start(){if(begin!==null||done)return;shuffleArrivals();begin=performance.now();trigger.disabled=true;layer.focus({preventScroll:true});layer.classList.add('playing');layer.dataset.state='playing';status.textContent='汉字随风飘散，汇成：期待 婚礼见';}
+trigger.addEventListener('click',start);
+layer.addEventListener('click',()=>{if(begin===null)start();});
+canvas.addEventListener('webglcontextlost',event=>{event.preventDefault();layer.classList.add('dandelion-fallback');announcement.classList.add('show');announcement.setAttribute('aria-hidden','false');finish();});
+const d=window.invitationData||{};layer.querySelector('.dandelion-couple').textContent=`${d.partnerOne||'陈萌'} & ${d.partnerTwo||'叶倩芸'}`;layer.querySelector('.dandelion-date').textContent=d.date||'2026.11.21';
+let inView=true;
+function visibility(){
+ const paused=document.hidden||!inView;
+ if(paused&&pausedAt===null){pausedAt=performance.now();cancelAnimationFrame(frame);}
+ else if(!paused&&pausedAt!==null){const delta=performance.now()-pausedAt;epoch+=delta;if(begin!==null)begin+=delta;pausedAt=null;if(!done||!reduced)frame=requestAnimationFrame(loop);}
 }
-document.querySelector('#replay').addEventListener('click',()=>{announcementAt=null;outroAt=null;outroLetters.forEach(letter=>{letter.style.transform='';letter.style.opacity=''})});
-addEventListener('resize',resize);resize();main.hidden=true;document.body.classList.add('intro-active');frame=requestAnimationFrame(loop);
-})();
+document.addEventListener('visibilitychange',visibility);
+const resizeObserver=new ResizeObserver(()=>{resize();if(done)render((performance.now()-epoch)/1000,8.5);});resizeObserver.observe(layer);
+resize();layer.dataset.state='idle';frame=requestAnimationFrame(loop);
+return {setVisible(value){inView=value;visibility();},dispose(){cancelAnimationFrame(frame);resizeObserver.disconnect();document.removeEventListener('visibilitychange',visibility);if(gl){gl.deleteBuffer(buffer);gl.deleteTexture(texture);gl.deleteProgram(program);gl.getExtension('WEBGL_lose_context')?.loseContext();}}};
+}

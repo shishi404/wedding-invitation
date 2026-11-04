@@ -7,6 +7,9 @@
     "predev": "node build-browser.mjs",
     "dev": "node preview.mjs",
     "pretest": "node build-browser.mjs",
-    "test": "node check-study.mjs"
+    "test": "node audit-runtime.mjs && node check-study.mjs && node check-study-loft.mjs",
+    "prepare:delivery": "node prepare-http-assets.mjs",
+    "prepare:github": "node build-browser.mjs && node github-files.mjs --write-ignore",
+    "release": "node build-browser.mjs && node prepare-http-assets.mjs && node build-static-site.mjs"
   }
 }

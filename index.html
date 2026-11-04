@@ -6,15 +6,15 @@
   <meta name="theme-color" content="#0d100e">
   <meta name="description" content="一间无人书房。三件旧物。一封不该出现在这里的信。">
   <title>旧印 · 无人书房</title>
-  <link rel="stylesheet" href="assets/fonts/study-gothic.css">
   <link rel="stylesheet" href="study.css">
   <link rel="stylesheet" href="check.css">
-  <link rel="preload" href="assets/study-source-plate-v21.webp" as="image" type="image/webp">
-  <link rel="preload" href="assets/musicbox-cleared-v1.webp" as="image" type="image/webp">
-  <link rel="preload" href="assets/windchime-cleared-v1.webp" as="image" type="image/webp">
-  <link rel="preload" href="assets/pendant-cleared-v1.webp" as="image" type="image/webp">
+  <link rel="stylesheet" href="study-loft.css">
+  <link rel="stylesheet" href="launch.css?v=dandelion-mist-blue-4">
+  <link rel="stylesheet" href="record-control.css">
+  <link rel="stylesheet" href="terminal-loading.css">
+  <script type="importmap">{"imports":{"three":"./vendor/three.module.js"}}</script>
 </head>
-<body>
+<body class="study-3d">
   <section id="entry-screen" class="entry-screen" aria-label="探索入口">
     <div class="entry-ornaments" aria-hidden="true">
       <span class="entry-clear-oval"></span>
@@ -37,41 +37,25 @@
     </div>
   </section>
   <main id="study" aria-label="书房探索" hidden>
-    <div id="world" aria-hidden="true"><div class="ambient-room"></div></div>
-    <div class="scene-artboard" id="scene-artboard">
-      <img id="scene-plate" class="scene-plate" src="assets/study-source-plate-v21.webp" width="1536" height="1024" alt="昏暗书房中的旧木书桌，桌上放着破损笔记、唱片机、球仪与书上的吊坠，中央抽屉上着锁。" fetchpriority="high" decoding="async">
-      <img id="scene-open-plate" class="scene-plate scene-open-plate" width="1536" height="1024" alt="" aria-hidden="true" decoding="async">
-      <svg class="scene-details" viewBox="0 0 1536 1024" aria-hidden="true">
-        <g class="keepsake-removals">
-          <image data-remove-object="musicbox" href="assets/musicbox-cleared-v1.webp" x="297" y="404" width="75" height="64" hidden/>
-          <image data-remove-object="windchime" href="assets/windchime-cleared-v1.webp" x="925" y="298" width="85" height="165" hidden/>
-          <image data-remove-object="pendant" href="assets/pendant-cleared-v1.webp" x="360" y="325" width="240" height="120" hidden/>
-        </g>
-        <defs><clipPath id="note-prop-edge"><path d="M704 499 L837 493 L853 576 L855 585 Q815 605 688 597 Z"/></clipPath><filter id="windchime-outline" x="-10%" y="-10%" width="120%" height="120%"><feComponentTransfer in="SourceAlpha" result="solid"><feFuncA type="discrete" tableValues="0 0 0 1"/></feComponentTransfer><feMorphology in="solid" operator="dilate" radius="1.1" result="expanded"/><feComposite in="expanded" in2="solid" operator="out" result="edge"/><feFlood flood-color="#d6be87" result="gold"/><feComposite in="gold" in2="edge" operator="in"/></filter></defs>
-        <g transform="translate(539 381.5) scale(.3)"><image href="assets/note-source-sprite-v2.png" x="660" y="470" width="220" height="146.667" preserveAspectRatio="none" clip-path="url(#note-prop-edge)"/></g>
-        <g class="interaction-outlines" fill="none" stroke="#c6ae77" stroke-width="1.7" stroke-linejoin="round">
-          <path data-outline="musicbox" hidden d="M314 427 L335 427 L347 431 L350 435 L349 444 L340 449 L316 450 L303 445 L300 438 L302 432Z"/>
-          <path data-outline="pendant" hidden d="M437 334 L429 343 L437 357 L464 401 M526 339 L519 351 L505 366 L475 401 M466 401 L472 401 L477 405 L479 410 L477 416 L472 420 L466 420 L460 416 L458 410 L461 404Z"/>
-          <image data-outline="windchime" hidden href="assets/windchime-source-desktop-v3.png" x="934" y="306" width="54" height="150" filter="url(#windchime-outline)"/>
-          <path data-outline="note" transform="translate(539 381.5) scale(.3)" d="M704 500 L837 494 L852 577 L854 585 Q810 604 689 596 Z"/>
-          <path data-outline="notebook" hidden d="M306 489 L453 471 L460 478 L512 550 L513 576 L340 603 L326 587 L305 505 Z"/>
-          <path data-outline="record" hidden d="M1092 389 L1366 376 L1378 377 L1510 470 L1495 555 L1161 555 L1088 468 Z"/>
-          <path data-outline="drawer" hidden d="M397 670 L1137 670 L1130 797 L406 797 Z"/>
-          <path data-outline="photo" hidden d="M637 334 L713 332 L718 425 L640 429 Z"/>
-        </g>
-      </svg>
-      <div class="record-motion" aria-hidden="true"></div>
-      <nav id="hotspots" aria-label="书桌上的互动物品" inert>
-        <button class="hotspot" data-object="musicbox" disabled style="--x:21.15%;--y:42.8%;--w:3.5%;--h:3%;min-width:44px" aria-label="查看陶瓷八音盒"></button>
-        <button class="hotspot" data-object="pendant" disabled style="--x:31.1%;--y:36.9%;--w:7%;--h:9%;min-width:44px" aria-label="查看小吊坠"></button>
-        <button class="hotspot" data-object="windchime" disabled style="--x:62.6%;--y:37.3%;--w:4.3%;--h:15%;min-width:44px" aria-label="查看风铃"></button>
-        <button class="hotspot" data-object="note" style="--x:50.1%;--y:53.2%;--w:3.15%;--h:3.1%;min-width:44px" aria-label="查看桌上的便签"></button>
-        <button class="hotspot" data-object="notebook" disabled style="--x:26.5%;--y:53%;--w:17%;--h:14%" aria-label="查看旧笔记"></button>
-        <button class="hotspot" data-object="record" disabled style="--x:85%;--y:45.5%;--w:28%;--h:19%" aria-label="查看唱片机"></button>
-        <button class="hotspot" data-object="drawer" disabled style="--x:50%;--y:72%;--w:48%;--h:14%" aria-label="查看上锁的抽屉"></button>
-        <button class="hotspot" data-object="photo" disabled style="--x:44.1%;--y:37.2%;--w:7%;--h:12%" aria-label="查看相框照片"></button>
-      </nav>
+    <div id="world"></div>
+    <div id="scene-loading" role="status" aria-live="polite">
+      <span class="scene-loading-mark" aria-hidden="true"></span>
+      <span id="scene-loading-text">正在添加泥土…</span>
+      <button id="scene-retry" type="button" hidden>重新载入房间</button>
     </div>
+    <div class="scene-controls"><p id="scene-hint">与物品互动·便签上有字也许有线索</p><button id="scene-reset" type="button" hidden>回到初始视角</button></div>
+    <nav id="hotspots" aria-label="书桌上的互动物品（键盘操作）" inert>
+      <button data-object="musicbox" type="button">查看陶瓷八音盒</button>
+      <button data-object="pendant" type="button">查看小吊坠</button>
+      <button data-object="windchime" type="button">查看风铃</button>
+      <button data-object="note" type="button">查看桌上的便利贴</button>
+      <button data-object="notebook" type="button">查看旧笔记</button>
+      <button data-object="record" type="button">查看唱片机</button>
+      <button data-object="drawer" type="button">查看上锁的首饰盒</button>
+      <button data-object="photo" type="button">查看相框照片</button>
+      <button data-object="teacup" type="button">查看中古茶杯</button>
+      <button data-object="handheld" type="button">查看白色 3DS XL</button>
+    </nav>
     <div class="vignette" aria-hidden="true"></div>
     <header class="study-header">
       <div class="wordmark"><img src="assets/elder-sign.png" alt="" width="33" height="27"><span>寻找请柬</span></div>
@@ -93,19 +77,19 @@
     <p class="sr-only" id="game-status" role="status" aria-live="polite"></p><p id="render-status" class="render-status" hidden></p>
   </main>
   <dialog id="choose-dialog" class="choose-dialog" aria-labelledby="choose-title">
-    <img class="note-closeup" src="assets/note-source-detail-v2.webp" width="1536" height="1024" alt="黄色便利贴上写着：可以从桌子上挑选一件纪念品，寻找请柬时可能帮得上忙">
+    <div id="note-inspection" class="inspection-stage" aria-label="旋转调查便签模型"></div>
     <div class="note-choice-content">
     <h2 id="choose-title">便签·留言</h2><p class="dialog-intro">可以从桌子上挑选一件纪念品，寻找请柬时可能帮得上忙</p>
     <div class="keepsakes">
-      <button data-keepsake="strength"><span class="item-art" aria-hidden="true"><img src="assets/musicbox-source-detail-v1.webp" alt="" decoding="async"></span><strong>陶瓷质的八音盒</strong><span>转动发条有一种脚踏实地的沉稳感</span></button>
-      <button data-keepsake="intelligence"><span class="item-art" aria-hidden="true"><img src="assets/windchime-source-detail-v1.webp" alt="" decoding="async"></span><strong>一个悬挂的风铃</strong><span>风起时，杂乱的思绪被铃声理顺</span></button>
-      <button data-keepsake="will"><span class="item-art" aria-hidden="true"><img src="assets/pendant-books-source-detail-v1.webp" alt="" decoding="async"></span><strong>小吊坠</strong><span>被珍视的不起眼的吊坠，想必是持有者心中坚定的锚点</span></button>
+      <button data-keepsake="strength"><span class="item-art" aria-hidden="true"><img src="assets/item-thumbnails/musicbox.webp" alt="" decoding="async" width="512" height="512"></span><strong>陶瓷质的八音盒</strong><span>转动发条有一种脚踏实地的沉稳感</span></button>
+      <button data-keepsake="intelligence"><span class="item-art" aria-hidden="true"><img src="assets/item-thumbnails/windchime.webp" alt="" decoding="async" width="512" height="512"></span><strong>一个悬挂的风铃</strong><span>风起时，杂乱的思绪被铃声理顺</span></button>
+      <button data-keepsake="will"><span class="item-art" aria-hidden="true"><img src="assets/item-thumbnails/pendant.webp" alt="" decoding="async" width="512" height="512"></span><strong>小吊坠</strong><span>被珍视的不起眼的吊坠，想必是持有者心中坚定的锚点</span></button>
     </div>
     </div>
   </dialog>
   <dialog id="gain-dialog" class="gain-dialog" aria-labelledby="gain-title"><div class="dialog-eyebrow">随身物品 / 已取得</div><h2 id="gain-title"></h2><p class="gain-stat" id="gain-value"></p><button id="gain-continue" class="primary-button" type="button">继续寻找请柬的线索</button></dialog>
   <dialog id="interaction-dialog" class="interaction-dialog" aria-labelledby="interaction-title">
-    <div id="object-art" class="object-art" aria-hidden="true"></div>
+    <div id="object-art" class="object-art"></div>
     <div class="inspection-content"><h2 id="interaction-title"></h2><p class="narrative" id="interaction-copy"></p><div id="interaction-actions" class="dialog-actions"></div></div>
   </dialog>
   <dialog id="check-dialog" class="check-dialog" aria-labelledby="check-title check-kind" aria-describedby="check-context" data-phase="ready">
@@ -123,7 +107,22 @@
     <section class="check-bonus" aria-label="本次检定的纪念品加值"><div class="check-bonus-card" id="check-bonus-card"><strong id="check-bonus-value">+0</strong><img id="check-bonus-art" alt="" hidden><span id="check-bonus-item">无对应纪念品</span><span id="check-bonus-attribute">智力</span></div></section>
     <div class="check-result-area"><p class="check-verdict sr-only" id="check-verdict" role="status" aria-live="polite">等待掷骰</p><p class="check-progress" id="check-progress">D100</p></div>
   </dialog>
+  <template id="study-dice-document">
+      <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+      <title>书房检定组件</title><link rel="stylesheet" href="dice.css">
+    <main class="app">
+      <section class="table" aria-label="双十面骰检定">
+        <div class="table-art" aria-hidden="true"><div class="sigil"><span>✧</span></div></div>
+        <div id="dice-stage" class="dice-stage" aria-hidden="true"></div>
+      </section>
+      <div class="controls" hidden><button id="roll-button" type="button"><span id="button-label">掷骰</span></button>
+        <p id="hint"></p><span id="result-number">—</span><span id="result-breakdown">等待掷骰</span>
+      </div>
+    </main><script type="module" src="dice.js"></script>
+  </template>
   <audio id="background-music" loop preload="none"></audio><audio id="record-music" preload="none"></audio><audio id="bell-sound" preload="none"></audio><audio id="musicbox-music" preload="none"></audio><audio id="dice-sound" preload="none"></audio><p class="sr-only" id="music-status" role="status" aria-live="polite"></p>
   <noscript><div class="noscript">书房探索需要启用 JavaScript。<a href="invitation.html">直接阅读婚礼请柬</a></div></noscript>
-  <script src="data.js"></script><script src="music.js"></script><script src="study-browser.js"></script>
+  <script src="terminal-loading.js?v=investigator-copy-2"></script>
+  <script src="study-bootstrap.js"></script>
+  <script src="data.js"></script><script src="ui-sounds.js"></script><script src="music.js"></script><script src="study-sounds.js"></script><script src="study-browser.js"></script>
 </body></html>

@@ -1,0 +1,16 @@
+html{transition:background-color 1.8s ease-in-out}
+.invitation-opening{overflow:hidden;background:#101c17}
+html.invitation-color-transition{background-color:#a8bfca}
+.invitation-opening body{background:transparent}
+.invitation-opening .invitation-image{visibility:hidden}
+.invitation-intro{position:fixed;inset:0;z-index:20;width:100%;max-width:none;height:100dvh;max-height:none;margin:0;padding:0;border:0;overflow:hidden;background:#101c17;color:#eeeade;isolation:isolate;transition:background-color 1.8s ease-in-out}
+.invitation-intro::before{content:'';position:absolute;inset:0;z-index:-1;background:radial-gradient(ellipse at 50% 45%,#44534c,#101c17 75%);opacity:1;transition:opacity 1.8s ease-in-out;pointer-events:none}
+.invitation-intro.invitation-color-transition{background-color:#a8bfca}
+.invitation-intro.invitation-color-transition::before{opacity:0}
+.invitation-intro[open]{display:grid;place-items:center}
+.invitation-intro-stage{width:min(100vw,1050px);height:min(82dvh,850px)}
+.invitation-intro-stage canvas{display:block;width:100%;height:100%;pointer-events:none}
+.invitation-intro .letter-foreground{position:fixed;inset:0;z-index:1;background:transparent;pointer-events:none}
+.invitation-intro .letter-foreground canvas{display:block;width:100%;height:100%}
+@media(max-width:600px){.invitation-intro-stage{height:70dvh}}
+@media(prefers-reduced-motion:reduce){html,.invitation-intro,.invitation-intro::before{transition-duration:120ms}}

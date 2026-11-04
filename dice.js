@@ -1,4 +1,4 @@
-import * as THREE from 'three';
+import * as THREE from './vendor/three.module.js';
 
 const stage = document.querySelector('#dice-stage');
 const button = document.querySelector('#roll-button');
@@ -7,7 +7,9 @@ const resultNumber = document.querySelector('#result-number');
 const resultBreakdown = document.querySelector('#result-breakdown');
 const hint = document.querySelector('#hint');
 const reducedMotion = matchMedia('(prefers-reduced-motion: reduce)').matches;
-const embedded = new URLSearchParams(location.search).has('embed') && parent !== window;
+const embedded = parent !== window;
+// srcdoc inherits the parent origin, while location.origin itself is "null".
+const messageOrigin = new URL(document.baseURI).origin;
 let embeddedRollId = null;
 
 // A pentagonal trapezohedron: ten planar kite faces, one number per face.
@@ -377,6 +379,7 @@ function makeDie(crystal, tens) {
 }
 
 let renderer, scene, camera, dice = [], rolling = false, startedAt = 0, animation = null;
+let initialDicePose=[],animationFrame=0,fallbackTimer=0;
 try {
   renderer = new THREE.WebGLRenderer({antialias:true, alpha:true, powerPreference:'high-performance'});
   renderer.setPixelRatio(Math.min(devicePixelRatio || 1, 2));
@@ -399,10 +402,18 @@ try {
   one.group.quaternion.copy(targetQuaternion(one, 0));
   scene.add(ten.group, one.group);
   dice = [ten, one];
+  initialDicePose=dice.map(({group})=>({position:group.position.clone(),quaternion:group.quaternion.clone()}));
 
+  let sized=false;
   function resize() {
-    const {width, height} = stage.getBoundingClientRect();
+    if(!renderer)return;
+    const bounds = stage.getBoundingClientRect();
+    // A closed parent dialog has no layout size. Warm a real framebuffer once,
+    // then retain it while hidden instead of repeatedly shrinking it to 0×0.
+    if(sized&&(!bounds.width||!bounds.height))return;
+    const width=bounds.width||300,height=bounds.height||222;
     renderer.setSize(width, height, false);
+    sized=true;
     camera.aspect = width / height;
     camera.position.z = embedded ? 8.3 : width < 480 ? 11.8 : 11.4;
     camera.updateProjectionMatrix();
@@ -411,13 +422,18 @@ try {
   }
   new ResizeObserver(resize).observe(stage);
   resize();
+  await renderer.compileAsync(scene,camera);
+  renderer.render(scene,camera);
   renderer.domElement.addEventListener('webglcontextlost', e => {
     e.preventDefault(); hint.textContent = '3D 渲染暂时不可用，仍可继续掷骰并查看结果。';
   });
 } catch (error) {
+  renderer?.dispose();renderer=null;stage.replaceChildren();
   console.warn('WebGL unavailable; the numeric d100 roll remains usable.', error);
   hint.textContent = '此设备无法显示 3D 骰子，仍可掷骰并查看结果。';
 }
+stage.dataset.diceState=renderer?'ready':'fallback';
+const idleHint=hint.textContent;
 
 function targetQuaternion(die, faceIndex) {
   const face = die.faces[faceIndex];
@@ -430,8 +446,17 @@ function targetQuaternion(die, faceIndex) {
 }
 
 function draw() { if (renderer) renderer.render(scene, camera); }
+function resetDice(){
+  cancelAnimationFrame(animationFrame);clearTimeout(fallbackTimer);animationFrame=fallbackTimer=0;
+  rolling=false;startedAt=0;animation=null;embeddedRollId=null;
+  dice.forEach(({group},i)=>{group.position.copy(initialDicePose[i].position);group.quaternion.copy(initialDicePose[i].quaternion);});
+  button.disabled=false;buttonLabel.textContent='抛掷命运';
+  resultNumber.textContent='—';resultBreakdown.textContent='等待掷骰';hint.textContent=idleHint;
+  draw();
+}
 const easeOut = t => 1 - Math.pow(1 - t, 3);
 function animate(now) {
+  animationFrame=0;
   if (!rolling || !renderer) return;
   const p = Math.min(1, (now - startedAt) / 1850);
   animation.forEach((a, i) => {
@@ -447,11 +472,12 @@ function animate(now) {
     die.position.x = a.x + Math.sin(Math.PI * p) * (i ? .22 : -.22);
   });
   draw();
-  if (p < 1) requestAnimationFrame(animate);
+  if (p < 1) animationFrame=requestAnimationFrame(animate);
   else finishRoll();
 }
 
 function finishRoll() {
+  animationFrame=fallbackTimer=0;
   rolling = false;
   button.disabled = false;
   buttonLabel.textContent = '再次掷骰';
@@ -461,7 +487,7 @@ function finishRoll() {
   resultBreakdown.textContent = `${String(tens * 10).padStart(2, '0')} + ${ones}`;
   hint.textContent = '命运已落定。你可以再次掷骰。';
   if (embedded && embeddedRollId !== null) {
-    parent.postMessage({type:'dice-result', id:embeddedRollId, total}, location.protocol==='file:'?'*':location.origin);
+    parent.postMessage({type:'dice-result', id:embeddedRollId, total}, messageOrigin);
     embeddedRollId = null;
     button.disabled = true;
   }
@@ -477,7 +503,7 @@ function roll() {
   const values = [randomDigit(), randomDigit()];
   if (!renderer) {
     animation = values.map(value => ({value}));
-    setTimeout(finishRoll, reducedMotion ? 0 : 500);
+    fallbackTimer=setTimeout(finishRoll, reducedMotion ? 0 : 500);
     return;
   }
   animation = dice.map((die, i) => {
@@ -495,7 +521,7 @@ function roll() {
     draw(); finishRoll(); return;
   }
   startedAt = performance.now();
-  requestAnimationFrame(animate);
+  animationFrame=requestAnimationFrame(animate);
 }
 
 button.addEventListener('click', roll);
@@ -506,9 +532,11 @@ document.addEventListener('keydown', event => {
 });
 if (embedded) {
   window.addEventListener('message', event => {
-    if (event.source !== parent || event.origin !== (location.protocol==='file:'?'null':location.origin) || event.data?.type !== 'study-roll' || rolling) return;
+    if (event.source !== parent || event.origin !== messageOrigin) return;
+    if(event.data?.type==='study-reset'){resetDice();return;}
+    if(event.data?.type!=='study-roll'||rolling)return;
     embeddedRollId = event.data.id;
     roll();
   });
-  parent.postMessage({type:'dice-ready',rendererAvailable:!!renderer}, location.protocol==='file:'?'*':location.origin);
+  parent.postMessage({type:'dice-ready',rendererAvailable:!!renderer}, messageOrigin);
 }
