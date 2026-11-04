@@ -111,4 +111,12 @@ async function studyAudioContext(){
   documentHandlers.click({target:{closest:()=>null}});await new Promise(resolve=>setImmediate(resolve));
   assert.equal(bg.paused,false,'If entry priming is blocked, the next room gesture retries');
 }
-console.log('Passed: 600 roll evaluations, music controls, silent gesture priming, blocked-play recovery, deliberate pause, buffering and permanent record damage.');
+{
+  const {els,api}=await studyAudioContext(),bg=els['background-music'];
+  await api.startInvitation();assert.equal(bg.muted,false);assert.equal(bg.paused,false);
+  await api.toggleRecord();api.resumeAfterGesture();assert.equal(bg.paused,true);
+  api.endInvitation();await api.breakRecord();
+  await api.startInvitation();assert.equal(bg.paused,false,'Reading has music even if the game record was broken');
+  api.endInvitation();assert.equal(bg.paused,true);assert.equal(els['music-toggle'].disabled,true,'Returning restores the game record state');
+}
+console.log('Passed: 600 roll evaluations, music controls, gesture priming, mobile invitation music, blocked-play recovery, deliberate pause, buffering and record damage.');

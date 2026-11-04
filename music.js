@@ -6,11 +6,27 @@
   const audio = document.querySelector('#background-music');
   const status = document.querySelector('#music-status');
   const config = window.invitationData || {};
+  // A mobile reader shares the parent's already-unlocked media element.
+  if(window.parent&&window.parent!==window&&window.frameElement?.id==='invitation-reader-frame'){
+    const parent=window.parent,player=parent.InvitationAudio;
+    if(player){
+      const parentButton=parent.document.querySelector('#music-toggle');
+      const sync=()=>{label.textContent=parent.document.querySelector('#music-toggle-label').textContent;button.setAttribute('aria-pressed',parentButton.getAttribute('aria-pressed'));};
+      button.removeAttribute('aria-controls');button.addEventListener('click',()=>player.toggleRecord());
+      const retry=event=>{if(!event.target?.closest?.('#music-toggle'))player.resumeAfterGesture();};
+      document.addEventListener('click',retry,{capture:true});document.addEventListener('touchend',retry,{capture:true,passive:true});
+      document.addEventListener('WeixinJSBridgeReady',retry);
+      const observer=new MutationObserver(sync);observer.observe(parentButton,{attributes:true,childList:true,subtree:true});
+      window.addEventListener('pagehide',()=>observer.disconnect());window.InvitationAudio=player;sync();return;
+    }
+  }
   const isStudy = !!document.querySelector('#study');
   const sharedPlaylist = isStudy || document.body?.dataset?.musicPlaylist === 'study';
   const autoplay = document.body?.hasAttribute?.('data-autoplay-music') || false;
   let retryAutoplay = false;
   let studyRoomReady = false;
+  let readingInvitation = false;
+  let invitationRecordBroken = false;
   const source = sharedPlaylist ? (config.studyMusic || config.music) : config.music;
   const record = document.querySelector('#record-music');
   const bell = document.querySelector('#bell-sound');
@@ -101,7 +117,7 @@
       if (sharedPlaylist) recordError = true;
       update();
       syncPlayback();
-      retryAutoplay = (autoplay || (isStudy && studyRoomReady)) && error.name === 'NotAllowedError';
+      retryAutoplay = (autoplay || readingInvitation || (isStudy && studyRoomReady)) && error.name === 'NotAllowedError';
       status.textContent = retryAutoplay ? '点击音乐按钮播放音乐。' : '音乐暂时无法播放，请稍后重试。';
     }
   }
@@ -184,6 +200,9 @@
   });
   window.InvitationAudio = {
     prepareBackground,
+    startInvitation(){if(!readingInvitation)invitationRecordBroken=recordBroken;readingInvitation=true;recordBroken=false;button.disabled=false;window.InvitationStudySounds?.stop();audio.muted=false;return setBackground(true);},
+    endInvitation(){readingInvitation=false;if(invitationRecordBroken){invitationRecordBroken=false;window.InvitationAudio.breakRecord();}},
+    resumeAfterGesture(){if(retryAutoplay)return window.InvitationAudio.startBackground();},
     get recordPlaying() { return recordPlaying; },
     get recordError() { return recordError; },
     startBackground() { return enabled ? Promise.resolve() : setBackground(true); },
@@ -257,7 +276,7 @@
   if (autoplay || isStudy) {
     // Browsers may require a gesture; a later deliberate pause must never be undone.
     const resumeAutoplay = event => {
-      if (!retryAutoplay || (isStudy&&!studyRoomReady) || event.target?.closest?.('#music-toggle')) return;
+      if (!retryAutoplay || (isStudy&&!studyRoomReady&&!readingInvitation) || event.target?.closest?.('#music-toggle')) return;
       if (event.type === 'keydown' && !['Enter',' ','ArrowDown','PageDown'].includes(event.key)) return;
       window.InvitationAudio.startBackground();
     };

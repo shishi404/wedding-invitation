@@ -61,7 +61,7 @@ function activity(){if(suspended())stop();else requestRender();}
 document.addEventListener('visibilitychange',activity);
 new MutationObserver(activity).observe(document.body,{subtree:true,attributes:true,attributeFilter:['open','hidden']});
 
-function updateHint(){hint.textContent=game.noteRead?'与物品互动·寻找婚礼请柬':'与物品互动·便签上有字也许有线索';}
+function updateHint(){const copy=game.noteRead?'与物品互动·寻找婚礼请柬':'与物品互动·便签上有字也许有线索';hint.textContent=profile==='mobile'?copy+'\n双指张开放大画面 · 放大后可左右拖动':copy;}
 function syncGame(){
   updateHint();if(!props)return;
   if(lastChoice!==game.choice){props.setTaken(TAKEN_MODELS[game.choice]);lastChoice=game.choice;}
