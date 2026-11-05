@@ -8,7 +8,7 @@ import {notebookPageLabel} from './notebook-page-copy.js';
 import {applyStickyNoteMessage,STICKY_NOTE_MESSAGE} from './study-sticky-note.js';
 import {createWindchimeSway} from './study-windchime-sway.js';
 import {createEnvelopeDetails,showInlineInvitation} from './study-envelope.js';
-import {createHandheldMedia} from './study-handheld.js';
+import {createHandheldMedia} from './study-handheld.js?v=preload-10';
 
 // Orbit the camera rather than tipping the object: heavy objects stay upright.
 export const inspectionLimits=art=>({min:.06,max:art==='record'?Math.PI/2-.12:Math.PI-.06});
@@ -351,5 +351,5 @@ export function createInspection({getModel,mobile=false}){
     if(!visible()){stop();if(host&&!host.closest('dialog')?.open){++token;release();art=null;}}
     else{fit();request();}
   }).observe(document.body,{subtree:true,attributes:true,attributeFilter:['open']});
-  return {show,openJewelryBox,shakeJewelryBox,openNotebook,openEnvelope,readInvitation,showInvitation:()=>showInlineInvitation(host.closest('dialog')),pickupKey,shakeWindchime,setHandheldRaised,closeHandheld:()=>handheldMedia.end()};
+  return {show,openJewelryBox,shakeJewelryBox,openNotebook,openEnvelope,readInvitation,showInvitation:()=>showInlineInvitation(host.closest('dialog')),pickupKey,shakeWindchime,setHandheldRaised,closeHandheld:()=>handheldMedia.end(),prepareHandheld:()=>handheldMedia.prepare()};
 }

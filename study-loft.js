@@ -9,7 +9,7 @@ import {createTableProps} from './loft-table-props.js?v=mobile-shadows-6';
 import {applyRoomFinishes} from './loft-room-finishes.js';
 import {createTableLighting,preserveRoomLighting} from './loft-table-lighting.js';
 import {LOFT_INTERACTIONS,TAKEN_MODELS,canUseLoftObject} from './study-loft-mapping.js';
-import {createInspection} from './study-inspection.js?v=handheld-video-7';
+import {createInspection} from './study-inspection.js?v=preload-10';
 import {clone} from './vendor/three-addons/utils/SkeletonUtils.js';
 import {MeshoptDecoder} from './vendor/meshopt_decoder.js';
 import {notebookPageLabel} from './notebook-page-copy.js';
@@ -200,13 +200,14 @@ function clearScene(){
   renderer?.dispose();renderer?.domElement.remove();mobileView=null;renderer=null;props=null;desk=null;firewood=null;lighting=null;lastNotebookState='';lastChoice=undefined;lastBoxOpen=lastEnvelope=lastLockBroken=null;ready=false;
 }
 async function boot(){
-  if(booting||ready)return;booting=true;loading.hidden=false;retry.hidden=true;loadingText.textContent='正在添加泥土…';window.InvitationTerminal?.begin();
+  if(booting||ready)return;booting=true;hotspots.inert=true;delete world.dataset.handheldMediaReady;loading.hidden=false;retry.hidden=true;loadingText.textContent='正在添加泥土…';window.InvitationTerminal?.begin();
   try{
     // Also gate retries, when the room module is already in memory.
     await window.InvitationTerminal?.intro();
     clearScene();layout=await fetch('./assets/study-loft-layout.json').then(response=>{if(!response.ok)throw Error('布局加载失败');return response.json();});
     // Download both complete tracks while the scene loads. Playback begins after entry.
     const roomAudio=Promise.all([window.InvitationAudio?.prepareBackground(),window.InvitationStudySounds?.prepareCampfire(),window.InvitationStudySounds?.prepareEffects()]).then(()=>({ok:true}),error=>({error}));
+    const handheldReady=window.InvitationInspection.prepareHandheld().then(()=>({ok:true}),error=>({error}));
     scene=new THREE.Scene();scene.background=new THREE.Color('#e3e2db');scene.add(new THREE.AmbientLight(0xffffff,.3));
     camera=new THREE.PerspectiveCamera(layout.fov,layout.aspect,.03,100);camera.position.fromArray(layout.position);camera.quaternion.fromArray(layout.quaternion);
     const direction=camera.getWorldDirection(new THREE.Vector3());baseYaw=yaw=Math.atan2(direction.x,direction.z);basePitch=pitch=Math.asin(direction.y);
@@ -224,6 +225,7 @@ async function boot(){
     const savedProps=structuredClone(layout.tableProps);savedProps.interactions={jewelryBox:{open:false}};
     props=createTableProps({desk,scene,renderer,loader:{loadAsync:load},assets:catalog.tableProps,envelopeAsset:catalog.envelope,saved:savedProps,lighting,emphasizeShadows:profile==='mobile',onChange(){
       if(!props)return;const progress=props.getProgress();
+      if(ready||!booting||!retry.hidden){requestRender();return;}
       const stages=['正在添加泥土…','正在铺设石块…','正在种植苔藓…','正在生长树木…','正在点亮烛火…','正在藏起宝藏…'];
       loadingText.textContent=stages[Math.min(stages.length-1,Math.floor(stages.length*progress.loaded/Math.max(1,progress.total)))];window.InvitationTerminal?.progress(45+40*progress.loaded/Math.max(1,progress.total));requestRender();
     }});props.setEditing(false);
@@ -236,12 +238,16 @@ async function boot(){
     loadingText.textContent='正在唤醒篝火…';window.InvitationTerminal?.progress(90);
     const audioResult=await roomAudio;if(audioResult.error)throw audioResult.error;
     world.dataset.roomAudioReady='true';
+    loadingText.textContent='正在载入游戏机里的回忆…';window.InvitationTerminal?.progress(95);
+    const handheldResult=await handheldReady;
+    if(handheldResult.error)throw Object.assign(Error('游戏机视频暂未载入，请重试。'),{code:'HANDHELD_MEDIA',cause:handheldResult.error});
+    world.dataset.handheldMediaReady='true';
     await window.InvitationTerminal?.complete();
-    ready=true;loading.hidden=true;hotspots.classList.remove('scene-fallback');world.classList.add('ready');resize();world.dataset.sceneLoaded='true';world.dataset.itemsLoaded=props.getProgress().loaded;
+    ready=true;loading.hidden=true;hotspots.inert=false;hotspots.classList.remove('scene-fallback');world.classList.add('ready');resize();world.dataset.sceneLoaded='true';world.dataset.itemsLoaded=props.getProgress().loaded;
     world.dataset.layoutSource='assets/study-loft-layout.json';syncGame();props.setRecordPlaying(!!window.InvitationAudio?.recordPlaying);
     window.dispatchEvent(new Event('study-room-enter'));
     window.dispatchEvent(new Event('study-scene-ready'));requestRender();
-  }catch(error){console.error('3D 房间载入失败',error);loadingText.textContent='房间暂时未能载入，请重试。';retry.hidden=false;window.InvitationTerminal?.fail();world.dataset.sceneLoaded='error';hotspots.classList.add('scene-fallback');window.dispatchEvent(new Event('study-room-failed'));}
+  }catch(error){console.error('3D 房间载入失败',error);loadingText.textContent=error.code==='HANDHELD_MEDIA'?error.message:'房间暂时未能载入，请重试。';retry.hidden=false;window.InvitationTerminal?.fail();world.dataset.sceneLoaded='error';hotspots.classList.add('scene-fallback');window.dispatchEvent(new Event('study-room-failed'));}
   finally{booting=false;}
 }
 retry.onclick=()=>boot();

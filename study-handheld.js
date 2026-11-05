@@ -10,8 +10,56 @@ export function createHandheldMedia({requestRender}){
   video.id='handheld-video';video.hidden=true;video.playsInline=true;
   video.setAttribute('playsinline','');video.setAttribute('webkit-playsinline','');
   video.disablePictureInPicture=true;video.preload='none';video.loop=false;
-  video.volume=.8;video.src=HANDHELD_VIDEO;document.body.append(video);
+  video.volume=.8;document.body.append(video);
   let host=null,active=false,resumeMusic=null,binding=null,prompt=null,generation=0;
+  let preparing=null,prepared=false,videoURL=null,preparedImage=null;
+  async function prepare(){
+    if(prepared)return;
+    if(preparing)return preparing;
+    video.dataset.preloadState='loading';
+    preparing=Promise.allSettled([
+      (async()=>{
+        if(videoURL&&video.readyState>=2)return;
+        const response=await fetch(HANDHELD_VIDEO,{signal:AbortSignal.timeout(60000)});
+        if(!response.ok)throw Error('游戏机视频下载失败');
+        const blob=await response.blob();if(!blob.size)throw Error('游戏机视频为空');
+        if(videoURL)URL.revokeObjectURL(videoURL);
+        videoURL=URL.createObjectURL(new Blob([blob],{type:'video/mp4'}));
+        video.dataset.preloadBytes=String(blob.size);video.muted=true;video.preload='auto';
+        try{
+          await new Promise((resolve,reject)=>{
+            let settled=false;
+            const done=error=>{
+              if(settled)return;settled=true;
+              clearTimeout(timeout);for(const type of ['loadeddata','canplay','loadedmetadata'])video.removeEventListener(type,ready);
+              video.removeEventListener('error',failed);video.pause();error?reject(error):resolve();
+            };
+            const ready=()=>{if(video.readyState>=2&&video.videoWidth>0&&video.videoHeight>0&&Number.isFinite(video.duration)&&video.duration>0)done();};
+            const failed=()=>done(Error('游戏机视频无法解码'));
+            const timeout=setTimeout(()=>done(Error('游戏机视频载入超时')),60000);
+            for(const type of ['loadeddata','canplay','loadedmetadata'])video.addEventListener(type,ready);
+            video.addEventListener('error',failed);video.src=videoURL;video.load();
+            // Muted priming lets iOS decode a first frame without consuming the
+            // audible, one-shot playback reserved for the item interaction.
+            video.play().catch(error=>{if(!['AbortError','NotAllowedError'].includes(error.name))failed();});
+            ready();
+          });
+          video.currentTime=0;
+        }finally{video.pause();video.muted=false;}
+      })(),
+      (async()=>{
+        if(preparedImage)return;
+        const image=new Image();image.src=HANDHELD_IMAGE;await image.decode();
+        if(!image.naturalWidth)throw Error('游戏机下屏图片载入失败');preparedImage=image;
+      })(),
+    ]).then(results=>{
+      const failure=results.find(result=>result.status==='rejected');if(failure)throw failure.reason;
+      prepared=true;video.dataset.preloadState='ready';
+    }).catch(error=>{
+      preparing=null;video.dataset.preloadState='error';throw error;
+    });
+    return preparing;
+  }
   function state(value){if(host)host.dataset.videoState=value;requestRender();}
   function removePrompt(){prompt?.remove();prompt=null;}
   async function play(){
@@ -71,18 +119,20 @@ export function createHandheldMedia({requestRender}){
     const imageTexture=new THREE.CanvasTexture(canvas);imageTexture.colorSpace=THREE.SRGBColorSpace;imageTexture.flipY=false;
     const imageMaterial=new THREE.MeshBasicMaterial({map:imageTexture,toneMapped:false});lower.material=imageMaterial;
     let disposed=false;
-    const image=new Image();image.onload=()=>{
+    const image=preparedImage||new Image();const drawImage=()=>{
       if(disposed)return;
       const scale=Math.min(640/image.width,480/image.height),w=image.width*scale,h=image.height*scale;
       ctx.drawImage(image,(640-w)/2,(480-h)/2,w,h);imageTexture.needsUpdate=true;
       if(host)host.dataset.lowerScreenState='ready';requestRender();
-    };image.onerror=()=>{if(!disposed&&host)host.dataset.lowerScreenState='error';};image.src=HANDHELD_IMAGE;
+    };
+    if(preparedImage)drawImage();
+    else{image.onload=drawImage;image.onerror=()=>{if(!disposed&&host)host.dataset.lowerScreenState='error';};image.src=HANDHELD_IMAGE;}
     binding={upper,dispose(){
       disposed=true;image.onload=image.onerror=null;video.removeEventListener('loadedmetadata',fitVideo);
       upper.remove(surface);upper.material=originals[0];lower.material=originals[1];
       geometry.dispose();black.dispose();videoMaterial.dispose();texture.dispose();imageMaterial.dispose();imageTexture.dispose();
     }};
   }
-  window.addEventListener('pagehide',end);
-  return {begin,bind,end,get video(){return video;},get active(){return active;},get playing(){return active&&!video.paused&&!video.ended;}};
+  window.addEventListener('pagehide',event=>{end();if(!event.persisted&&videoURL)URL.revokeObjectURL(videoURL);});
+  return {prepare,begin,bind,end,get video(){return video;},get active(){return active;},get playing(){return active&&!video.paused&&!video.ended;}};
 }
