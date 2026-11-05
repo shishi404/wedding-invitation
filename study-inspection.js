@@ -8,6 +8,7 @@ import {notebookPageLabel} from './notebook-page-copy.js';
 import {applyStickyNoteMessage,STICKY_NOTE_MESSAGE} from './study-sticky-note.js';
 import {createWindchimeSway} from './study-windchime-sway.js';
 import {createEnvelopeDetails,showInlineInvitation} from './study-envelope.js';
+import {createHandheldMedia} from './study-handheld.js';
 
 // Orbit the camera rather than tipping the object: heavy objects stay upright.
 export const inspectionLimits=art=>({min:.06,max:art==='record'?Math.PI/2-.12:Math.PI-.06});
@@ -19,6 +20,8 @@ export function createInspection({getModel,mobile=false}){
   let windchimeMotion=null;
   let envelopePlaying=false,envelopeCancel=null,envelopeAction=null;
   let envelopeDetails=null;
+  let handheldRaised=false,handheldView=null;
+  const handheldMedia=createHandheldMedia({requestRender:request});
   let clipRoot,clips=[],jewelryController,busy=false,pendingShow=Promise.resolve(),bookPlaying=false,bookOpened=false;
   const isBox=value=>['drawer','drawer-open','drawer-empty'].includes(value);
   function resetView(){const distance=camera.position.length();camera.position.set(.3,.7,1).setLength(distance);controls.target.set(0,0,0);controls.update();fit();}
@@ -42,7 +45,7 @@ export function createInspection({getModel,mobile=false}){
     canvas.addEventListener('keydown',event=>{
       if(!['ArrowLeft','ArrowRight','ArrowUp','ArrowDown','Home'].includes(event.key))return;
       event.preventDefault();
-      if(busy)return;
+      if(busy||handheldRaised)return;
       if(event.key==='Home'){resetView();return;}
       const spherical=new THREE.Spherical().setFromVector3(camera.position);
       if(event.key==='ArrowLeft')spherical.theta-=.15;
@@ -52,7 +55,10 @@ export function createInspection({getModel,mobile=false}){
       camera.position.setFromSpherical(spherical);controls.update();request();
     });
   }
-  function release(){
+  function release(keepHandheld=false){
+    if(!keepHandheld)handheldMedia.end();
+    handheldRaised=false;handheldView=null;
+    if(host){delete host.dataset.handheldRaised;const dialog=host.closest('dialog');if(dialog)delete dialog.dataset.handheldRaised;}
     envelopeDetails?.dispose();envelopeDetails=null;
     envelopeCancel?.();envelopeCancel=null;envelopePlaying=false;envelopeAction=null;
     if(boxClosedHold){boxClosedHold.resolve(false);boxClosedHold=null;}
@@ -71,6 +77,17 @@ export function createInspection({getModel,mobile=false}){
     renderer.setSize(Math.round(bounds.width),Math.round(bounds.height),false);
     camera.aspect=bounds.width/bounds.height;
     const halfFov=THREE.MathUtils.degToRad(camera.fov/2);
+    if(art==='handheld'&&handheldRaised&&model){
+      model.updateWorldMatrix(true,true);
+      const upper=clipRoot.getObjectByName('Screen_Upper');upper.geometry.computeBoundingBox();
+      const center=upper.localToWorld(upper.geometry.boundingBox.getCenter(new THREE.Vector3()));
+      const size=upper.geometry.boundingBox.getSize(new THREE.Vector3()).multiply(upper.getWorldScale(new THREE.Vector3()));
+      const normal=new THREE.Vector3(0,1,0).transformDirection(upper.matrixWorld);
+      const distance=Math.max(size.x/(2*Math.tan(halfFov)*camera.aspect),size.z/(2*Math.tan(halfFov)))*1.12;
+      controls.target.copy(center);camera.up.copy(new THREE.Vector3(0,0,-1).transformDirection(upper.matrixWorld));
+      camera.position.copy(center).addScaledVector(normal,distance);camera.lookAt(center);
+      camera.near=.01;camera.far=distance+20;camera.updateProjectionMatrix();request();return;
+    }
     const distance=1.65/Math.sin(Math.min(halfFov,Math.atan(Math.tan(halfFov)*camera.aspect)));
     if(camera.position.length()<.1)camera.position.set(.3,.7,1);
     camera.position.setLength(distance);camera.near=.01;camera.far=distance+20;camera.updateProjectionMatrix();
@@ -84,6 +101,8 @@ export function createInspection({getModel,mobile=false}){
     resizeObserver.disconnect();host=detail.host;art=detail.art;
     host.classList.add('model-inspection');host.dataset.modelState='loading';
     host.setAttribute('aria-busy','true');
+    if(art==='handheld'&&!same)handheldMedia.begin(host);
+    else if(art!=='handheld')handheldMedia.end();
     try{
       // Paint the dialog before model cloning, material setup and shader work.
       await new Promise(resolve=>requestAnimationFrame(()=>setTimeout(resolve,0)));
@@ -91,7 +110,7 @@ export function createInspection({getModel,mobile=false}){
       init();host.replaceChildren(renderer.domElement);resizeObserver.observe(host);
       renderer.domElement.setAttribute('aria-label',art==='record'?'留声机模型。拖动或使用方向键查看上方与侧面，无法翻看底部。':'物品模型。拖动或使用方向键旋转调查，Home 键重置。');
       if(!same){
-        release();renderer.clear();
+        release(art==='handheld');renderer.clear();
         const result=await getModel(art);
         if(sequence!==token)return;
         if(!result?.object)throw Error('物品模型暂时不可用');
@@ -104,6 +123,7 @@ export function createInspection({getModel,mobile=false}){
           const cloned=original.map(material=>{const copy=material.clone();materials.push(copy);applyTabletopMaterial(copy,renderer,{enabled:true});return copy;});
           node.material=Array.isArray(node.material)?cloned:cloned[0];
         });
+        if(art==='handheld')handheldMedia.bind(object);
         const box=new THREE.Box3().setFromObject(object,art==='notebook-opening'||result.notebookOpen),size=box.getSize(new THREE.Vector3());
         // Reserve room for the raised lid without reframing halfway through opening.
         if(isBox(art)){
@@ -145,11 +165,11 @@ export function createInspection({getModel,mobile=false}){
         bookOpened=!!result.notebookOpen;
         host.dataset.notebookPages=notebookPageLabel(result.notebookResult);
         const limits=inspectionLimits(art);controls.minPolarAngle=limits.min;controls.maxPolarAngle=limits.max;
-        controls.target.set(0,0,0);camera.position.set(.3,.7,1);controls.update();
+        controls.target.set(0,0,0);camera.up.set(0,1,0);camera.position.set(.3,.7,1);controls.update();
       }
       if(isBox(art))host.dataset.lockVisible=String(clipRoot.getObjectByName('BrassLock_Root')?.visible!==false);
       host.dataset.modelState='ready';host.setAttribute('aria-busy','false');
-      controls.enabled=!busy;host.dataset.inspectionBusy=String(busy);
+      controls.enabled=!busy&&!handheldRaised;host.dataset.inspectionBusy=String(busy);
       host.dataset.inspectionArt=art;fit();request();
       if(art==='invitation'){
         envelopeDetails?.setOpened(!!detail.envelopeWithKnife);
@@ -158,6 +178,7 @@ export function createInspection({getModel,mobile=false}){
       }
     }catch(error){
       if(sequence!==token)return;
+      if(art==='handheld')handheldMedia.end();
       console.error('模型检视失败',error);host.dataset.modelState='error';host.setAttribute('aria-busy','false');
       host.textContent='模型暂时无法载入，仍可使用下方选项继续调查。';
     }
@@ -177,7 +198,22 @@ export function createInspection({getModel,mobile=false}){
     if(lidAction)host.dataset.boxOpenProgress=String(lidAction.time/lidAction.getClip().duration);
     renderer.render(scene,camera);
     host.dataset.polarAngle=String(controls.getPolarAngle());
-    if(boxClosedHold||jewelryController?.busy||bookPlaying||envelopePlaying||envelopeDetails?.active()||windchimeMotion?.active()||mixer&&art==='record'&&window.InvitationAudio?.recordPlaying)timer=setTimeout(request,1000/30);
+    if(handheldMedia.playing||boxClosedHold||jewelryController?.busy||bookPlaying||envelopePlaying||envelopeDetails?.active()||windchimeMotion?.active()||mixer&&art==='record'&&window.InvitationAudio?.recordPlaying)timer=setTimeout(request,1000/30);
+  }
+  async function setHandheldRaised(raised){
+    await pendingShow;
+    if(!visible()||art!=='handheld'||host.dataset.modelState!=='ready'||!handheldMedia.active)return false;
+    if(raised===handheldRaised)return handheldRaised;
+    if(raised){
+      handheldView={position:camera.position.clone(),target:controls.target.clone()};
+    }else{
+      camera.up.set(0,1,0);camera.position.copy(handheldView.position);controls.target.copy(handheldView.target);
+      handheldView=null;
+    }
+    handheldRaised=raised;controls.enabled=!raised;
+    host.dataset.handheldRaised=String(raised);host.closest('dialog').dataset.handheldRaised=String(raised);
+    renderer.domElement.setAttribute('aria-label',raised?'游戏机已拿起，正在仔细观看。点击放在桌上可恢复旋转。':'游戏机模型。拖动或使用方向键旋转调查，Home 键重置。');
+    fit();return handheldRaised;
   }
   async function openEnvelope({withKnife=false}={}){
     if(busy)return false;
@@ -315,5 +351,5 @@ export function createInspection({getModel,mobile=false}){
     if(!visible()){stop();if(host&&!host.closest('dialog')?.open){++token;release();art=null;}}
     else{fit();request();}
   }).observe(document.body,{subtree:true,attributes:true,attributeFilter:['open']});
-  return {show,openJewelryBox,shakeJewelryBox,openNotebook,openEnvelope,readInvitation,showInvitation:()=>showInlineInvitation(host.closest('dialog')),pickupKey,shakeWindchime};
+  return {show,openJewelryBox,shakeJewelryBox,openNotebook,openEnvelope,readInvitation,showInvitation:()=>showInlineInvitation(host.closest('dialog')),pickupKey,shakeWindchime,setHandheldRaised,closeHandheld:()=>handheldMedia.end()};
 }

@@ -49,6 +49,7 @@
   let recordPlaying = false, resumeBackground = false, recordError = false, recordRequest = 0;
   let recordBroken = false;
   let enabled = false;
+  let mediaPause=null;
   let request = 0;
   if (sharedPlaylist) { audio.src = recordSources[0]; audio.loop=false; }
   else if (source) audio.src = source;
@@ -93,6 +94,7 @@
   for (const event of ['playing','play','pause','waiting','ended','emptied','error']) audio.addEventListener(event, syncPlayback);
   syncPlayback();
   async function setBackground(nextEnabled) {
+    if(nextEnabled&&mediaPause)return;
     if (sharedPlaylist && recordBroken) { update(); return; }
     retryAutoplay = false;
     const current = ++request;
@@ -109,7 +111,7 @@
     try {
       if (sharedPlaylist) recordError = false;
       await audio.play();
-      if (!enabled || musicBoxPhase!=='idle' || (sharedPlaylist ? recordBroken : recordPlaying)) audio.pause();
+      if (!enabled || mediaPause || musicBoxPhase!=='idle' || (sharedPlaylist ? recordBroken : recordPlaying)) audio.pause();
       syncPlayback();
     } catch (error) {
       if (current !== request) return;
@@ -200,6 +202,17 @@
   });
   window.InvitationAudio = {
     prepareBackground,
+    pauseForMedia(){
+      const hold={background:enabled&&!audio.paused&&!audio.ended&&!recordBroken,musicBox:musicBoxPhase!=='idle'&&musicBox&&!musicBox.paused};
+      mediaPause=hold;++request;retryAutoplay=false;enabled=false;resumeBackground=false;
+      audio.pause();musicBox?.pause();update();syncPlayback();
+      return ()=>{
+        if(mediaPause!==hold)return;
+        mediaPause=null;
+        if(hold.musicBox&&musicBoxPhase!=='idle')musicBox.play().catch(()=>{});
+        else if(hold.background&&!recordBroken)return setBackground(true);
+      };
+    },
     startInvitation(){if(!readingInvitation)invitationRecordBroken=recordBroken;readingInvitation=true;recordBroken=false;button.disabled=false;window.InvitationStudySounds?.stop();audio.muted=false;return setBackground(true);},
     endInvitation(){readingInvitation=false;if(invitationRecordBroken){invitationRecordBroken=false;window.InvitationAudio.breakRecord();}},
     resumeAfterGesture(){if(retryAutoplay)return window.InvitationAudio.startBackground();},
@@ -249,7 +262,7 @@
       audio.pause(); record?.pause(); syncPlayback(); update();
       status.textContent = '唱片已损坏，无法继续播放音乐。';
     },
-    leaveStudy() { studyRoomReady=false;retryAutoplay=false;window.InvitationStudySounds?.stop(); ++request; ++recordRequest; ++musicBoxRequest; musicBoxPhase='idle';musicBoxResumeBackground=false;enabled = false; record?.pause(); bell?.pause(); if (bell) bell.currentTime = 0; musicBox?.pause(); if (musicBox) musicBox.currentTime = 0; diceSound?.pause(); if (diceSound) diceSound.currentTime = 0; audio.pause();audio.muted=false; recordPlaying = false; resumeBackground = false; update(); syncPlayback(); notifyRecord(); }
+    leaveStudy() { mediaPause=null;studyRoomReady=false;retryAutoplay=false;window.InvitationStudySounds?.stop(); ++request; ++recordRequest; ++musicBoxRequest; musicBoxPhase='idle';musicBoxResumeBackground=false;enabled = false; record?.pause(); bell?.pause(); if (bell) bell.currentTime = 0; musicBox?.pause(); if (musicBox) musicBox.currentTime = 0; diceSound?.pause(); if (diceSound) diceSound.currentTime = 0; audio.pause();audio.muted=false; recordPlaying = false; resumeBackground = false; update(); syncPlayback(); notifyRecord(); }
   };
   if (!sharedPlaylist) {
     record?.addEventListener('ended', stopRecord);

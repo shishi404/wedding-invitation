@@ -11,6 +11,8 @@
 !/assets/entry-button-ink.svg
 !/assets/entry-button-paper.svg
 !/assets/entry-traced-continuous.svg
+!/assets/handheld-logo.webp
+!/assets/handheld-memory.mp4
 !/assets/item-thumbnails/envelope.webp
 !/assets/item-thumbnails/key.webp
 !/assets/item-thumbnails/knife.webp
@@ -159,6 +161,7 @@
 !/study-bootstrap.js
 !/study-browser.js
 !/study-envelope.js
+!/study-handheld.js
 !/study-inspection.js
 !/study-loft-mapping.js
 !/study-loft.css

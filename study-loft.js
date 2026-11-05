@@ -9,7 +9,7 @@ import {createTableProps} from './loft-table-props.js?v=mobile-shadows-6';
 import {applyRoomFinishes} from './loft-room-finishes.js';
 import {createTableLighting,preserveRoomLighting} from './loft-table-lighting.js';
 import {LOFT_INTERACTIONS,TAKEN_MODELS,canUseLoftObject} from './study-loft-mapping.js';
-import {createInspection} from './study-inspection.js';
+import {createInspection} from './study-inspection.js?v=handheld-video-7';
 import {clone} from './vendor/three-addons/utils/SkeletonUtils.js';
 import {MeshoptDecoder} from './vendor/meshopt_decoder.js';
 import {notebookPageLabel} from './notebook-page-copy.js';

@@ -136,7 +136,18 @@ function teacup(){
 }
 function handheld(){
   currentObject='handheld';
-  showObject('白色3DS','一台放在桌上的白色游戏机。','handheld',[continueSearchAction()]);
+  let raised=false,changing=false;
+  const actions=()=>[
+    {label:raised?'放在桌上':'拿起仔细看',run:async()=>{
+      if(changing)return;changing=true;
+      try{
+        raised=await window.InvitationInspection?.setHandheldRaised(!raised)||false;
+        if(interaction.open&&currentObject==='handheld')setInteractionActions(actions());
+      }finally{changing=false;}
+    }},
+    {label:'继续寻找新的线索',run:()=>{window.InvitationInspection?.closeHandheld();interaction.close();},secondary:true},
+  ];
+  showObject('白色3DS','一台放在桌上的白色游戏机。上屏正在播放一段回忆，下屏是属于他们的图案。','handheld',actions());
 }
 function notebook(){
   currentObject='notebook';

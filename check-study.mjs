@@ -119,4 +119,16 @@ async function studyAudioContext(){
   await api.startInvitation();assert.equal(bg.paused,false,'Reading has music even if the game record was broken');
   api.endInvitation();assert.equal(bg.paused,true);assert.equal(els['music-toggle'].disabled,true,'Returning restores the game record state');
 }
-console.log('Passed: 600 roll evaluations, music controls, gesture priming, mobile invitation music, blocked-play recovery, deliberate pause, buffering and record damage.');
+// Media inspections pause the shared channel and restore only prior playback.
+{
+  const {els,api}=await studyAudioContext(),bg=els['background-music'];
+  await api.startBackground();const at=bg.currentTime,restore=api.pauseForMedia();
+  assert.equal(bg.paused,true);assert.equal(api.recordPlaying,false);
+  await api.startBackground();assert.equal(bg.paused,true,'Media ownership blocks background restarts');
+  await restore();assert.equal(bg.paused,false);assert.equal(bg.currentTime,at);
+  await api.toggleRecord();const keepPaused=api.pauseForMedia();await keepPaused();
+  assert.equal(bg.paused,true,'A deliberately paused background must stay paused');
+  await api.startBackground();const staleRestore=api.pauseForMedia();api.leaveStudy();await staleRestore();
+  assert.equal(bg.paused,true,'Closing after leaving the study cannot restart music');
+}
+console.log('Passed: 600 roll evaluations, music controls, media inspection pause/restore, gesture priming, mobile invitation music, blocked-play recovery, deliberate pause, buffering and record damage.');

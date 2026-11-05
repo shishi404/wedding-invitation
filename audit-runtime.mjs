@@ -47,7 +47,7 @@ export async function auditRuntime(){
     if(!/\.(?:html|css|js|json|svg|gltf)$/.test(file))continue;
     const source=bytes.toString('utf8');
     const text=extname(file)==='.js'?source.replace(/\/\*[\s\S]*?\*\/|^[ \t]*\/\/.*$/gm,''):source;
-    const strings=/(['"`])([^'"`\r\n]+?\.(?:html|css|js|json|svg|png|jpe?g|webp|ogg|mp3|wav|woff2?|ttf|glb|gltf|bin|wasm)(?:\?[^'"`\r\n]*)?)\1/g;
+    const strings=/(['"`])([^'"`\r\n]+?\.(?:html|css|js|json|svg|png|jpe?g|webp|ogg|mp3|mp4|wav|woff2?|ttf|glb|gltf|bin|wasm)(?:\?[^'"`\r\n]*)?)\1/g;
     for(const match of text.matchAll(strings))await enqueue(match[2],file);
     if(/\bfrom\s*['"]three['"]/.test(text))queue.push('vendor/three.module.js');
     if(extname(file)==='.css')for(const match of text.matchAll(/url\(\s*['"]?([^)'"\s]+)['"]?\s*\)/g))await enqueue(match[1],file,{required:true});

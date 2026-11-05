@@ -80,6 +80,9 @@ body.study-3d{height:100dvh;overflow:hidden}
 .model-inspection canvas:active{cursor:grabbing}
 .model-inspection:after{content:'拖动模型旋转调查 · 方向键也可操作';position:absolute;bottom:8px;left:12px;right:12px;color:#e3dfcd;font-size:12px;text-align:center;letter-spacing:1px;pointer-events:none;text-shadow:0 1px 4px #000}
 .model-inspection[data-inspection-art="record"]:after{content:'留声机太重了，只能查看上方和侧面'}
+.model-inspection[data-handheld-raised="true"]:after{content:'点击“放在桌上”可恢复旋转';bottom:4px}
+.model-inspection[data-handheld-raised="true"] canvas{cursor:default}
+.handheld-play-prompt{position:absolute;z-index:2;left:50%;top:50%;transform:translate(-50%,-50%);padding:12px 20px;border:1px solid #dfc4a0;border-radius:3px;background:#fffcf6;color:#785a3d}
 .model-inspection[data-model-state="loading"]:after{content:'正在拿起物品…'}
 .model-inspection[data-model-state="error"]:after{content:none}
 .model-inspection[data-inspection-busy="true"] canvas{cursor:wait}
@@ -100,3 +103,6 @@ body.study-3d{height:100dvh;overflow:hidden}
   .study-3d :is(.inspection-content,.note-choice-content){padding:20px}
   .model-inspection:after{font-size:11px;letter-spacing:0}
 }
+.study-3d #interaction-dialog[data-handheld-raised="true"] #object-art{height:calc(100svh - 240px);min-height:180px;max-height:74svh}
+.study-3d #interaction-dialog[data-handheld-raised="true"] .inspection-content{padding:14px 20px}
+.study-3d #interaction-dialog[data-handheld-raised="true"] .inspection-content .narrative{display:none}
