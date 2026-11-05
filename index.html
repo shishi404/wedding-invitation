@@ -13,6 +13,7 @@
   <link rel="stylesheet" href="record-control.css">
   <link rel="stylesheet" href="terminal-loading.css">
   <link rel="stylesheet" href="cream-theme.css?v=cream-scanlines-4">
+  <link rel="stylesheet" href="invitation-save.css?v=album-1">
   <script type="importmap">{"imports":{"three":"./vendor/three.module.js"}}</script>
 </head>
 <body class="study-3d">
@@ -34,7 +35,7 @@
       </h1>
       <p class="entry-intro">我们为你留了一封请柬。<br>若不赶时间，不妨来书房找找。</p>
       <button id="start-exploration" class="primary-button" type="button">参观书房，寻找请柬</button>
-      <a class="entry-invitation-button" href="invitation.html">还是直接阅读婚礼请柬吧</a>
+      <a class="entry-invitation-button" href="invitation.html?v=album-1">还是直接阅读婚礼请柬吧</a>
     </div>
   </section>
   <main id="study" aria-label="书房探索" hidden>
@@ -74,7 +75,7 @@
         </button>
       </div>
     </header>
-    <footer class="study-footer"><div class="inventory-wrap"><span class="inventory-title">随身物品 <span id="inventory-count">0</span></span><div id="inventory" class="inventory" aria-label="物品栏"></div></div><a id="study-direct-invitation" class="study-direct-invitation" href="invitation.html">直接阅读婚礼请柬</a><span class="footer-index">CASE FILE / 001</span></footer>
+    <footer class="study-footer"><div class="inventory-wrap"><span class="inventory-title">随身物品 <span id="inventory-count">0</span></span><div id="inventory" class="inventory" aria-label="物品栏"></div></div><a id="study-direct-invitation" class="study-direct-invitation" href="invitation.html?v=album-1">直接阅读婚礼请柬</a><span class="footer-index">CASE FILE / 001</span></footer>
     <p class="sr-only" id="game-status" role="status" aria-live="polite"></p><p id="render-status" class="render-status" hidden></p>
   </main>
   <dialog id="choose-dialog" class="choose-dialog" aria-labelledby="choose-title">
@@ -124,6 +125,7 @@
   <audio id="background-music" loop preload="none"></audio><audio id="record-music" preload="none"></audio><audio id="bell-sound" preload="none"></audio><audio id="musicbox-music" preload="none"></audio><audio id="dice-sound" preload="none"></audio><p class="sr-only" id="music-status" role="status" aria-live="polite"></p>
   <noscript><div class="noscript">书房探索需要启用 JavaScript。<a href="invitation.html">直接阅读婚礼请柬</a></div></noscript>
   <script src="terminal-loading.js?v=investigator-copy-2"></script>
+  <script src="invitation-save.js?v=album-1"></script>
   <script src="study-bootstrap.js?v=full-table-8"></script>
   <script src="data.js?v=playlist-4"></script><script src="ui-sounds.js"></script><script src="music.js?v=handheld-video-7"></script><script src="study-sounds.js?v=room-audio-3"></script><script src="study-browser.js?v=handheld-video-7"></script>
   <script src="invitation-navigation.js?v=cream-1"></script>

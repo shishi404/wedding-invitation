@@ -15,6 +15,7 @@ html,body{scrollbar-width:none;-ms-overflow-style:none}html::-webkit-scrollbar,b
 <link rel="stylesheet" href="launch.css?v=dandelion-mist-blue-4">
 <link rel="stylesheet" href="record-control.css">
 <link rel="stylesheet" href="cream-theme.css?v=cream-1">
+<link rel="stylesheet" href="invitation-save.css?v=album-1">
 <script type="importmap">{"imports":{"three":"./vendor/three.module.js"}}</script>
 </head>
 <body data-music-playlist="study" data-autoplay-music>
@@ -30,6 +31,7 @@ html,body{scrollbar-width:none;-ms-overflow-style:none}html::-webkit-scrollbar,b
 </main>
 <script type="module">import {mountDandelionEnding} from './launch.js?v=dandelion-mist-blue-4';mountDandelionEnding(document.querySelector('#invitation-ending'));</script>
 <script src="data.js?v=playlist-4"></script><script src="music.js?v=invitation-audio-4"></script><script src="study-sounds.js?v=room-audio-3"></script>
+<script src="invitation-save.js?v=album-1"></script>
 <script type="module">import('./invitation-entry.js').catch(()=>document.documentElement.classList.remove('invitation-opening'));</script>
 </body>
 </html>

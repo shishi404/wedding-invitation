@@ -54,6 +54,7 @@
 !/assets/study-loft-layout.json
 !/assets/ui-button-1.ogg
 !/assets/ui-button-2.ogg
+!/assets/wedding-invitation-album.jpg
 !/assets/wedding-invitation-mobile.webp
 !/assets/wedding-invitation-original.jpg
 !/assets/windchime-01.ogg
@@ -89,6 +90,8 @@
 !/invitation-entry.css
 !/invitation-entry.js
 !/invitation-navigation.js
+!/invitation-save.css
+!/invitation-save.js
 !/invitation.html
 !/launch.css
 !/launch.js
