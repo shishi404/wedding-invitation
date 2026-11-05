@@ -22,13 +22,13 @@ export function sanitizeFireplace(value={}){
   return result;
 }
 
-export function contactTexture(){
+export function contactTexture(strength=1){
   const canvas=document.createElement('canvas');canvas.width=256;canvas.height=256;
   const ctx=canvas.getContext('2d');
   const gradient=ctx.createRadialGradient(128,128,30,128,128,128);
-  gradient.addColorStop(0,'rgba(22,18,14,0.40)');
-  gradient.addColorStop(.48,'rgba(22,18,14,0.28)');
-  gradient.addColorStop(.78,'rgba(22,18,14,0.10)');
+  gradient.addColorStop(0,`rgba(22,18,14,${Math.min(1,.40*strength)})`);
+  gradient.addColorStop(.48,`rgba(22,18,14,${Math.min(1,.28*strength)})`);
+  gradient.addColorStop(.78,`rgba(22,18,14,${Math.min(1,.10*strength)})`);
   gradient.addColorStop(1,'rgba(22,18,14,0)');
   ctx.fillStyle=gradient;ctx.fillRect(0,0,256,256);
   return new THREE.CanvasTexture(canvas);

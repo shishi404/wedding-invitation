@@ -84,7 +84,7 @@ export function createTableLighting({desk,renderer,onChange=()=>{}}){
   function invalidate(){renderer.shadowMap.needsUpdate=true;}
   function prepare(object){object.traverse(mesh=>{
     if(!mesh.isMesh)return;
-    if(mesh.name==='桌面接触阴影'){mesh.visible=!(state.enabled&&state.shadows);return;}
+    if(mesh.name==='桌面接触阴影'){mesh.visible=!!mesh.userData.mobileContactShadow||!(state.enabled&&state.shadows);return;}
     if(mesh===ground)return;
     const materials=Array.isArray(mesh.material)?mesh.material:[mesh.material];
     mesh.castShadow=state.enabled&&state.shadows&&!materials.every(m=>m.transparent&&m.opacity<.1);

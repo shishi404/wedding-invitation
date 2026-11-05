@@ -5,7 +5,7 @@ import {createFireplace} from './loft-fireplace.js';
 import {createDesk} from './loft-desk.js';
 import {createFirewood} from './loft-firewood.js';
 import {createHearthAsh} from './loft-hearth-ash.js';
-import {createTableProps} from './loft-table-props.js?v=pendant-hit-5';
+import {createTableProps} from './loft-table-props.js?v=mobile-shadows-6';
 import {applyRoomFinishes} from './loft-room-finishes.js';
 import {createTableLighting,preserveRoomLighting} from './loft-table-lighting.js';
 import {LOFT_INTERACTIONS,TAKEN_MODELS,canUseLoftObject} from './study-loft-mapping.js';
@@ -15,7 +15,7 @@ import {MeshoptDecoder} from './vendor/meshopt_decoder.js';
 import {notebookPageLabel} from './notebook-page-copy.js';
 import {setJewelryLockVisible} from './模型库/14_彩绘漆面首饰盒_Source/青蓝写实旧铜锁版_v7/jewelry-box-controller.js';
 import {inspectionAssetCatalog} from './loft-inspection-assets.js';
-import {createMobileSceneView,mobileRenderSize} from './study-mobile-view.js?v=mobile-performance-3';
+import {createMobileSceneView,mobileRenderSize,sceneNeedsZoom} from './study-mobile-view.js?v=scene-framing-6';
 
 const study=document.querySelector('#study'),world=document.querySelector('#world');
 const loading=document.querySelector('#scene-loading'),loadingText=document.querySelector('#scene-loading-text'),retry=document.querySelector('#scene-retry');
@@ -32,6 +32,7 @@ let request=0,timer=0,lastFrame=0,frames=0,drag=null,baseYaw=0,basePitch=0,yaw=0
 let poseChanged=false;
 let mobileView=null;
 let sceneGesturing=false;
+let mobileBaseFov=100;
 const loader=new GLTFLoader().setMeshoptDecoder(MeshoptDecoder);
 const queue=[];let decoding=0;
 function load(url){return new Promise((resolve,reject)=>{queue.push({url,resolve,reject});pump();});}
@@ -61,7 +62,13 @@ function activity(){if(suspended())stop();else requestRender();}
 document.addEventListener('visibilitychange',activity);
 new MutationObserver(activity).observe(document.body,{subtree:true,attributes:true,attributeFilter:['open','hidden']});
 
-function updateHint(){const copy=game.noteRead?'与物品互动·寻找婚礼请柬':'与物品互动·便签上有字也许有线索';hint.textContent=profile==='mobile'?copy+'\n双指张开放大画面 · 放大后可左右拖动':copy;}
+const needsZoom=()=>{const r=world.getBoundingClientRect();return sceneNeedsZoom(r.width,r.height);};
+function updateHint(){
+  const copy=game.noteRead?'与物品互动·寻找婚礼请柬':'与物品互动·便签上有字也许有线索';
+  const controls=needsZoom()?(profile==='mobile'?'双指张开放大画面 · 放大后可左右拖动':'滚轮缩放画面 · 放大后可左右拖动'):'';
+  hint.textContent=copy+(controls?'\n'+controls:'');
+  world.querySelector('canvas')?.setAttribute('aria-label','三维房间。点击物品进行调查。'+(controls?controls+'。Home 键还原画面。':''));
+}
 function syncGame(){
   updateHint();if(!props)return;
   if(lastChoice!==game.choice){props.setTaken(TAKEN_MODELS[game.choice]);lastChoice=game.choice;}
@@ -86,18 +93,18 @@ window.addEventListener('record-state',()=>{props?.setRecordPlaying(!!window.Inv
 function resize(){
   if(!renderer||!camera||!layout)return;
   const bounds=world.getBoundingClientRect();if(!bounds.width||!bounds.height)return;
-  const letterbox=profile==='mobile';
-  const width=letterbox?Math.min(bounds.width,bounds.height*layout.aspect):bounds.width;
-  const height=letterbox?width/layout.aspect:bounds.height;
+  const width=bounds.width,height=bounds.height;
   camera.aspect=width/height;
-  camera.fov=letterbox?layout.fov:THREE.MathUtils.radToDeg(2*Math.atan(Math.tan(THREE.MathUtils.degToRad(layout.fov)/2)*Math.max(1,layout.aspect/camera.aspect)));
+  const fitFov=THREE.MathUtils.radToDeg(2*Math.atan(Math.tan(THREE.MathUtils.degToRad(layout.fov)/2)*Math.max(1,layout.aspect/camera.aspect)));
+  mobileBaseFov=Math.min(100,fitFov);
+  camera.fov=profile==='mobile'?mobileBaseFov:fitFov;
   camera.updateProjectionMatrix();renderer.setPixelRatio(Math.min(devicePixelRatio,profile==='mobile'?1.5:2));
   setSceneSize(width,height);
   renderer.domElement.style.width=width+'px';renderer.domElement.style.height=height+'px';
-  world.dataset.letterbox=String(letterbox);
+  world.dataset.letterbox='false';
   world.style.setProperty('--scene-bar-y',(bounds.height-height)/2+'px');
   world.style.setProperty('--scene-bar-x',(bounds.width-width)/2+'px');
-  mobileView?.resize(width,height);requestRender();
+  updateHint();mobileView?.resize(width,height);requestRender();
 }
 new ResizeObserver(resize).observe(world);
 function setSceneSize(width,height,zoom=1){
@@ -109,63 +116,67 @@ function applyLook(){
   camera.lookAt(camera.position.clone().add(new THREE.Vector3(Math.sin(yaw)*Math.cos(pitch),Math.sin(pitch),Math.cos(yaw)*Math.cos(pitch))));
   poseChanged=Math.abs(yaw-baseYaw)+Math.abs(pitch-basePitch)>.005;reset.hidden=!poseChanged;requestRender();
 }
-reset.onclick=()=>{if(mobileView){mobileView.reset();return;}yaw=baseYaw;pitch=basePitch;applyLook();};
+reset.onclick=()=>{if(mobileView){mobileView.reset();yaw=baseYaw;pitch=basePitch;applyLook();return;}yaw=baseYaw;pitch=basePitch;applyLook();};
 function hit(event){
   const rect=renderer.domElement.getBoundingClientRect();if(event.clientX<rect.left||event.clientX>rect.right||event.clientY<rect.top||event.clientY>rect.bottom)return null;
   pointer.set((event.clientX-rect.left)/rect.width*2-1,1-(event.clientY-rect.top)/rect.height*2);
   camera.updateMatrixWorld();scene.updateMatrixWorld(true);raycaster.setFromCamera(pointer,camera);return props?.findHit(raycaster);
 }
 function installInput(canvas){
-  let pendingTap=null;
   const blocked=()=>!ready||document.hidden||study.hidden||modalOpen()||hotspots.inert;
-  if(profile==='mobile'){
-    reset.textContent='还原画面';
-    mobileView=createMobileSceneView({surface:world,canvas,blocked,onTap:event=>{
+  reset.textContent='还原画面';
+  mobileView=createMobileSceneView({surface:world,canvas,blocked,
+    zoomLimit:3,projected:profile==='mobile',zoomEnabled:needsZoom,
+    framing:profile==='mobile'?bounds=>{
+      const controls=document.querySelector('.scene-controls').getBoundingClientRect();
+      const footer=document.querySelector('.study-footer').getBoundingClientRect();
+      const bottom=Math.max(1,Math.min(controls.top,footer.top)-bounds.top-12);
+      let anchor=.74;
+      if(desk){
+        const base=new THREE.PerspectiveCamera(mobileBaseFov,camera.aspect,.03,100);
+        base.position.copy(camera.position);base.quaternion.copy(camera.quaternion);base.updateMatrixWorld();
+        desk.surface.updateWorldMatrix(true,false);
+        anchor=Math.max(...[-1,1].map(sign=>{
+          const p=new THREE.Vector3(0,0,sign*desk.nativeSize.z/2).applyMatrix4(desk.surface.matrixWorld).project(base);
+          return (1-p.y)/2;
+        }));
+      }
+      return {bottom,anchor,initialZoom:bounds.height>bounds.width?1.4:1};
+    }:null,
+    onTap:event=>{
       const id=hit(event);if(canUseLoftObject(id,game))window.dispatchEvent(new CustomEvent('study-object',{detail:LOFT_INTERACTIONS[id]}));
-    },onChange:({zoom,width,height,settled,gesturing})=>{
-      sceneGesturing=gesturing;
-      reset.hidden=zoom<=1.001;
+    },onChange:({zoom,pan,offsetY,width,height,settled,gesturing})=>{
+      sceneGesturing=gesturing&&profile!=='mobile';
+      if(profile==='mobile'){
+        camera.fov=THREE.MathUtils.radToDeg(2*Math.atan(Math.tan(THREE.MathUtils.degToRad(mobileBaseFov)/2)/zoom));
+        camera.updateProjectionMatrix();
+        camera.projectionMatrix.elements[8]=-2*pan/width;
+        camera.projectionMatrix.elements[9]=2*offsetY/height;
+        camera.projectionMatrixInverse.copy(camera.projectionMatrix).invert();
+      }
+      const initial=Number(world.dataset.sceneInitialZoom)||1;
+      reset.hidden=Math.abs(zoom-initial)<.001&&Math.abs(pan)<1;
       const bounds=world.getBoundingClientRect();
-      world.style.setProperty('--scene-bar-y',Math.max(0,(bounds.height-height*zoom)/2)+'px');
+      world.style.setProperty('--scene-bar-top',Math.max(0,(bounds.height-height*zoom)/2+offsetY)+'px');
+      world.style.setProperty('--scene-bar-bottom',Math.max(0,(bounds.height-height*zoom)/2-offsetY)+'px');
       world.style.setProperty('--scene-bar-x',Math.max(0,(bounds.width-width*zoom)/2)+'px');
-      // Pinch/pan moves the existing canvas on the compositor; no scene redraw.
-      if(gesturing){stop();return;}
+      // Move the existing canvas during touch gestures, then redraw within the GPU budget.
+      if(gesturing&&profile!=='mobile'){stop();return;}
       if(settled&&width&&height)setSceneSize(width,height,zoom);
       requestRender();
     }});
-    canvas.addEventListener('keydown',event=>mobileView.key(event));return;
-  }
-  canvas.addEventListener('pointerdown',event=>{
-    pendingTap=null;
-    if(event.button!==0||blocked())return;drag={id:event.pointerId,x:event.clientX,y:event.clientY,yaw,pitch,canLook:event.pointerType==='touch',moved:false};canvas.setPointerCapture(event.pointerId);
-  });
   canvas.addEventListener('pointermove',event=>{
-    if(blocked())return;
-    if(drag?.id===event.pointerId){
-      const dx=event.clientX-drag.x,dy=event.clientY-drag.y;if(Math.hypot(dx,dy)>8)drag.moved=true;
-      if(drag.moved&&drag.canLook){yaw=THREE.MathUtils.clamp(drag.yaw+dx*.003,baseYaw-.9,baseYaw+.9);pitch=THREE.MathUtils.clamp(drag.pitch+dy*.0025,basePitch-.3,basePitch+.2);applyLook();}
-    }else if(event.pointerType==='mouse')canvas.style.cursor=canUseLoftObject(hit(event),game)?'pointer':'default';
+    if(event.pointerType==='mouse'&&!blocked())canvas.style.cursor=canUseLoftObject(hit(event),game)?'pointer':'default';
   });
-  canvas.addEventListener('pointerup',event=>{
-    if(drag?.id!==event.pointerId)return;const moved=drag.moved;drag=null;
-    if(canvas.hasPointerCapture(event.pointerId))canvas.releasePointerCapture(event.pointerId);
-    if(moved||blocked())return;
-    pendingTap={x:event.clientX,y:event.clientY};
-  });
-  canvas.addEventListener('click',event=>{
-    const tap=pendingTap;pendingTap=null;
-    if(!tap||blocked()||Math.hypot(event.clientX-tap.x,event.clientY-tap.y)>8)return;
-    event.preventDefault();event.stopPropagation();
-    const id=hit(event);if(canUseLoftObject(id,game))window.dispatchEvent(new CustomEvent('study-object',{detail:LOFT_INTERACTIONS[id]}));
-  });
-  canvas.addEventListener('pointercancel',()=>{drag=null;pendingTap=null;});
-  canvas.addEventListener('lostpointercapture',()=>{if(drag){drag=null;pendingTap=null;}});
   canvas.addEventListener('keydown',event=>{
+    if(event.key==='Home'&&!blocked()){event.preventDefault();reset.onclick();return;}
+    if(profile==='mobile'||Number(world.dataset.sceneZoom)>1.001){mobileView.key(event);return;}
     if(blocked())return;
-    if(event.key==='ArrowLeft')yaw+=.12;else if(event.key==='ArrowRight')yaw-=.12;else if(event.key==='ArrowUp')pitch+=.08;else if(event.key==='ArrowDown')pitch-=.08;else if(event.key==='Home'){yaw=baseYaw;pitch=basePitch;}else return;
+    if(event.key==='ArrowLeft')yaw+=.12;else if(event.key==='ArrowRight')yaw-=.12;else if(event.key==='ArrowUp')pitch+=.08;else if(event.key==='ArrowDown')pitch-=.08;else return;
     event.preventDefault();yaw=THREE.MathUtils.clamp(yaw,baseYaw-.9,baseYaw+.9);pitch=THREE.MathUtils.clamp(pitch,basePitch-.3,basePitch+.2);applyLook();
   });
 }
+
 function render(now){
   request=0;clearTimeout(timer);timer=0;if(suspended()||!renderer)return;
   const dt=Math.min(Math.max(0,(now-lastFrame)/1000),.05);lastFrame=now;
@@ -196,7 +207,7 @@ async function boot(){
     camera=new THREE.PerspectiveCamera(layout.fov,layout.aspect,.03,100);camera.position.fromArray(layout.position);camera.quaternion.fromArray(layout.quaternion);
     const direction=camera.getWorldDirection(new THREE.Vector3());baseYaw=yaw=Math.atan2(direction.x,direction.z);basePitch=pitch=Math.asin(direction.y);
     renderer=new THREE.WebGLRenderer({antialias:true});renderer.outputColorSpace=THREE.SRGBColorSpace;renderer.toneMapping=THREE.NoToneMapping;
-    const canvas=renderer.domElement;canvas.tabIndex=0;canvas.setAttribute('aria-label',profile==='mobile'?'三维房间。点击物品进行调查，双指缩放画面，左右滑动查看放大的区域，Home 键还原画面。':'三维房间。点击物品进行调查，使用方向键查看桌面，Home 键回到初始视角。');world.prepend(canvas);installInput(canvas);resize();
+    const canvas=renderer.domElement;canvas.tabIndex=0;canvas.setAttribute('aria-label',profile==='mobile'?'三维房间。点击物品进行调查，双指缩放画面，左右滑动查看放大的区域，Home 键还原画面。':'三维房间。点击物品进行调查，滚轮缩放画面，放大后左右拖动，使用方向键查看桌面，Home 键还原画面。');world.prepend(canvas);installInput(canvas);resize();
     world.dataset.sceneProfile=profile;world.dataset.clickMode='raycast / no highlights';
     const room=await load(catalog.roomModels.room.url);repairBakedUV(room.scene);scene.add(room.scene);
     await applyRoomFinishes(room.scene,{woodAsset:catalog.stairWood});preserveRoomLighting(room.scene);requestRender();
@@ -207,7 +218,7 @@ async function boot(){
     const fireplace=createFireplace(furniture[1].value.scene,scene,renderer);fireplace.apply(layout.fireplace);preserveRoomLighting(fireplace.root);
     lighting=createTableLighting({desk,renderer});lighting.apply(layout.tableLighting||{});
     const savedProps=structuredClone(layout.tableProps);savedProps.interactions={jewelryBox:{open:false}};
-    props=createTableProps({desk,scene,renderer,loader:{loadAsync:load},assets:catalog.tableProps,envelopeAsset:catalog.envelope,saved:savedProps,lighting,onChange(){
+    props=createTableProps({desk,scene,renderer,loader:{loadAsync:load},assets:catalog.tableProps,envelopeAsset:catalog.envelope,saved:savedProps,lighting,emphasizeShadows:profile==='mobile',onChange(){
       if(!props)return;const progress=props.getProgress();
       const stages=['正在添加泥土…','正在铺设石块…','正在种植苔藓…','正在生长树木…','正在点亮烛火…','正在藏起宝藏…'];
       loadingText.textContent=stages[Math.min(stages.length-1,Math.floor(stages.length*progress.loaded/Math.max(1,progress.total)))];window.InvitationTerminal?.progress(45+40*progress.loaded/Math.max(1,progress.total));requestRender();
@@ -222,7 +233,7 @@ async function boot(){
     const audioResult=await roomAudio;if(audioResult.error)throw audioResult.error;
     world.dataset.roomAudioReady='true';
     await window.InvitationTerminal?.complete();
-    ready=true;loading.hidden=true;hotspots.classList.remove('scene-fallback');world.classList.add('ready');world.dataset.sceneLoaded='true';world.dataset.itemsLoaded=props.getProgress().loaded;
+    ready=true;loading.hidden=true;hotspots.classList.remove('scene-fallback');world.classList.add('ready');resize();world.dataset.sceneLoaded='true';world.dataset.itemsLoaded=props.getProgress().loaded;
     world.dataset.layoutSource='assets/study-loft-layout.json';syncGame();props.setRecordPlaying(!!window.InvitationAudio?.recordPlaying);
     window.dispatchEvent(new Event('study-room-enter'));
     window.dispatchEvent(new Event('study-scene-ready'));requestRender();

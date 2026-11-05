@@ -1,5 +1,5 @@
 import assert from 'node:assert/strict';
-import {createMobileSceneView,mobileRenderSize} from './study-mobile-view.js';
+import {createMobileSceneView,mobileRenderSize,sceneNeedsZoom} from './study-mobile-view.js';
 
 class Surface extends EventTarget{
   dataset={};captures=new Set();
@@ -40,6 +40,41 @@ blocked=true;gesture(100,200);assert.equal(last.zoom,1);assert.equal(taps,1);
 blocked=false;gesture(100,200);view.resize(320,180);assert.ok(last.zoom>=1);
 view.reset();assert.equal(last.zoom,1);assert.equal(last.pan,0);
 view.destroy();gesture(100,200);assert.equal(last.zoom,1);
+// Phone framing keeps the lower tabletop above the controls at every zoom.
+const framedSurface=new Surface(),framedCanvas={style:{}};let framed;
+const framedView=createMobileSceneView({surface:framedSurface,canvas:framedCanvas,blocked:()=>blocked,onTap:()=>{},onChange:value=>framed=value,framing:()=>({top:100,bottom:640})});
+framedView.resize(390,390*9/16);
+assert.ok(framed.zoom>1,'Phones start enlarged');
+assert.equal(844/2+framed.offsetY+framed.height*framed.zoom/2,640);
+function wheel(surface,deltaY){const event=new Event('wheel',{cancelable:true});Object.assign(event,{deltaY,deltaMode:0,clientX:195});surface.dispatchEvent(event);return event;}
+assert.equal(wheel(framedSurface,-3000).defaultPrevented,true);
+assert.equal(framed.zoom,844/(390*9/16));
+assert.equal(844/2+framed.offsetY+framed.height*framed.zoom/2,640,'Maximum zoom keeps the tabletop clear of the controls');
+blocked=true;wheel(framedSurface,3000);assert.equal(framed.zoom,844/(390*9/16));blocked=false;
+framedView.reset();assert.equal(framed.zoom,540/(390*9/16));framedView.destroy();
+const fullSurface=new Surface(),fullCanvas={style:{}};let full;
+const fullView=createMobileSceneView({surface:fullSurface,canvas:fullCanvas,blocked:()=>false,onTap:()=>{},onChange:value=>full=value,projected:true,zoomLimit:3,framing:()=>({bottom:640,anchor:.74,initialZoom:1.4})});
+fullView.resize(390,844);assert.equal(full.zoom,1.4);
+assert.equal(fullCanvas.style.transform,'translate(-50%,-50%)','The rendered canvas always covers the viewport');
+wheel(fullSurface,-3000);assert.equal(full.zoom,3);
+assert.equal(422+(.74-.5)*844*full.zoom+full.offsetY,640,'The real desk edge stays above controls without moving the canvas');
+assert.equal(fullCanvas.style.transform,'translate(-50%,-50%)');fullView.destroy();
+assert.equal(sceneNeedsZoom(1440,900),false);assert.equal(sceneNeedsZoom(844,390),false);assert.equal(sceneNeedsZoom(390,844),true);
+let allowZoom=false,conditional;
+const conditionalSurface=new Surface();
+const conditionalView=createMobileSceneView({surface:conditionalSurface,canvas:{style:{}},blocked:()=>false,onTap:()=>{},onChange:value=>conditional=value,zoomLimit:3,zoomEnabled:()=>allowZoom});
+conditionalView.resize(390,844);assert.equal(conditional.zoom,1);
+assert.equal(wheel(conditionalSurface,-3000).defaultPrevented,false,'Full-scene views do not consume the wheel');
+assert.equal(conditional.zoom,1);
+conditionalSurface.pointer('pointerdown',1,140);conditionalSurface.pointer('pointerdown',2,240);
+conditionalSurface.pointer('pointermove',1,40);conditionalSurface.pointer('pointermove',2,340);
+assert.equal(conditional.zoom,1,'Pinching is disabled in a full-scene view');
+allowZoom=true;conditionalView.resize(390,844);wheel(conditionalSurface,-3000);assert.equal(conditional.zoom,3);
+allowZoom=false;conditionalView.resize(390,844);assert.equal(conditional.zoom,1);assert.equal(conditional.pan,0);conditionalView.destroy();
+const desktopSurface=new Surface();let desktop;
+const desktopView=createMobileSceneView({surface:desktopSurface,canvas:{style:{}},blocked:()=>false,onTap:()=>{},onChange:value=>desktop=value,zoomLimit:3});
+desktopView.resize(390,844);wheel(desktopSurface,-3000);assert.equal(desktop.zoom,3);
+wheel(desktopSurface,10000);assert.equal(desktop.zoom,1);desktopView.destroy();
 for(const [width,height]of [[390,390*9/16],[844,844*9/16],[320,180]]){
   for(const zoom of [1,2,4]){
     const size=mobileRenderSize(width,height,zoom,1.5);

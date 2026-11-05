@@ -54,13 +54,13 @@ body.study-3d{background:var(--cream-base);color:var(--cream-ink)}
   box-shadow:0 0 0 100vmax #fff8ed,inset 0 0 0 1px #ecdbbf;
 }
 .terminal-screen{background:linear-gradient(150deg,#fffefa,#fff7e9);border-color:#e6d1b2;box-shadow:none;text-shadow:none}
-.terminal-loading::after{background:none;box-shadow:none}
+.terminal-loading::after{background:repeating-linear-gradient(0deg,#80603918 0px,#80603918 1px,transparent 1px,transparent 3px),radial-gradient(ellipse,transparent 55%,#8c674414);box-shadow:inset 0 0 30px 8px #8c674410}
 .terminal-heading,#scene-loading.terminal-loading #scene-loading-text{color:#806a50}
 .terminal-footer{border-top-color:#eddec7}
 .terminal-meter{border-color:#e6cfad;box-shadow:none}
 .terminal-fill{background:repeating-linear-gradient(90deg,#cdb18b 0,#cdb18b 14px,transparent 14px,transparent 17px)}
 .terminal-cursor{box-shadow:none}
-.terminal-sweep{display:none}
+.terminal-sweep{background:linear-gradient(transparent,#a77a4208 65%,#a77a4214 91%,#a77a4229 96%,transparent)}
 #scene-loading.terminal-loading #scene-retry{background:#fffcf6;border-color:#dfc4a0;color:#785a3d}
 
 /* The mobile room matte changes independently of model materials and lights. */
@@ -84,8 +84,9 @@ body.study-3d{background:var(--cream-base);color:var(--cream-ink)}
 
 /* All interaction surfaces share a light overlay and warm, readable copy. */
 dialog{background:linear-gradient(140deg,#fffef9,#fff8ed);color:var(--cream-ink);border-color:#ead6b8;box-shadow:0 8px 32px #dbb2750a}
-dialog::backdrop{background:#fff7e9ef;backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px)}
-.study-3d :is(#interaction-dialog,#choose-dialog)::backdrop{background:#fff8edef;backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px)}
+dialog::backdrop{background:rgb(255 247 233 / 30%);backdrop-filter:blur(7.2px);-webkit-backdrop-filter:blur(7.2px)}
+/* Shared interaction treatment: alpha .30 and 60% of the original 12px blur. */
+.study-3d :is(#interaction-dialog,#choose-dialog)::backdrop{background:rgb(255 248 237 / 30%);backdrop-filter:blur(7.2px);-webkit-backdrop-filter:blur(7.2px)}
 .study-3d :is(#interaction-dialog,#choose-dialog)[open]{color:var(--cream-ink)}
 .study-3d :is(.inspection-content,.note-choice-content){background:linear-gradient(145deg,#fffefa,#fffaf2);border-color:var(--cream-border);box-shadow:0 6px 22px #dbb27508}
 .interaction-dialog .narrative,.dialog-intro,.choose-note,.dialog-eyebrow{color:var(--cream-muted)}
@@ -115,7 +116,7 @@ dialog::backdrop{background:#fff7e9ef;backdrop-filter:blur(10px);-webkit-backdro
 .noscript{background:var(--cream-base);color:var(--cream-ink)}
 
 /* Direct reading and the game unfolding sequence use the same opening palette. */
-.letter-foreground{background:radial-gradient(ellipse at 50% 44%,#fffdf8fa,#fff6e8f7 85%);backdrop-filter:blur(14px)}
+.letter-foreground{background:radial-gradient(ellipse at 50% 44%,rgb(255 253 248 / 30%),rgb(255 246 232 / 30%) 85%);backdrop-filter:blur(7.2px);-webkit-backdrop-filter:blur(7.2px)}
 html.invitation-opening{background:#fff7ea}
 html.invitation-opening.invitation-color-transition{background-color:#a8bfca}
 .invitation-opening body{background:transparent}
@@ -128,7 +129,7 @@ a.invitation-download:hover{background:#fff5e5}
 
 /* The 3D dice remain intact; the frame and surrounding controls become ivory. */
 #check-dialog{background:transparent;color:var(--cream-ink)}
-#check-dialog::backdrop{background:#fff9eff5;backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px)}
+#check-dialog::backdrop{background:rgb(255 249 239 / 30%);backdrop-filter:blur(7.2px);-webkit-backdrop-filter:blur(7.2px)}
 #check-dialog h2,.check-current strong{color:#654d35;text-shadow:none}
 #check-kind,.check-current-label,#check-dialog #check-progress{color:#806a50}
 .check-frame{filter:none}
