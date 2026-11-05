@@ -14,7 +14,7 @@
     return;
   }
   function loadRoomProgram(){
-    const script=document.createElement('script');script.type='module';script.src='./study-loft.js?v=handheld-video-7';
+    const script=document.createElement('script');script.type='module';script.src='./study-loft.js?v=full-table-8';
     script.onerror=()=>startupError('房间程序未能载入，请刷新页面重试。若是本地预览，请重新运行「启动书房预览.cmd」。','重新载入页面',()=>location.reload());
     document.head.append(script);
   }

@@ -12,7 +12,6 @@ window.invitationData = {
     "assets/study-clair-de-lune.ogg",
     "assets/record-a-familiar-room.ogg",
     "assets/record-burning-memory.ogg",
-    "assets/record-rise-up-dead-man.ogg",
     "assets/record-world-on-fire.ogg"
   ],
   partnerOne: "陈萌",

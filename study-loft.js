@@ -15,7 +15,7 @@ import {MeshoptDecoder} from './vendor/meshopt_decoder.js';
 import {notebookPageLabel} from './notebook-page-copy.js';
 import {setJewelryLockVisible} from './模型库/14_彩绘漆面首饰盒_Source/青蓝写实旧铜锁版_v7/jewelry-box-controller.js';
 import {inspectionAssetCatalog} from './loft-inspection-assets.js';
-import {createMobileSceneView,mobileRenderSize,sceneNeedsZoom} from './study-mobile-view.js?v=scene-framing-6';
+import {createMobileSceneView,mobileRenderSize,sceneNeedsZoom} from './study-mobile-view.js?v=full-table-8';
 
 const study=document.querySelector('#study'),world=document.querySelector('#world');
 const loading=document.querySelector('#scene-loading'),loadingText=document.querySelector('#scene-loading-text'),retry=document.querySelector('#scene-retry');
@@ -33,6 +33,7 @@ let poseChanged=false;
 let mobileView=null;
 let sceneGesturing=false;
 let mobileBaseFov=100;
+let mobileMinimumZoom=1;
 const loader=new GLTFLoader().setMeshoptDecoder(MeshoptDecoder);
 const queue=[];let decoding=0;
 function load(url){return new Promise((resolve,reject)=>{queue.push({url,resolve,reject});pump();});}
@@ -65,7 +66,7 @@ new MutationObserver(activity).observe(document.body,{subtree:true,attributes:tr
 const needsZoom=()=>{const r=world.getBoundingClientRect();return sceneNeedsZoom(r.width,r.height);};
 function updateHint(){
   const copy=game.noteRead?'与物品互动·寻找婚礼请柬':'与物品互动·便签上有字也许有线索';
-  const controls=needsZoom()?(profile==='mobile'?'双指张开放大画面 · 放大后可左右拖动':'滚轮缩放画面 · 放大后可左右拖动'):'';
+  const controls=needsZoom()?(profile==='mobile'?'双指捏合查看全桌 · 张开放大后左右拖动':'滚轮缩放画面 · 放大后可左右拖动'):'';
   hint.textContent=copy+(controls?'\n'+controls:'');
   world.querySelector('canvas')?.setAttribute('aria-label','三维房间。点击物品进行调查。'+(controls?controls+'。Home 键还原画面。':''));
 }
@@ -97,6 +98,9 @@ function resize(){
   camera.aspect=width/height;
   const fitFov=THREE.MathUtils.radToDeg(2*Math.atan(Math.tan(THREE.MathUtils.degToRad(layout.fov)/2)*Math.max(1,layout.aspect/camera.aspect)));
   mobileBaseFov=Math.min(100,fitFov);
+  // Keep the approved close initial composition, but allow pinching back to
+  // the same complete horizontal field of view used on desktop.
+  mobileMinimumZoom=Math.min(1,Math.tan(THREE.MathUtils.degToRad(mobileBaseFov)/2)/Math.tan(THREE.MathUtils.degToRad(fitFov)/2));
   camera.fov=profile==='mobile'?mobileBaseFov:fitFov;
   camera.updateProjectionMatrix();renderer.setPixelRatio(Math.min(devicePixelRatio,profile==='mobile'?1.5:2));
   setSceneSize(width,height);
@@ -108,7 +112,7 @@ function resize(){
 }
 new ResizeObserver(resize).observe(world);
 function setSceneSize(width,height,zoom=1){
-  const size=profile==='mobile'?mobileRenderSize(width,height,zoom,renderer.getPixelRatio()):{width:Math.round(width),height:Math.round(height)};
+  const size=profile==='mobile'?mobileRenderSize(width,height,Math.max(1,zoom),renderer.getPixelRatio()):{width:Math.round(width),height:Math.round(height)};
   const ratio=renderer.getPixelRatio(),canvas=renderer.domElement;
   if(canvas.width!==Math.floor(size.width*ratio)||canvas.height!==Math.floor(size.height*ratio))renderer.setSize(size.width,size.height,false);
 }
@@ -126,7 +130,7 @@ function installInput(canvas){
   const blocked=()=>!ready||document.hidden||study.hidden||modalOpen()||hotspots.inert;
   reset.textContent='还原画面';
   mobileView=createMobileSceneView({surface:world,canvas,blocked,
-    zoomLimit:3,projected:profile==='mobile',zoomEnabled:needsZoom,
+    zoomLimit:3,zoomMinimum:()=>profile==='mobile'?mobileMinimumZoom:1,projected:profile==='mobile',zoomEnabled:needsZoom,
     framing:profile==='mobile'?bounds=>{
       const controls=document.querySelector('.scene-controls').getBoundingClientRect();
       const footer=document.querySelector('.study-footer').getBoundingClientRect();

@@ -39,7 +39,7 @@ async function audioContext(){const els=Object.fromEntries(['music-toggle','back
   els['record-music'].play=()=>Promise.reject(new Error('Missing track'));await api.toggleRecord();assert.equal(api.recordError,true);assert.equal(api.recordPlaying,false);assert.equal(els['background-music'].paused,false);
 }
 // In the study, background playback and the 3D turntable share one channel.
-async function studyAudioContext(){
+async function studyAudioContext(config){
   const els=Object.fromEntries(['study','music-toggle','music-toggle-label','music-record-icon','background-music','record-music','music-status'].map(k=>[k,element()]));
   const events=[],handlers={},documentHandlers={};
   for(const el of Object.values(els)){
@@ -48,7 +48,7 @@ async function studyAudioContext(){
     el.play=function(){this.paused=false;this.listeners.play?.();this.listeners.playing?.();return Promise.resolve();};
     el.pause=function(){this.paused=true;this.listeners.pause?.();};
   }
-  const w={invitationData:{studyMusic:'study.ogg',recordPlaylist:['record.wav']},dispatchEvent(){events.push(w.InvitationAudio?.recordPlaying);},addEventListener(type,fn){handlers[type]=fn;}};
+  const w={invitationData:config||{studyMusic:'study.ogg',recordPlaylist:['record.wav']},dispatchEvent(){events.push(w.InvitationAudio?.recordPlaying);},addEventListener(type,fn){handlers[type]=fn;}};
   vm.runInNewContext(await readFile('music.js','utf8'),{window:w,document:{querySelector:s=>els[s.slice(1)],addEventListener(type,fn){documentHandlers[type]=fn;}},Event:class{}});
   return {els,events,handlers,documentHandlers,api:w.InvitationAudio};
 }
@@ -131,4 +131,14 @@ async function studyAudioContext(){
   await api.startBackground();const staleRestore=api.pauseForMedia();api.leaveStudy();await staleRestore();
   assert.equal(bg.paused,true,'Closing after leaving the study cannot restart music');
 }
-console.log('Passed: 600 roll evaluations, music controls, media inspection pause/restore, gesture priming, mobile invitation music, blocked-play recovery, deliberate pause, buffering and record damage.');
+{
+  const dataWindow={};vm.runInNewContext(await readFile('data.js','utf8'),{window:dataWindow});
+  const config=dataWindow.invitationData,tracks=['assets/study-clair-de-lune.ogg','assets/record-a-familiar-room.ogg','assets/record-burning-memory.ogg','assets/record-world-on-fire.ogg'];
+  assert.deepEqual(Array.from(config.recordPlaylist),tracks);
+  const {api,els}=await studyAudioContext(config),bg=els['background-music'];
+  await api.startBackground();
+  for(const track of tracks){assert.equal(bg.src,track);await api.nextRecord();}
+  assert.equal(bg.src,tracks[0],'The four remaining tracks wrap without a missing-file request');
+  await api.previousRecord();assert.equal(bg.src,tracks.at(-1));
+}
+console.log('Passed: 600 roll evaluations, four-track playlist cycling, music controls, media inspection pause/restore, gesture priming, mobile invitation music, blocked-play recovery, deliberate pause, buffering and record damage.');

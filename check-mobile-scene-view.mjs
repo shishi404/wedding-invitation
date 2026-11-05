@@ -59,6 +59,21 @@ assert.equal(fullCanvas.style.transform,'translate(-50%,-50%)','The rendered can
 wheel(fullSurface,-3000);assert.equal(full.zoom,3);
 assert.equal(422+(.74-.5)*844*full.zoom+full.offsetY,640,'The real desk edge stays above controls without moving the canvas');
 assert.equal(fullCanvas.style.transform,'translate(-50%,-50%)');fullView.destroy();
+// A phone must zoom out past its previous cropped baseline, and can pan even
+// at zoom 1 while the full-table minimum is lower than 1.
+const overviewSurface=new Surface();let overview;
+const overviewView=createMobileSceneView({surface:overviewSurface,canvas:{style:{}},blocked:()=>false,onTap:()=>{},onChange:value=>overview=value,projected:true,zoomLimit:3,zoomMinimum:()=>.65,framing:()=>({bottom:640,anchor:.74,initialZoom:1.4})});
+overviewView.resize(390,844);assert.equal(overview.zoom,1.4);
+wheel(overviewSurface,10000);assert.equal(overview.zoom,.65);assert.equal(overview.pan,0);
+assert.equal(overviewSurface.dataset.sceneMinZoom,'0.65');
+wheel(overviewSurface,-Math.log(1/.65)/.0015);assert.ok(Math.abs(overview.zoom-1)<1e-10);
+overviewSurface.pointer('pointerdown',1,195);overviewSurface.pointer('pointermove',1,390);overviewSurface.pointer('pointerup',1,390);
+assert.ok(overview.pan>100,'Intermediate zoom retains horizontal access to edge objects');
+overviewSurface.pointer('pointerdown',1,50);overviewSurface.pointer('pointerdown',2,340);
+overviewSurface.pointer('pointermove',1,190);overviewSurface.pointer('pointermove',2,200);
+overviewSurface.pointer('pointerup',1,190);overviewSurface.pointer('pointerup',2,200);
+assert.equal(overview.zoom,.65);assert.equal(overview.pan,0,'Pinching to the minimum centers the complete table');
+overviewView.reset();assert.equal(overview.zoom,1.4);overviewView.destroy();
 assert.equal(sceneNeedsZoom(1440,900),false);assert.equal(sceneNeedsZoom(844,390),false);assert.equal(sceneNeedsZoom(390,844),true);
 let allowZoom=false,conditional;
 const conditionalSurface=new Surface();

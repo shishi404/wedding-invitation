@@ -5,8 +5,8 @@ export function mobileRenderSize(width,height,zoom=1,pixelRatio=1.5){
   return {width:Math.max(1,Math.floor(width*scale)),height:Math.max(1,Math.floor(height*scale))};
 }
 export const sceneNeedsZoom=(width,height)=>width<height;
-export function createMobileSceneView({surface,canvas,blocked,onTap,onChange,framing=null,zoomLimit=null,projected=false,zoomEnabled=()=>true}){
-  let width=0,height=0,zoom=1,pan=0,maxZoom=1,gesture=null,pendingTap=null,initialized=false,wheelTimer;
+export function createMobileSceneView({surface,canvas,blocked,onTap,onChange,framing=null,zoomLimit=null,zoomMinimum=()=>1,projected=false,zoomEnabled=()=>true}){
+  let width=0,height=0,zoom=1,pan=0,minZoom=1,maxZoom=1,gesture=null,pendingTap=null,initialized=false,wheelTimer;
   let wasEnabled;
   const points=new Map();
   const listeners=new AbortController(),listen=(type,handler,options={})=>surface.addEventListener(type,handler,{...options,signal:listeners.signal});
@@ -15,17 +15,20 @@ export function createMobileSceneView({surface,canvas,blocked,onTap,onChange,fra
     const bounds=surface.getBoundingClientRect();
     const enabled=zoomEnabled();
     if(enabled!==wasEnabled){initialized=false;pan=0;wasEnabled=enabled;}
+    minZoom=enabled?clamp(zoomMinimum(),.05,1):1;
     maxZoom=enabled&&width&&height?Math.max(1,zoomLimit??Math.max(bounds.width/width,bounds.height/height)):1;
     const frame=enabled?framing?.(bounds):null;
-    const initialZoom=frame&&height?clamp(frame.initialZoom??(frame.bottom-frame.top)/height,1,maxZoom):1;
+    const initialZoom=frame&&height?clamp(frame.initialZoom??(frame.bottom-frame.top)/height,minZoom,maxZoom):1;
     if(!initialized&&width&&height){zoom=initialZoom;initialized=true;}
-    zoom=clamp(zoom,1,maxZoom);
-    const limit=Math.max(0,(width*zoom-bounds.width)/2);
+    zoom=clamp(zoom,minZoom,maxZoom);
+    // Pan bounds use the complete reference view, rather than the cropped
+    // phone view at zoom 1. At minimum zoom the whole desktop is centered.
+    const limit=Math.max(0,(width*zoom/minZoom-bounds.width)/2);
     pan=clamp(pan,-limit,limit);
     // Projection mode anchors the real tabletop while rendering the room behind all UI.
     const offsetY=frame?(projected?frame.bottom-bounds.height/2-(frame.anchor-.5)*height*zoom:Math.min((frame.top+frame.bottom-bounds.height)/2,frame.bottom-bounds.height/2-height*zoom/2)):0;
     canvas.style.transform=projected?'translate(-50%,-50%)':`translate(-50%,-50%) translate(${pan}px,${offsetY}px) scale(${zoom})`;
-    surface.dataset.sceneZoom=String(zoom);surface.dataset.scenePan=String(pan);surface.dataset.sceneMaxZoom=String(maxZoom);
+    surface.dataset.sceneZoom=String(zoom);surface.dataset.scenePan=String(pan);surface.dataset.sceneMinZoom=String(minZoom);surface.dataset.sceneMaxZoom=String(maxZoom);
     surface.dataset.sceneOffsetY=String(offsetY);surface.dataset.sceneInitialZoom=String(initialZoom);
     surface.dataset.sceneZoomEnabled=String(enabled);
     delete surface.dataset.sceneDeskEdge;
@@ -55,7 +58,7 @@ export function createMobileSceneView({surface,canvas,blocked,onTap,onChange,fra
     if(Math.hypot(point.x-point.startX,point.y-point.startY)>8)point.moved=true;
     const values=[...points.values()];
     if(values.length>=2){
-      const [a,b]=values,newZoom=clamp(gesture.zoom*Math.hypot(a.x-b.x,a.y-b.y)/gesture.distance,1,maxZoom);
+      const [a,b]=values,newZoom=clamp(gesture.zoom*Math.hypot(a.x-b.x,a.y-b.y)/gesture.distance,minZoom,maxZoom);
       const bounds=surface.getBoundingClientRect(),center=bounds.left+bounds.width/2;
       pan=(a.x+b.x)/2-center-(gesture.center-center-gesture.pan)*newZoom/gesture.zoom;
       zoom=newZoom;update();
@@ -82,7 +85,7 @@ export function createMobileSceneView({surface,canvas,blocked,onTap,onChange,fra
     if(blocked()||!height||!zoomEnabled())return;
     event.preventDefault();pendingTap=null;
     const delta=event.deltaY*(event.deltaMode===1?16:event.deltaMode===2?surface.getBoundingClientRect().height:1);
-    const next=clamp(zoom*Math.exp(-delta*.0015),1,maxZoom);
+    const next=clamp(zoom*Math.exp(-delta*.0015),minZoom,maxZoom);
     const bounds=surface.getBoundingClientRect(),x=event.clientX-bounds.left-bounds.width/2;
     pan=x-(x-pan)*next/zoom;zoom=next;update();
     clearTimeout(wheelTimer);wheelTimer=setTimeout(()=>update(true),120);
