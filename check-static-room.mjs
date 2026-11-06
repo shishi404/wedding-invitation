@@ -41,6 +41,9 @@ try{
    const square=await p.locator('.static-room-stage').boundingBox();assert.ok(Math.abs(square.width-width)<1,'Keep approved horizontal minimum bounds');
    await p.screenshot({path:'output/static-room/qa/minimum-390.png'});await p.locator('#scene-reset').click();
   }
+  const staticRequests=requests.filter(value=>new URL(value).pathname.includes('/assets/static-room/'));
+  assert.ok(staticRequests.length>0);
+  assert.ok(staticRequests.every(value=>new URL(value).searchParams.get('v')==='room-artwork-20261106-2'),'Every baked room asset must carry the same release to bypass old browser caches');
   const before=requests.length;
 
   // Actual image-mask picking, with screen coordinates transformed with the picture.

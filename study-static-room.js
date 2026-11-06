@@ -5,7 +5,7 @@ import {clone} from './vendor/three-addons/utils/SkeletonUtils.js';
 import {assetCatalog} from './loft-asset-profile.js';
 import {inspectionAssetCatalog} from './loft-inspection-assets.js';
 import {sceneAssetProfile} from './loft-startup-downloads.js';
-import {preloadStaticRoom,downloadRoomFile,backgroundRoomDownloads} from './static-room-downloads.js?v=static-picking-2';
+import {preloadStaticRoom,downloadRoomFile,backgroundRoomDownloads} from './static-room-downloads.js?v=room-artwork-20261106-2';
 import {createPickingDecoder,pickStaticRoom,applyPickingPatches} from './static-room-picking.js';
 import {createInspection} from './study-inspection.js?v=handheld-safari-3';
 import {createFlame} from './loft-flame.js';

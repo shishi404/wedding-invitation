@@ -3,8 +3,12 @@ const downloads=new Map();
 const mediaURLs=new Map();
 window.InvitationMediaSource=value=>mediaURLs.get(new URL(value,document.baseURI).href)||value;
 window.addEventListener('pagehide',()=>{for(const value of mediaURLs.values())URL.revokeObjectURL(value.split('#')[0]);});
-export const staticManifestURL=new URL('./assets/static-room/manifest.json',import.meta.url).href;
-export const staticPickingURL=new URL('./assets/static-room/picking-v2.json',import.meta.url).href;
+// Carry the release through the manifest and every baked image. Reusing an
+// unversioned image URL can mix a cached old room with a newly downloaded script.
+const roomVersion=new URL(import.meta.url).searchParams.get('v')||'room-artwork-20261106-2';
+function versionedURL(value,base){const url=new URL(value,base);url.searchParams.set('v',roomVersion);return url.href;}
+export const staticManifestURL=versionedURL('./assets/static-room/manifest.json',import.meta.url);
+export const staticPickingURL=versionedURL('./assets/static-room/picking-v2.json',import.meta.url);
 export function downloadRoomFile(url,{retry=false}={}){
  url=new URL(url,document.baseURI).href;
  if(retry)downloads.delete(url);
@@ -18,7 +22,7 @@ export function preloadStaticRoom({retry=false}={}){
   const [layout,picking]=await Promise.all([staticManifestURL,staticPickingURL].map(async value=>JSON.parse(new TextDecoder().decode(await downloadRoomFile(value)))));
   if(picking.schema!==2)throw Error('点击区域版本不匹配，请刷新页面');
   const manifest={...layout,hitMap:picking.mask,hitIds:picking.colors.map(c=>c.id),picking};
-  const url=value=>new URL(value,staticManifestURL).href;
+  const url=value=>versionedURL(value,staticManifestURL);
   await Promise.all([manifest.background,manifest.hitMap,manifest.windchime,...Object.values(picking.patches).map(p=>p.url)].map(value=>downloadRoomFile(url(value))));
   return {manifest,url};
  })();
