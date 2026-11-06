@@ -34,3 +34,18 @@ export async function applyFramedPhoto(root){
   }
   return {photoSlot:'Photo_Slot',image:'wedding-photo',crop:'square / both faces retained'};
 }
+
+// Replace only the outward-facing print; keep the original board edges and back.
+export async function applyWindowArtwork(room){
+ let board;room.traverse(object=>{if(object.isMesh&&/^painting_/i.test(object.name))board=object;});
+ if(!board?.isMesh)throw Error('未找到窗边画板');
+ const geometry=board.geometry.clone(),position=geometry.attributes.position,normal=geometry.attributes.normal,uv=geometry.attributes.uv;
+ const material=board.material.clone(),map=await imageTexture('window-board-art');
+ material.name='Window Board · Dancing Figures';material.map=map;material.emissiveMap=map;material.toneMapped=false;
+ geometry.clearGroups();
+ for(let i=0;i<position.count;i++)if(normal.getY(i)<-.99)uv.setXY(i,(position.getX(i)+1)/2,(1-position.getZ(i))/2);
+ const count=geometry.index?.count??position.count;
+ for(let i=0;i<count;i+=3){const vertex=geometry.index?geometry.index.getX(i):i;geometry.addGroup(i,3,normal.getY(vertex)<-.99?1:0);}
+ uv.needsUpdate=true;board.geometry=geometry;board.material=[board.material,material];
+ return {board:board.name,image:'window-board-art',fit:'contain / upright / uncropped'};
+}

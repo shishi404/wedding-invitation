@@ -24,7 +24,7 @@ export function preloadStaticRoom({retry=false}={}){
  })();
  return first;
 }
-export function backgroundRoomDownloads(urls,onProgress=()=>{}){
+export function backgroundRoomDownloads(urls,onProgress=()=>{},{strict=false}={}){
  const pending=[...new Set(urls)],total=pending.length;let done=0;
- return Promise.all([0,1].map(async()=>{while(pending.length){const url=pending.shift();try{const data=await downloadRoomFile(url),absolute=new URL(url,document.baseURI).href;if(/\.(?:ogg|webp)(?:\?|$)/.test(absolute)&&!mediaURLs.has(absolute)){const type=absolute.includes('.ogg')?'audio/ogg':'image/webp';mediaURLs.set(absolute,URL.createObjectURL(new Blob([data],{type}))+'#'+new URL(absolute).pathname.split('/').pop());}}catch{}onProgress(++done,total);}}));
+ return Promise.all([0,1].map(async()=>{while(pending.length){const url=pending.shift();try{const data=await downloadRoomFile(url),absolute=new URL(url,document.baseURI).href;if(/\.(?:ogg|wav|mp3|webp)(?:\?|$)/.test(absolute)&&!mediaURLs.has(absolute)){const extension=new URL(absolute).pathname.split('.').pop(),type={ogg:'audio/ogg',wav:'audio/wav',mp3:'audio/mpeg',webp:'image/webp'}[extension];mediaURLs.set(absolute,URL.createObjectURL(new Blob([data],{type}))+'#'+new URL(absolute).pathname.split('/').pop());}}catch(error){if(strict)throw error;}onProgress(++done,total);}}));
 }

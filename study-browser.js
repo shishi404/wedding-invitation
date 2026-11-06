@@ -39,6 +39,17 @@ const letterOpenerDescription='是shishi最爱玩的游戏里面的道具，能�
 let state=initialState(), currentObject=null, activeCheck=null, diceReady=false, diceTimer=null, resultTimer=null, sequence=0, opening=false,boxOpening=false;
 let notebookOpening=false,notebookRewardPending=null;
 let forcedBoxPending=null;
+const rollCounts={critical:0,fumble:0};
+let dicePreparation;
+window.InvitationDice={prepare:()=>{
+  if(diceReady)return Promise.resolve();
+  if(!dicePreparation)dicePreparation=new Promise((resolve,reject)=>{
+    const done=()=>{clearTimeout(timeout);window.removeEventListener('study-dice-ready',done);resolve();};
+    const timeout=setTimeout(()=>{window.removeEventListener('study-dice-ready',done);dicePreparation=null;frame.removeAttribute('srcdoc');reject(Error('骰子未能准备好，请重试。'));},60000);
+    window.addEventListener('study-dice-ready',done);prepareDice();
+  });
+  return dicePreparation;
+}};
 const interactionBusy=()=>opening||boxOpening||notebookOpening;
 const outcomeNames={critical:'大成功',success:'成功',failure:'失败',fumble:'大失败'};
 const announce=text=>{$('#game-status').textContent=text;};
@@ -309,7 +320,9 @@ function openEnvelope(){
   showObject('信封里的答案',state.knife?'拆信刀应该可以小心的取下火漆了，划开封口。答案，近在眼前。':'封口粘得很牢。你可以直接撕开，肯定会损坏这个火漆，也许有更合适的工具。','envelope',actions);
 }
 function showOpenedEnvelope(withKnife){
-  showObject('原来，是一场喜事',withKnife?'你完美通关，保留了完整的火漆，信用评级+1。\n\n划开封口，你看到了一张温暖的请柬。\n“关于往后的故事，我们想邀请你，一起见证。”':'你沿着封口撕开一道小口，看到了里面完好的请柬。\n“关于往后的故事，我们想邀请你，一起见证。”','invitation',[{label:'阅读婚礼请柬',run:readInvitation}]);
+  const stats=[rollCounts.critical?`触发 ${rollCounts.critical} 次大成功`:'',rollCounts.fumble?`触发 ${rollCounts.fumble} 次大失败`:''].filter(Boolean).join('，');
+  const ending=withKnife?'你达成了完美结局，截图私发给新人可以获得神秘礼品！\n\n划开封口，你看到了一张温暖的请柬。\n“关于往后的故事，我们想邀请你，一起见证。”':'你沿着封口撕开一道小口，看到了里面完好的请柬。\n“关于往后的故事，我们想邀请你，一起见证。”';
+  showObject('原来，是一场喜事',ending+(stats?'\n\n'+stats+'。':''),'invitation',[{label:'阅读婚礼请柬',run:readInvitation}]);
 }
 async function readInvitation(){
   if(interactionBusy())return;opening=true;interaction.setAttribute('aria-busy','true');
@@ -349,6 +362,7 @@ function resolveRoll(value){
   clearTimeout(diceTimer);
   const result=evaluateRoll(value,state.attributes[activeCheck.attribute],activeCheck.difficulty);
   activeCheck.result=result;
+  if(result.kind in rollCounts)rollCounts[result.kind]++;
   window.InvitationStudySounds?.play(result.passed?'check-success':'check-failure');
   $('#check-verdict').textContent=`${String(value).padStart(2,'0')} · ${outcomeNames[result.kind]}`;
   $('#check-title').textContent=outcomeNames[result.kind];
@@ -384,9 +398,9 @@ $('#check-roll').onclick=()=>{
   sendRoll();
   diceTimer=setTimeout(()=>{if(activeCheck?.started&&!activeCheck.result){$('#check-context').textContent='骰子画面暂时不可用，已完成同样的 D100 随机检定。';resolveRoll(randomD100());}},16000);
 };
-window.addEventListener('message',event=>{if(event.source!==frame.contentWindow||event.origin!==(location.protocol==='file:'?'null':location.origin))return;const msg=event.data;if(msg?.type==='dice-ready'){diceReady=true;frame.dataset.diceState=msg.rendererAvailable===false?'fallback':'ready';$('#check-dice-area').classList.toggle('models-ready',msg.rendererAvailable!==false);$('#check-dice-area').classList.toggle('numeric-fallback',msg.rendererAvailable===false);sendRoll();}else if(msg?.type==='dice-result'&&msg.id===activeCheck?.id&&Number.isInteger(msg.total)&&msg.total>=1&&msg.total<=100)resolveRoll(msg.total);});
+window.addEventListener('message',event=>{if(event.source!==frame.contentWindow||event.origin!==(location.protocol==='file:'?'null':location.origin))return;const msg=event.data;if(msg?.type==='dice-ready'){diceReady=true;window.dispatchEvent(new Event('study-dice-ready'));frame.dataset.diceState=msg.rendererAvailable===false?'fallback':'ready';$('#check-dice-area').classList.toggle('models-ready',msg.rendererAvailable!==false);$('#check-dice-area').classList.toggle('numeric-fallback',msg.rendererAvailable===false);sendRoll();}else if(msg?.type==='dice-result'&&msg.id===activeCheck?.id&&Number.isInteger(msg.total)&&msg.total>=1&&msg.total<=100)resolveRoll(msg.total);});
 for(const dialog of [interaction,choose,checkDialog,gain]){dialog.setAttribute('closedby','none');dialog.addEventListener('cancel',e=>e.preventDefault());}
-$('#start-exploration').onclick=()=>{if(entry.hidden)return;entry.hidden=true;$('#study').hidden=false;if(window.InvitationLocalPreviewRequired){$('#hotspots').inert=true;return;}$('#hotspots').inert=false;refresh();if(window.InvitationTerminal)window.InvitationTerminal.intro().then(prepareDice);else prepareDice();window.dispatchEvent(new Event('study-enter'));};
+$('#start-exploration').onclick=()=>{if(entry.hidden)return;entry.hidden=true;$('#study').hidden=false;if(window.InvitationLocalPreviewRequired){$('#hotspots').inert=true;return;}$('#hotspots').inert=false;refresh();window.InvitationDice.prepare().catch(()=>{});window.dispatchEvent(new Event('study-enter'));};
 $('#study-direct-invitation').onclick=()=>window.InvitationAudio?.leaveStudy();
 function finishSelection(){gain.close();$('#hotspots').inert=false;($('.static-room-stage')||$('#world canvas')||$('[data-object="note"]')).focus({preventScroll:true});}
 $('#gain-continue').onclick=finishSelection;

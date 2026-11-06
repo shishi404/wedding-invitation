@@ -358,10 +358,10 @@
     {
       "id": "little-prince-pendant",
       "point": [
-        0.3334375,
-        0.6396875
+        0.3321875,
+        0.6390625
       ],
-      "regression": "Former antialiased ID decoded this pendant pixel as the notebook"
+      "regression": "Pendant silhouette edge, previously vulnerable to antialiased ID colors"
     }
   ],
   "patches": {

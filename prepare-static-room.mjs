@@ -10,9 +10,10 @@ const server=createPreviewServer();await new Promise(r=>server.listen(0,'127.0.0
 const browser=await chromium.launch({executablePath:'C:/Program Files/Google/Chrome/Application/chrome.exe',headless:true,args:['--enable-unsafe-swiftshader','--autoplay-policy=no-user-gesture-required']});
 const bytes=data=>Buffer.from(data.split(',')[1],'base64');
 try{
- const p=await browser.newPage({viewport:{width:1600,height:900},reducedMotion:'reduce'});p.on('pageerror',e=>console.error(e.message));
+ const p=await browser.newPage({viewport:{width:1600,height:900},reducedMotion:'reduce'});p.on('pageerror',e=>console.error(e.message));p.on('console',m=>{if(m.type()==='error')console.error(m.text());});
  await p.goto(`http://127.0.0.1:${server.address().port}/?bake-room=1`);await p.locator('#start-exploration').click();
- await p.waitForFunction(()=>!!window.LoftBake,null,{timeout:180000});
+ await p.waitForFunction(()=>!!window.LoftBake||document.querySelector('#world').dataset.sceneLoaded==='error',null,{timeout:180000});
+ if(!await p.evaluate(()=>!!window.LoftBake))throw Error(await p.locator('#scene-loading-text').textContent());
  const metadata=await p.evaluate(async()=>{
   const THREE=await import('./vendor/three.module.js'),b=window.LoftBake;b.stop();
   b.renderer.setPixelRatio(1);b.renderer.setSize(3200,3200,false);b.camera.aspect=1;b.camera.fov=THREE.MathUtils.radToDeg(2*Math.atan(Math.tan(THREE.MathUtils.degToRad(49)/2)*16/9));b.camera.updateProjectionMatrix();b.camera.projectionMatrix.elements[8]=b.camera.projectionMatrix.elements[9]=0;b.camera.projectionMatrixInverse.copy(b.camera.projectionMatrix).invert();b.scene.updateMatrixWorld(true);b.camera.updateMatrixWorld(true);
@@ -53,7 +54,7 @@ try{
   await patch(`notebook-${result}`,()=>window.LoftBake.capture());
  }
  // Picking is generated in a separate, un-antialiased renderer after this artwork pass.
- metadata.layers=layers;metadata.background='./room.webp';metadata.picking='./picking-v2.json';metadata.windchime='./windchime.glb';
+ metadata.layers=layers;metadata.background='./room.webp';metadata.surround='./room-surround.webp';metadata.picking='./picking-v2.json';metadata.windchime='./windchime.glb';
  await writeFile(`${dir}/manifest.json`,JSON.stringify(metadata,null,2));
  // Compress the full desktop windchime without simplifying geometry or animation.
  const {NodeIO}=await import('./output/loft-viewer/mobile-tools/node_modules/@gltf-transform/core/dist/index.js');

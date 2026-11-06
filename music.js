@@ -203,6 +203,7 @@
   });
   window.InvitationAudio = {
     prepareBackground,
+    preloadSources:()=>[...new Set([source,...recordSources,...bellSources,...diceSources,musicBoxWindingSource,musicBoxMusicSource].filter(Boolean))],
     pauseForMedia(){
       const hold={background:enabled&&!audio.paused&&!audio.ended&&!recordBroken,musicBox:musicBoxPhase!=='idle'&&musicBox&&!musicBox.paused};
       mediaPause=hold;++request;retryAutoplay=false;enabled=false;resumeBackground=false;

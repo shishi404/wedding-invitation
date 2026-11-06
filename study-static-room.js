@@ -97,25 +97,40 @@ function installView(){
  reset.textContent='还原画面';reset.onclick=()=>view.reset();
  stage.addEventListener('keydown',e=>view.key(e));stage.addEventListener('pointermove',e=>{if(e.pointerType==='mouse')stage.style.cursor=!blocked()&&hit(e)?'pointer':'default';});size();
 }
+const interactionURLs=()=>[...new Set([...catalog.tableProps.map(a=>a.url),catalog.envelope.url,...Object.values(extras)])];
+async function prepareEntry(token){
+ const media=[...(window.InvitationAudio?.preloadSources()||[]),'assets/wedding-invitation-mobile.webp'];
+ await Promise.all([
+  backgroundRoomDownloads([...interactionURLs(),...media],(done,total)=>{if(token===generation){world.dataset.startupLoaded=done;world.dataset.startupTotal=total;}},{strict:true}),
+  window.InvitationAudio?.prepareBackground(),window.InvitationStudySounds?.prepareCampfire(),window.InvitationStudySounds?.prepareEffects(),
+  window.InvitationDice?.prepare(),window.InvitationInspection.prepareHandheld()
+ ]);
+ world.dataset.handheldMediaReady='true';world.dataset.diceReady='true';
+}
+async function prepareLayers(){
+ await Promise.all(Object.entries(manifest.layers).map(async([key,rect])=>{
+  const image=await imageFor(url(rect.url));image.hidden=true;image.dataset.stateLayer=key;layerImages[key]=addLayer(image,rect);
+ }));stage.append(renderer.domElement);
+}
 async function background(token){
  world.dataset.backgroundState='loading';
- // State images precede large inspection models so visible changes are ready early.
- const layers=Promise.all(Object.entries(manifest.layers).map(async([key,rect])=>{try{const image=await imageFor(url(rect.url));if(token!==generation)return;image.hidden=true;image.dataset.stateLayer=key;layerImages[key]=addLayer(image,rect);stage.append(renderer.domElement);sync();}catch(e){console.warn('状态图片暂未就绪',key,e);}}));
- const config=window.invitationData||{},laterMedia=[...(config.recordPlaylist||[]),config.musicBoxWinding,config.musicBoxMusic,'assets/dice1.ogg','assets/dice2.ogg',...Array.from({length:12},(_,i)=>`assets/windchime-${String(i+1).padStart(2,'0')}.ogg`),'assets/wedding-invitation-mobile.webp'].filter(value=>value&&value!==(config.studyMusic||config.music));
- const models=backgroundRoomDownloads([...catalog.tableProps.map(a=>a.url),catalog.envelope.url,...Object.values(extras),...laterMedia],(done,total)=>{if(token===generation){world.dataset.backgroundLoaded=done;world.dataset.backgroundTotal=total;}});
- const media=window.InvitationInspection.prepareHandheld().then(()=>{if(token===generation)world.dataset.handheldMediaReady='true';}).catch(()=>{});
- const sounds=window.InvitationStudySounds?.prepareEffects();
- await Promise.allSettled([layers,models,media,sounds]);if(token===generation)world.dataset.backgroundState='complete';
+ const pending=interactionURLs();let done=0;const total=pending.length;
+ // Parse downloaded animation clips in small batches; user inspection shares these promises.
+ try{
+  await Promise.all([0,1].map(async()=>{while(pending.length){await modelAt(pending.shift());if(token!==generation)return;world.dataset.backgroundLoaded=++done;world.dataset.backgroundTotal=total;await new Promise(resolve=>setTimeout(resolve,0));}}));
+  if(token===generation)world.dataset.backgroundState='complete';
+ }catch(error){if(token===generation)world.dataset.backgroundState='error';console.warn('互动模型预载失败，可在互动时重试',error);}
 }
 async function boot(){
  if(ready||booting)return;const retrying=world.dataset.sceneLoaded==='error';booting=true;const token=++generation;loading.hidden=false;retry.hidden=true;hotspots.inert=true;world.dataset.sceneLoaded='loading';window.InvitationTerminal?.begin();
  try{
-  const audio=Promise.all([window.InvitationAudio?.prepareBackground(),window.InvitationStudySounds?.prepareCampfire()]);audio.catch(()=>{});
+  const startup=prepareEntry(token);startup.catch(()=>{});
   const first=preloadStaticRoom({retry:retrying});first.catch(()=>{});await window.InvitationTerminal?.intro();
   loadingText.textContent='正在展开书房…';({manifest,url}=await first);window.InvitationTerminal?.progress(35);
   stop();view?.destroy();stage?.remove();renderer?.dispose();layerImages={};
   stage=document.createElement('div');stage.className='static-room-stage';stage.tabIndex=0;stage.setAttribute('aria-label','书房。点击物品调查，双指或滚轮缩放，Home 键还原画面。');world.prepend(stage);
   const [backgroundImage,hitImage,windModel]=await Promise.all([imageFor(url(manifest.background)),imageFor(url(manifest.hitMap)),modelAt(url(manifest.windchime))]);
+  const surround=addLayer(await imageFor(url(manifest.surround)),{x:0,y:-1,width:1,height:3});surround.classList.add('static-room-surround');
   addLayer(backgroundImage);const mask=document.createElement('canvas');mask.width=hitWidth=hitImage.naturalWidth;mask.height=hitHeight=hitImage.naturalHeight;const ctx=mask.getContext('2d',{willReadFrequently:true});ctx.imageSmoothingEnabled=false;ctx.drawImage(hitImage,0,0);baseHitPixels=hitPixels=ctx.getImageData(0,0,mask.width,mask.height).data;decodeHit=createPickingDecoder(manifest.picking.colors);pickingState='';pickingPatches={};
   await Promise.all(Object.entries(manifest.picking.patches).map(async([key,rect])=>{const image=await imageFor(url(rect.url)),canvas=document.createElement('canvas');canvas.width=image.naturalWidth;canvas.height=image.naturalHeight;const context=canvas.getContext('2d',{willReadFrequently:true});context.imageSmoothingEnabled=false;context.drawImage(image,0,0);pickingPatches[key]={...rect,pixels:context.getImageData(0,0,canvas.width,canvas.height).data};}));
   renderer=new THREE.WebGLRenderer({alpha:true,antialias:true});renderer.outputColorSpace=THREE.SRGBColorSpace;renderer.setPixelRatio(1);renderer.setSize(1600,Math.round(1600/manifest.camera.aspect),false);renderer.domElement.className='static-room-dynamics';stage.append(renderer.domElement);
@@ -131,7 +146,8 @@ async function boot(){
   windchime.traverse(o=>{if(o.isMesh)for(const m of Array.isArray(o.material)?o.material:[o.material])applyTabletopMaterial(m,renderer,{enabled:true,strength:1,yaw:deskYaw,reflection:.38});});
   breeze=createWindchimeBreeze(windchime,{enabled:()=>!matchMedia('(prefers-reduced-motion:reduce)').matches});
   const fireplace=transformGroup(manifest.fireplaceMatrix);scene.add(fireplace);const anchor=transformGroup(manifest.flameAnchor);scene.add(anchor);const wood={visible:true};flame=createFlame(anchor,{root:fireplace,getLayout:()=>({gap:manifest.fireplaceGap})},wood);flame.apply(manifest.flame);flame.update(0);
-  window.InvitationTerminal?.progress(85);loadingText.textContent='正在准备音乐与篝火声…';await audio;world.dataset.roomAudioReady='true';
+  await prepareLayers();
+  window.InvitationTerminal?.progress(85);loadingText.textContent='正在准备音乐、音效、动画与骰子…';await startup;world.dataset.roomAudioReady='true';
   scene.updateMatrixWorld(true);await renderer.compileAsync(scene,camera);renderer.render(scene,camera);world.dataset.staticRoomReady='true';world.dataset.windchimeReady='true';world.dataset.flameReady='true';
   installView();sync();await window.InvitationTerminal?.complete();ready=true;loading.hidden=true;hotspots.inert=false;hotspots.classList.remove('scene-fallback');world.classList.add('ready');world.dataset.sceneLoaded='true';world.dataset.sceneMode='static-hybrid';world.dataset.sceneProfile=profile;world.dataset.clickMode='image-mask';world.dataset.itemsLoaded=manifest.hitIds.length;world.dataset.layoutSource='assets/static-room/manifest.json';
   window.dispatchEvent(new Event('study-room-enter'));window.dispatchEvent(new Event('study-scene-ready'));sync();request();

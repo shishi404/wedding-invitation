@@ -74,7 +74,7 @@
       }else{
         if(!slot.media){slot.media=document.createElement('audio');slot.media.preload='none';slot.media.id=`study-effect-${channel}`;slot.media.volume=.65;document.body.append(slot.media);}
         slot.media.onended=()=>finish(token===slot.token);slot.media.onerror=()=>finish(false);
-        slot.media.src=url;slot.media.currentTime=0;await slot.media.play();
+        slot.media.src=window.InvitationMediaSource?.(url)||url;slot.media.currentTime=0;await slot.media.play();
         if(token!==slot.token){if(slot.stopped)slot.media.pause();finish(false);return false;}
       }
       notify(name,url);return waitForEnd?ended:true;
@@ -97,7 +97,11 @@
     if(effectsPreparation)return effectsPreparation;
     const pending=Object.keys(definitions);
     // Decode only short cues, two at a time. Keep long ambience/music streamed.
-    effectsPreparation=Promise.all([0,1].map(async()=>{while(pending.length)await prepare(pending.shift());}));
+    effectsPreparation=Promise.all([0,1].map(async()=>{while(pending.length){
+      const name=pending.shift(),definition=definitions[name],ctx=audioContext();
+      const choices=Array.isArray(definition[0])?definition[0]:[definition[0]];
+      await Promise.all(choices.map(async stem=>{const url=src(stem);if(ctx)await bufferFor(url,ctx);else {const response=await fetch(url);if(!response.ok)throw Error('音效下载失败');await response.arrayBuffer();}}));
+    }})).catch(error=>{effectsPreparation=null;throw error;});
     return effectsPreparation;
   }
   function playUI(record=false){return play(record?'ui-record':'ui-click');}

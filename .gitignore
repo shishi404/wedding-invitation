@@ -55,7 +55,6 @@
 !/assets/static-room/box-open-broken.webp
 !/assets/static-room/box-open.webp
 !/assets/static-room/hits-74047c06a7ab.png
-!/assets/static-room/hits.png
 !/assets/static-room/manifest.json
 !/assets/static-room/notebook-critical.webp
 !/assets/static-room/notebook-failure.webp
@@ -67,6 +66,7 @@
 !/assets/static-room/pick-without-pendant-37b25c2ab4bf.png
 !/assets/static-room/pick-without-windchime-e9e01972c66b.png
 !/assets/static-room/picking-v2.json
+!/assets/static-room/room-surround.webp
 !/assets/static-room/room.webp
 !/assets/static-room/windchime.glb
 !/assets/static-room/without-musicbox.webp
@@ -91,6 +91,7 @@
 !/assets/windchime-10.ogg
 !/assets/windchime-11.ogg
 !/assets/windchime-12.ogg
+!/assets/window-board-art.jpg
 !/audit-runtime.mjs
 !/build-browser.mjs
 !/build-static-site.mjs
@@ -183,6 +184,7 @@
 !/output/loft-viewer/sticky-note-web.glb
 !/package.json
 !/prepare-http-assets.mjs
+!/prepare-room-surround.mjs
 !/prepare-static-picking.mjs
 !/prepare-static-room.mjs
 !/preview.mjs

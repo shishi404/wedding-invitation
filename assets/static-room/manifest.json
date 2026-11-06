@@ -164,17 +164,17 @@
       "right": 0.6848591057534954,
       "bottom": 0.8152572216336653
     },
-    "square-wood-photo-frame": {
-      "x": 0.17549787201449257,
-      "y": 0.5180594538761292,
-      "right": 0.2829908394385342,
-      "bottom": 0.6102190054507518
-    },
     "single-sticky-note": {
       "x": 0.276471506280416,
       "y": 0.6785946269040382,
       "right": 0.43375620386607183,
       "bottom": 0.7819845110132115
+    },
+    "square-wood-photo-frame": {
+      "x": 0.17549787201449257,
+      "y": 0.5180594538761292,
+      "right": 0.2829908394385342,
+      "bottom": 0.6102190054507518
     }
   },
   "flame": {
@@ -182,18 +182,6 @@
     "intensity": 1.2,
     "light": 1
   },
-  "hitIds": [
-    "coffee-cup",
-    "windchime",
-    "alchemical-book",
-    "octagonal-music-box",
-    "gramophone",
-    "little-prince-pendant",
-    "white-3ds-xl",
-    "painted-lacquer-jewelry-box",
-    "square-wood-photo-frame",
-    "single-sticky-note"
-  ],
   "layers": {
     "without-musicbox": {
       "url": "./without-musicbox.webp",
@@ -241,7 +229,7 @@
       "url": "./box-empty-broken.webp",
       "x": 0.4190625,
       "y": 0.508125,
-      "width": 0.4859375,
+      "width": 0.224375,
       "height": 0.216875
     },
     "notebook-critical": {
@@ -274,7 +262,7 @@
     }
   },
   "background": "./room.webp",
-  "hitMap": "./hits.png",
-  "windchime": "./windchime.glb",
-  "hitMapSize": 1600
+  "surround": "./room-surround.webp",
+  "picking": "./picking-v2.json",
+  "windchime": "./windchime.glb"
 }

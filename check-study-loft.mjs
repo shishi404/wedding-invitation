@@ -60,9 +60,9 @@ const getGameElement=selector=>{
 };
 const gameContext=vm.createContext({
   location:{protocol:'http:',origin:'http://study.test'},
-  window:{addEventListener(type,fn){gameListeners[type]=fn;},dispatchEvent(event){gameEvents.push(event);},InvitationAudio:{startBackground(){starts++;},playBell(){bellStarts++;}},InvitationStudySounds:{play(name){effectLog.push(name);},prepare(){return Promise.resolve(true);}}},
+  window:{addEventListener(type,fn){gameListeners[type]=fn;},removeEventListener(type){delete gameListeners[type];},dispatchEvent(event){gameEvents.push(event);gameListeners[event.type]?.(event);},InvitationAudio:{startBackground(){starts++;},playBell(){bellStarts++;}},InvitationStudySounds:{play(name){effectLog.push(name);},prepare(){return Promise.resolve(true);}}},
   document:{querySelector:getGameElement,querySelectorAll:s=>s==='[data-object]'?gameButtons:keepsakeButtons,createElement:gameElement,createTextNode:text=>({textContent:text})},
-  Event:class{},CustomEvent:class{constructor(type,options){this.type=type;this.detail=options.detail;}},setTimeout,clearTimeout,
+  Event:class{constructor(type){this.type=type;}},CustomEvent:class{constructor(type,options){this.type=type;this.detail=options.detail;}},setTimeout,clearTimeout,
 });
 const rules=(await readFile('study-rules.js','utf8')).replace(/^export /gm,'');
 vm.runInContext(rules+'\n'+game.replace(/^import[^\n]+\n/,''),gameContext);
@@ -70,6 +70,8 @@ getGameElement('#start-exploration').onclick();
 assert.equal(starts,0,'Starting the loader must not start room music');assert.equal(getGameElement('#choose-dialog').open,false);
 assert.ok(getGameElement('#dice-frame').srcdoc.startsWith('<!doctype html>'),'Embedded dice must start loading before the first check');
 assert.equal(getGameElement('#dice-frame').dataset.diceState,'loading');
+gameListeners.message({source:undefined,origin:'http://study.test',data:{type:'dice-ready'}});
+assert.equal(getGameElement('#dice-frame').dataset.diceState,'ready');
 for(const object of ['notebook','record','drawer','photo','musicbox','windchime','pendant','teacup','handheld']){
   gameButtons.find(b=>b.dataset.object===object).onclick();
   assert.equal(getGameElement('#interaction-dialog').open,true,`Cannot inspect ${object} without keepsake`);
@@ -249,3 +251,15 @@ assert.equal(gameContext.location.href,undefined,'Do not navigate while the lett
 finishReading(true);await new Promise(resolve=>setTimeout(resolve,0));
 assert.equal(gameContext.location.href,undefined,'Reading after completion stays in the room');
 console.log('3D game integration passed: optional note, model inspection, exclusive box animation, immediate key consumption, delayed envelope pickup, reopening and failed-animation recovery.');
+
+// Both endings summarize only extreme outcomes, counted once when a roll resolves.
+for(const withKnife of [false,true]){
+ vm.runInContext('rollCounts.critical=0;rollCounts.fumble=0;showOpenedEnvelope('+withKnife+');',gameContext);
+ assert.ok(!/触发|次大成功|次大失败/.test(getGameElement('#interaction-copy').textContent));
+ vm.runInContext("activeCheck={started:true,attribute:'strength',difficulty:'normal'};resolveRoll(1);resolveRoll(1);clearTimeout(resultTimer);activeCheck={started:true,attribute:'will',difficulty:'normal'};resolveRoll(100);clearTimeout(resultTimer);showOpenedEnvelope("+withKnife+");",gameContext);
+ assert.ok(getGameElement('#interaction-copy').textContent.includes('触发 1 次大成功，触发 1 次大失败'));
+ vm.runInContext('rollCounts.critical=0;showOpenedEnvelope('+withKnife+');',gameContext);
+ assert.ok(!getGameElement('#interaction-copy').textContent.includes('次大成功'));
+ assert.ok(getGameElement('#interaction-copy').textContent.includes('触发 1 次大失败'));
+}
+console.log('Both endings passed: zero counts omitted, critical/fumble rolls counted once.');

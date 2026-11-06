@@ -1,4 +1,5 @@
 import * as THREE from 'three';
+import {applyWindowArtwork} from './loft-artwork.js';
 import {ROOM_FINISH_WOOD_ASSET} from './loft-props-catalog.js';
 
 // A slightly lighter variation of the jewelry box teal, retaining the cloth finish.
@@ -74,5 +75,6 @@ export async function applyRoomFinishes(room,{woodAsset=ROOM_FINISH_WOOD_ASSET}=
   wood.colorSpace=THREE.SRGBColorSpace;wood.wrapS=wood.wrapT=THREE.MirroredRepeatWrapping;
   wood.anisotropy=4;
   for(const object of stairs)object.material=Array.isArray(object.material)?object.material.map(material=>woodStairMaterial(material,wood)):woodStairMaterial(object.material,wood);
+  await applyWindowArtwork(room);
   return {sofaMeshes,stairMeshes:stairs.length,sofaColor:SOFA_TEAL,stairFinish:'light-oak-reference',stairColor:STAIR_OAK,extraTextureBytes:woodAsset.bytes};
 }

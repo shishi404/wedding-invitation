@@ -10,7 +10,7 @@ export async function githubFiles(){
     'study.js','study-rules.js','study-art.js','preview.mjs','http-compression.mjs',
     'audit-runtime.mjs','runtime-delivery.mjs','github-files.mjs',
     'prepare-http-assets.mjs','build-static-site.mjs','check-study.mjs',
-    'check-study-loft.mjs','check-study-sounds.mjs','check-mobile-scene-view.mjs','check-terminal-loading.mjs','check-handheld-media.mjs','check-static-room.mjs','check-static-picking.mjs','prepare-static-room.mjs','prepare-static-picking.mjs','启动书房预览.cmd'])files.add(path);
+    'check-study-loft.mjs','check-study-sounds.mjs','check-mobile-scene-view.mjs','check-terminal-loading.mjs','check-handheld-media.mjs','check-static-room.mjs','check-static-picking.mjs','prepare-static-room.mjs','prepare-room-surround.mjs','prepare-static-picking.mjs','启动书房预览.cmd'])files.add(path);
   const result=[...files].sort();
   const pages=result.filter(path=>path.endsWith('.html'));
   if(pages.join(',')!=='index.html,invitation.html')throw Error('Only the two main entry pages may be published');

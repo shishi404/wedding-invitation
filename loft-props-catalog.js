@@ -12,6 +12,7 @@ export const ROOM_FINISH_WOOD_ASSET={
   "textureBytes": 2097152
 };
 export const ROOM_IMAGE_ASSETS=[
+  {id:"window-board-art",url:"./assets/window-board-art.jpg",bytes:67013,textureBytes:4752288},
   {
     "id": "wedding-photo",
     "url": "./output/loft-viewer/framed-wedding-photo.jpg",
