@@ -291,8 +291,12 @@ function openEnvelope(){
 }
 function showOpenedEnvelope(withKnife){
   const stats=[rollCounts.critical?`触发 ${rollCounts.critical} 次大成功`:'',rollCounts.fumble?`触发 ${rollCounts.fumble} 次大失败`:''].filter(Boolean).join('，');
-  const ending=withKnife?'你达成了完美结局，截图私发给新人可以获得神秘礼品！\n\n划开封口，你看到了一张温暖的请柬。\n“关于往后的故事，我们想邀请你，一起见证。”':'你沿着封口撕开一道小口，看到了里面完好的请柬。\n“关于往后的故事，我们想邀请你，一起见证。”';
+  const ending=withKnife?'你达成了：\n完美结局\n截图私发给新人可以获得神秘礼品！':'你沿着封口撕开一道小口，看到了里面完好的请柬。\n“关于往后的故事，我们想邀请你，一起见证。”';
   showObject('原来，是一场喜事',ending+(stats?'\n\n'+stats+'。':''),'invitation',[{label:'阅读婚礼请柬',run:readInvitation}]);
+  if(withKnife){
+    const title=document.createElement('strong');title.className='perfect-ending-title';title.textContent='完美结局';
+    $('#interaction-copy').replaceChildren(document.createTextNode('你达成了：\n'),title,document.createTextNode('\n截图私发给新人可以获得神秘礼品！'+(stats?'\n\n'+stats+'。':'')));
+  }
 }
 async function readInvitation(){
   if(interactionBusy())return;opening=true;interaction.setAttribute('aria-busy','true');

@@ -43,7 +43,7 @@ try{
   }
   const staticRequests=requests.filter(value=>new URL(value).pathname.includes('/assets/static-room/'));
   assert.ok(staticRequests.length>0);
-  assert.ok(staticRequests.every(value=>new URL(value).searchParams.get('v')==='room-artwork-20261106-2'),'Every baked room asset must carry the same release to bypass old browser caches');
+  assert.ok(staticRequests.every(value=>new URL(value).searchParams.get('v')==='lit-art-ending-20261106-3'),'Every baked room asset must carry the same release to bypass old browser caches');
   const before=requests.length;
 
   // Actual image-mask picking, with screen coordinates transformed with the picture.

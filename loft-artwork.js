@@ -40,8 +40,34 @@ export async function applyWindowArtwork(room){
  let board;room.traverse(object=>{if(object.isMesh&&/^painting_/i.test(object.name))board=object;});
  if(!board?.isMesh)throw Error('未找到窗边画板');
  const geometry=board.geometry.clone(),position=geometry.attributes.position,normal=geometry.attributes.normal,uv=geometry.attributes.uv;
- const material=board.material.clone(),map=await imageTexture('window-board-art');
- material.name='Window Board · Dancing Figures';material.map=map;material.emissiveMap=map;material.toneMapped=false;
+ const map=await imageTexture('window-board-art');
+ // The print is diffuse canvas, with no inherited baked emission. It receives
+ // the same real window key, area lights and shadows as the tabletop props.
+ const material=new THREE.MeshStandardMaterial({name:'Window Board · Lit Canvas',map,roughness:.92,metalness:0,side:THREE.DoubleSide});
+ material.userData.physicalRoomSurface=true;board.receiveShadow=true;
+ // Evaluate the actual window opening as a finite area emitter in this material.
+ // Keeping it local to the canvas preserves illumination already baked into the room.
+ const windowLight={position:{value:new THREE.Vector3()},halfWidth:{value:new THREE.Vector3()},halfHeight:{value:new THREE.Vector3()},color:{value:new THREE.Color(0xfff2df).multiplyScalar(2.5)}};
+ const viewRotation=new THREE.Matrix3();
+ board.onBeforeRender=(_renderer,_scene,camera)=>{
+  viewRotation.setFromMatrix4(camera.matrixWorldInverse);
+  windowLight.position.value.set(-2.92,2.5,-3.2).applyMatrix4(camera.matrixWorldInverse);
+  windowLight.halfWidth.value.set(0,0,1.5).applyMatrix3(viewRotation);
+  windowLight.halfHeight.value.set(0,2.3,0).applyMatrix3(viewRotation);
+ };
+ material.onBeforeCompile=shader=>{
+  Object.assign(shader.uniforms,{canvasWindowPosition:windowLight.position,canvasWindowWidth:windowLight.halfWidth,canvasWindowHeight:windowLight.halfHeight,canvasWindowColor:windowLight.color});
+  shader.fragmentShader='uniform vec3 canvasWindowPosition;\nuniform vec3 canvasWindowWidth;\nuniform vec3 canvasWindowHeight;\nuniform vec3 canvasWindowColor;\n'+shader.fragmentShader.replace('#include <lights_fragment_end>',`
+   #include <lights_fragment_end>
+   #if NUM_RECT_AREA_LIGHTS > 0
+    RectAreaLight canvasWindow;
+    canvasWindow.position=canvasWindowPosition;canvasWindow.halfWidth=canvasWindowWidth;canvasWindow.halfHeight=canvasWindowHeight;canvasWindow.color=canvasWindowColor;
+    RE_Direct_RectArea(canvasWindow,geometryPosition,geometryNormal,geometryViewDir,geometryClearcoatNormal,material,reflectedLight);
+   #endif
+  `);
+ };
+ material.customProgramCacheKey=()=> 'physical-canvas-window-v1';
+
  geometry.clearGroups();
  for(let i=0;i<position.count;i++)if(normal.getY(i)<-.99)uv.setXY(i,(position.getX(i)+1)/2,(1-position.getZ(i))/2);
  const count=geometry.index?.count??position.count;

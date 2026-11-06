@@ -127,3 +127,5 @@ body>dialog .dialog-intro{font-size:16px;line-height:1.9}
 .choose-note,.gain-dialog .dialog-eyebrow{font-size:12px}
 .object-art.record+.inspection-content .dialog-actions .record-music-control{font-size:14px;padding-inline:0}
 @media(max-width:700px){.inspection-content{padding:22px}.inspection-content h2{font-size:25px}}
+
+.interaction-dialog .narrative .perfect-ending-title{display:inline-block;font-size:1.6em;line-height:1.7;letter-spacing:.12em;color:var(--cream-ink,#eeeade)}

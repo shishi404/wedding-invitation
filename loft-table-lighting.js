@@ -54,6 +54,7 @@ export function preserveRoomLighting(root){
   root.traverse(object=>{
     if(!object.material)return;
     for(const material of Array.isArray(object.material)?object.material:[object.material]){
+      if(material.userData.physicalRoomSurface){material.toneMapped=true;continue;}
       material.toneMapped=false;
       if(!material.isMeshStandardMaterial||material.userData.keepBakedLighting)continue;
       const previous=material.onBeforeCompile,previousKey=material.customProgramCacheKey();

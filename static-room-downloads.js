@@ -5,7 +5,7 @@ window.InvitationMediaSource=value=>mediaURLs.get(new URL(value,document.baseURI
 window.addEventListener('pagehide',()=>{for(const value of mediaURLs.values())URL.revokeObjectURL(value.split('#')[0]);});
 // Carry the release through the manifest and every baked image. Reusing an
 // unversioned image URL can mix a cached old room with a newly downloaded script.
-const roomVersion=new URL(import.meta.url).searchParams.get('v')||'room-artwork-20261106-2';
+const roomVersion=new URL(import.meta.url).searchParams.get('v')||'lit-art-ending-20261106-3';
 function versionedURL(value,base){const url=new URL(value,base);url.searchParams.set('v',roomVersion);return url.href;}
 export const staticManifestURL=versionedURL('./assets/static-room/manifest.json',import.meta.url);
 export const staticPickingURL=versionedURL('./assets/static-room/picking-v2.json',import.meta.url);
