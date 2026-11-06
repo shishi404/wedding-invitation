@@ -23,7 +23,7 @@ try{
   await p.addInitScript(()=>{window.firstInspectionPaints=[];window.addEventListener('study-inspect',event=>requestAnimationFrame(()=>window.firstInspectionPaints.push({art:event.detail.art,state:event.detail.host.dataset.modelState})));});
   await p.goto(base);assert.equal(requests.some(u=>u.includes('/static-room/')),false);
   const start=Date.now();await p.locator('#start-exploration').click();
-  await p.waitForFunction(()=>document.querySelector('#scene-loading-text').textContent==='正在准备音乐、音效、动画与骰子…',null,{timeout:90000});assert.equal(await p.locator('#scene-loading').isVisible(),true);assert.notEqual(await p.locator('#world').getAttribute('data-scene-loaded'),'true');
+  await p.waitForFunction(()=>document.querySelector('#world').dataset.startupPhase==='resources',null,{timeout:90000});await p.screenshot({path:`output/static-room/qa/loading-${width}.png`});assert.equal(await p.locator('#scene-loading').isVisible(),true);assert.notEqual(await p.locator('#world').getAttribute('data-scene-loaded'),'true');
   assert.ok(requests.some(u=>u.includes('/static-room/room.webp')));assert.ok(requests.some(u=>u.includes('handheld-memory.mp4')));
   release();await p.waitForTimeout(500);assert.notEqual(await p.locator('#world').getAttribute('data-scene-loaded'),'true');
   releaseModel();await p.waitForTimeout(500);assert.notEqual(await p.locator('#world').getAttribute('data-scene-loaded'),'true');
@@ -45,7 +45,7 @@ try{
   }
   const staticRequests=requests.filter(value=>new URL(value).pathname.includes('/assets/static-room/'));
   assert.ok(staticRequests.length>0);
-  assert.ok(staticRequests.every(value=>new URL(value).searchParams.get('v')==='interaction-ready-20261107-4'),'Every baked room asset must carry the same release to bypass old browser caches');
+  assert.ok(staticRequests.every(value=>new URL(value).searchParams.get('v')==='terraria-preload-20261107-6'),'Every baked room asset must carry the same release to bypass old browser caches');
   const before=requests.length;
 
   // Actual image-mask picking, with screen coordinates transformed with the picture.

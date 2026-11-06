@@ -40,15 +40,17 @@ audio.recordPlaying=true;listeners['record-state']();assert.ok(classes.has('reco
 audio.recordPlaying=false;listeners['record-state']();assert.ok(!classes.has('record-playing'));
 
 // Run actual game handlers: exploring before reading the note never grants a keepsake.
-function gameElement(tagName='div'){return {
+function gameElement(tagName='div'){const element={
   tagName,children:[],listeners:{},attrs:{},
   open:false,hidden:false,inert:false,dataset:{},style:{},textContent:'',
   classList:{toggle(){},add(){},remove(){}},
-  append(...nodes){this.children.push(...nodes);},replaceChildren(...nodes){this.children=nodes;},
+  append(...nodes){this.children.push(...nodes);},replaceChildren(...nodes){this.textContent='';this.children=nodes;},
   setAttribute(name,value){this.attrs[name]=value;},hasAttribute(name){return this.getAttribute(name)!==null;},getAttribute(name){return this.attrs[name]??this[name]??null;},removeAttribute(name){delete this.attrs[name];},addEventListener(type,fn){this.listeners[type]=fn;},
   querySelectorAll(){return this.children.filter(child=>child.tagName==='button');},showModal(){this.open=true;},close(){this.open=false;},
   decode(){return Promise.resolve();},focus(){},
-};}
+};
+let text='';Object.defineProperty(element,'textContent',{get(){return text+this.children.map(child=>child.textContent||'').join('');},set(value){text=value;this.children=[];}});
+Object.defineProperty(element,'childElementCount',{get(){return this.children.filter(child=>child.tagName).length;}});return element;}
 const gameEls=new Map(),gameListeners={},gameEvents=[],effectLog=[];let starts=0,bellStarts=0;
 const gameButtons=Object.values(LOFT_INTERACTIONS).map(object=>Object.assign(gameElement(),{dataset:{object}}));
 const keepsakeButtons=Object.keys(TAKEN_MODELS).map(keepsake=>Object.assign(gameElement(),{dataset:{keepsake}}));
@@ -255,11 +257,11 @@ console.log('3D game integration passed: optional note, model inspection, exclus
 // Both endings summarize only extreme outcomes, counted once when a roll resolves.
 for(const withKnife of [false,true]){
  vm.runInContext('rollCounts.critical=0;rollCounts.fumble=0;showOpenedEnvelope('+withKnife+');',gameContext);
- assert.ok(!/触发|次大成功|次大失败/.test(getGameElement('#interaction-copy').textContent));
+ assert.ok(!/大成功|大失败/.test(getGameElement('#interaction-copy').textContent));
  vm.runInContext("activeCheck={started:true,attribute:'strength',difficulty:'normal'};resolveRoll(1);resolveRoll(1);clearTimeout(resultTimer);activeCheck={started:true,attribute:'will',difficulty:'normal'};resolveRoll(100);clearTimeout(resultTimer);showOpenedEnvelope("+withKnife+");",gameContext);
- assert.ok(getGameElement('#interaction-copy').textContent.includes('触发 1 次大成功，触发 1 次大失败'));
+ assert.ok(getGameElement('#interaction-copy').textContent.includes('大成功x1大失败x1'));
  vm.runInContext('rollCounts.critical=0;showOpenedEnvelope('+withKnife+');',gameContext);
- assert.ok(!getGameElement('#interaction-copy').textContent.includes('次大成功'));
- assert.ok(getGameElement('#interaction-copy').textContent.includes('触发 1 次大失败'));
+ assert.ok(!getGameElement('#interaction-copy').textContent.includes('大成功x'));
+ assert.ok(getGameElement('#interaction-copy').textContent.includes('大失败x1'));
 }
 console.log('Both endings passed: zero counts omitted, critical/fumble rolls counted once.');

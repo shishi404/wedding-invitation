@@ -322,14 +322,26 @@ function openEnvelope(){
   showObject('信封里的答案',state.knife?'拆信刀应该可以小心的取下火漆了，划开封口。答案，近在眼前。':'封口粘得很牢。你可以直接撕开，肯定会损坏这个火漆，也许有更合适的工具。','envelope',actions);
 }
 function showOpenedEnvelope(withKnife){
-  const stats=[rollCounts.critical?`触发 ${rollCounts.critical} 次大成功`:'',rollCounts.fumble?`触发 ${rollCounts.fumble} 次大失败`:''].filter(Boolean).join('，');
-  const perfectEndingCopy='\n截图私发给新人可以获得神秘礼品！\n\n你完美通关，保留了完整的火漆，信用评级+1。\n\n划开封口，你看到了一张温暖的请柬。\n“关于往后的故事，我们想邀请你，一起见证。”';
-  const ending=withKnife?'你达成了：\n完美结局'+perfectEndingCopy:'你沿着封口撕开一道小口，看到了里面完好的请柬。\n“关于往后的故事，我们想邀请你，一起见证。”';
-  showObject('原来，是一场喜事',ending+(stats?'\n\n'+stats+'。':''),'invitation',[{label:'阅读婚礼请柬',run:readInvitation}]);
+  const story=withKnife?'划开封口，你看到了一张温暖的请柬。\n“关于往后的故事，我们想邀请你，一起见证。”':'你沿着封口撕开一道小口，看到了里面完好的请柬。\n“关于往后的故事，我们想邀请你，一起见证。”';
+  showObject('原来，是一场喜事',story,'invitation',[{label:'阅读婚礼请柬',run:readInvitation}]);
+  const summary=document.createElement('span');summary.className='ending-summary';
+  const columns=document.createElement('span');columns.className='ending-columns';
+  const makeLine=(text,className)=>{const line=document.createElement('span');line.className=className;line.textContent=text;return line;};
   if(withKnife){
+    const ending=document.createElement('span');ending.className='ending-achievement';
     const title=document.createElement('strong');title.className='perfect-ending-title';title.textContent='完美结局';
-    $('#interaction-copy').replaceChildren(document.createTextNode('你达成了：\n'),title,document.createTextNode(perfectEndingCopy+(stats?'\n\n'+stats+'。':'')));
+    ending.append(title,makeLine('信用评级+1','ending-credit'));columns.append(ending);
   }
+  if(rollCounts.critical||rollCounts.fumble){
+    const rolls=document.createElement('span');rolls.className='ending-rolls';
+    if(rollCounts.critical)rolls.append(makeLine(`大成功 x ${rollCounts.critical}`,'ending-roll critical'));
+    if(rollCounts.fumble)rolls.append(makeLine(`大失败 x ${rollCounts.fumble}`,'ending-roll fumble'));
+    columns.append(rolls);
+  }
+  const copy=$('#interaction-copy');copy.replaceChildren();
+  if(columns.childElementCount){summary.append(makeLine('你达成了','ending-label'),columns);copy.append(summary);}
+  if(withKnife)copy.append(makeLine('截图私发给新人可以获得神秘礼品！','ending-gift'));
+  copy.append(makeLine(story,'ending-story'));
 }
 async function readInvitation(){
   if(interactionBusy())return;opening=true;interaction.setAttribute('aria-busy','true');

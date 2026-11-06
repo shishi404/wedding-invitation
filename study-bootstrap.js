@@ -14,7 +14,7 @@
     return;
   }
   function loadRoomProgram(){
-    const script=document.createElement('script');script.type='module';script.src=new URLSearchParams(location.search).has('bake-room')?'./study-loft.js?v=handheld-safari-3':'./study-static-room.js?v=interaction-ready-20261107-4';
+    const script=document.createElement('script');script.type='module';script.src=new URLSearchParams(location.search).has('bake-room')?'./study-loft.js?v=handheld-safari-3':'./study-static-room.js?v=terraria-preload-20261107-6';
     script.onerror=()=>startupError('房间程序未能载入，请刷新页面重试。若是本地预览，请重新运行「启动书房预览.cmd」。','重新载入页面',()=>location.reload());
     document.head.append(script);
   }
@@ -22,7 +22,7 @@
   if(window.InvitationTerminal){
     window.addEventListener('study-enter',()=>{
       if(!new URLSearchParams(location.search).has('bake-room')){
-        import('./static-room-downloads.js?v=interaction-ready-20261107-4').then(module=>module.preloadStaticRoom()).catch(()=>{});
+        import('./static-room-downloads.js?v=terraria-preload-20261107-6').then(module=>module.preloadStaticRoom()).catch(()=>{});
         window.InvitationAudio?.prepareBackground().catch(()=>{});
         window.InvitationStudySounds?.prepareCampfire().catch(()=>{});
       }

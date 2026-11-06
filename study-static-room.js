@@ -5,9 +5,9 @@ import {clone} from './vendor/three-addons/utils/SkeletonUtils.js';
 import {assetCatalog} from './loft-asset-profile.js';
 import {inspectionAssetCatalog} from './loft-inspection-assets.js';
 import {sceneAssetProfile} from './loft-startup-downloads.js';
-import {preloadStaticRoom,downloadRoomFile,backgroundRoomDownloads} from './static-room-downloads.js?v=interaction-ready-20261107-4';
+import {preloadStaticRoom,downloadRoomFile,backgroundRoomDownloads} from './static-room-downloads.js?v=terraria-preload-20261107-6';
 import {createPickingDecoder,pickStaticRoom,applyPickingPatches} from './static-room-picking.js';
-import {createInspection} from './study-inspection.js?v=interaction-ready-20261107-4';
+import {createInspection} from './study-inspection.js?v=terraria-preload-20261107-6';
 import {createFlame} from './loft-flame.js';
 import {createWindchimeBreeze} from './loft-windchime-breeze.js';
 import {createTableLighting,applyTabletopMaterial} from './loft-table-lighting.js';
@@ -97,11 +97,19 @@ function installView(){
  reset.textContent='还原画面';reset.onclick=()=>view.reset();
  stage.addEventListener('keydown',e=>view.key(e));stage.addEventListener('pointermove',e=>{if(e.pointerType==='mouse')stage.style.cursor=!blocked()&&hit(e)?'pointer':'default';});size();
 }
+// Preserve the Terraria-style world-generation captions while resources prepare.
+const loadingStages=[[0,'正在添加泥土…'],[15,'正在铺设石块…'],[35,'正在铺设木墙…'],[50,'正在种植苔藓…'],[65,'正在生长树木…'],[80,'正在点亮烛火…'],[90,'正在藏起宝藏…'],[97,'正在唤醒篝火…']];
+let loadingProgress=0;
+function setLoadingProgress(value){
+ loadingProgress=Math.max(loadingProgress,value);
+ loadingText.textContent=loadingStages.filter(([threshold])=>loadingProgress>=threshold).at(-1)[1];
+ window.InvitationTerminal?.progress(loadingProgress);
+}
 const interactionURLs=()=>[...new Set([...catalog.tableProps.map(a=>a.url),catalog.envelope.url,...Object.values(extras)])];
 async function prepareEntry(token){
  const media=[...(window.InvitationAudio?.preloadSources()||[]),'assets/wedding-invitation-mobile.webp'];
  await Promise.all([
-  backgroundRoomDownloads([...interactionURLs(),...media],(done,total)=>{if(token===generation){world.dataset.startupLoaded=done;world.dataset.startupTotal=total;}},{strict:true}),
+  backgroundRoomDownloads([...interactionURLs(),...media],(done,total)=>{if(token===generation){world.dataset.startupLoaded=done;world.dataset.startupTotal=total;if(world.dataset.sceneLoaded==='loading')setLoadingProgress(40+45*done/total);}},{strict:true}),
   window.InvitationAudio?.prepareBackground(),window.InvitationStudySounds?.prepareCampfire(),window.InvitationStudySounds?.prepareEffects(),
   window.InvitationDice?.prepare(),window.InvitationInspection.prepareHandheld()
  ]);
@@ -122,11 +130,11 @@ async function background(token){
  }catch(error){if(token===generation)world.dataset.backgroundState='error';console.warn('互动模型预载失败，可在互动时重试',error);}
 }
 async function boot(){
- if(ready||booting)return;const retrying=world.dataset.sceneLoaded==='error';booting=true;const token=++generation;loading.hidden=false;retry.hidden=true;hotspots.inert=true;world.dataset.sceneLoaded='loading';window.InvitationTerminal?.begin();
+ if(ready||booting)return;const retrying=world.dataset.sceneLoaded==='error';booting=true;const token=++generation;loading.hidden=false;retry.hidden=true;hotspots.inert=true;world.dataset.sceneLoaded='loading';window.InvitationTerminal?.begin();loadingProgress=0;setLoadingProgress(0);
  try{
   const startup=prepareEntry(token);startup.catch(()=>{});
   const first=preloadStaticRoom({retry:retrying});first.catch(()=>{});await window.InvitationTerminal?.intro();
-  loadingText.textContent='正在展开书房…';({manifest,url}=await first);window.InvitationTerminal?.progress(35);
+  ({manifest,url}=await first);setLoadingProgress(35);
   stop();view?.destroy();stage?.remove();renderer?.dispose();layerImages={};
   stage=document.createElement('div');stage.className='static-room-stage';stage.tabIndex=0;stage.setAttribute('aria-label','书房。点击物品调查，双指或滚轮缩放，Home 键还原画面。');world.prepend(stage);
   const [backgroundImage,hitImage,windModel]=await Promise.all([imageFor(url(manifest.background)),imageFor(url(manifest.hitMap)),modelAt(url(manifest.windchime))]);
@@ -147,11 +155,11 @@ async function boot(){
   breeze=createWindchimeBreeze(windchime,{enabled:()=>!matchMedia('(prefers-reduced-motion:reduce)').matches});
   const fireplace=transformGroup(manifest.fireplaceMatrix);scene.add(fireplace);const anchor=transformGroup(manifest.flameAnchor);scene.add(anchor);const wood={visible:true};flame=createFlame(anchor,{root:fireplace,getLayout:()=>({gap:manifest.fireplaceGap})},wood);flame.apply(manifest.flame);flame.update(0);
   await prepareLayers();
-  window.InvitationTerminal?.progress(85);loadingText.textContent='正在准备音乐、音效、动画与骰子…';await startup;world.dataset.roomAudioReady='true';
-  loadingText.textContent='正在预演物品互动…';window.InvitationTerminal?.progress(92);
-  await window.InvitationInspection.prepare();world.dataset.inspectionReady='true';
+  world.dataset.startupPhase='resources';setLoadingProgress(85);await startup;world.dataset.roomAudioReady='true';
+  world.dataset.startupPhase='inspection';setLoadingProgress(92);
+  await window.InvitationInspection.prepare();world.dataset.inspectionReady='true';setLoadingProgress(97);
   scene.updateMatrixWorld(true);await renderer.compileAsync(scene,camera);renderer.render(scene,camera);world.dataset.staticRoomReady='true';world.dataset.windchimeReady='true';world.dataset.flameReady='true';
-  installView();sync();await window.InvitationTerminal?.complete();ready=true;loading.hidden=true;hotspots.inert=false;hotspots.classList.remove('scene-fallback');world.classList.add('ready');world.dataset.sceneLoaded='true';world.dataset.sceneMode='static-hybrid';world.dataset.sceneProfile=profile;world.dataset.clickMode='image-mask';world.dataset.itemsLoaded=manifest.hitIds.length;world.dataset.layoutSource='assets/static-room/manifest.json';
+  installView();sync();await window.InvitationTerminal?.complete();ready=true;world.dataset.startupPhase='ready';loading.hidden=true;hotspots.inert=false;hotspots.classList.remove('scene-fallback');world.classList.add('ready');world.dataset.sceneLoaded='true';world.dataset.sceneMode='static-hybrid';world.dataset.sceneProfile=profile;world.dataset.clickMode='image-mask';world.dataset.itemsLoaded=manifest.hitIds.length;world.dataset.layoutSource='assets/static-room/manifest.json';
   window.dispatchEvent(new Event('study-room-enter'));window.dispatchEvent(new Event('study-scene-ready'));sync();request();
   // Start automatically after entry; clicking is never required to start downloads.
   background(token).catch(console.warn);

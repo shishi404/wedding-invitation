@@ -539,7 +539,8 @@ if (embedded) {
     roll();
   });
   await document.fonts?.ready;
-  await new Promise(resolve=>requestAnimationFrame(()=>requestAnimationFrame(resolve)));
+  // Hidden iframes may suspend animation frames on phones. The synchronous
+  // compiled draw above is already warm; do not gate entry on an iframe rAF.
   draw();
   parent.postMessage({type:'dice-ready',rendererAvailable:!!renderer}, messageOrigin);
 }
