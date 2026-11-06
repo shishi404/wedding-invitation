@@ -38,3 +38,6 @@
 #check-dialog #check-progress{font-size:12px;line-height:1.65}
 @media(max-height:720px){.check-bonus{min-height:96px}.check-current{height:76px}.check-frame{height:307px}}
 @media(max-height:570px){.check-current{height:70px}.check-frame{height:266px}.check-bonus{min-height:90px}}
+
+/* Lay out the entire first check while the room loading overlay is still up. */
+#check-dialog[data-preparing]{visibility:hidden!important;pointer-events:none!important}

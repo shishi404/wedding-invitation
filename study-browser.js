@@ -40,13 +40,15 @@ let state=initialState(), currentObject=null, activeCheck=null, diceReady=false,
 let notebookOpening=false,notebookRewardPending=null;
 let forcedBoxPending=null;
 const rollCounts={critical:0,fumble:0};
-let dicePreparation;
+let dicePreparation,diceAppearanceReady=false;
 window.InvitationDice={prepare:()=>{
-  if(diceReady)return Promise.resolve();
+  if(diceReady&&diceAppearanceReady)return Promise.resolve();
+  if(dicePreparation)return dicePreparation;
   if(!dicePreparation)dicePreparation=new Promise((resolve,reject)=>{
-    const done=()=>{clearTimeout(timeout);window.removeEventListener('study-dice-ready',done);resolve();};
-    const timeout=setTimeout(()=>{window.removeEventListener('study-dice-ready',done);dicePreparation=null;frame.removeAttribute('srcdoc');reject(Error('骰子未能准备好，请重试。'));},60000);
-    window.addEventListener('study-dice-ready',done);prepareDice();
+    const cleanup=()=>{checkDialog.removeAttribute('open');checkDialog.removeAttribute('data-preparing');};
+    const done=()=>{clearTimeout(timeout);window.removeEventListener('study-dice-ready',done);prepareCheckAppearance().then(()=>{diceAppearanceReady=true;cleanup();resolve();},error=>{cleanup();dicePreparation=null;reject(error);});};
+    const timeout=setTimeout(()=>{cleanup();window.removeEventListener('study-dice-ready',done);dicePreparation=null;frame.removeAttribute('srcdoc');reject(Error('骰子未能准备好，请重试。'));},60000);
+    window.addEventListener('study-dice-ready',done);checkDialog.setAttribute('data-preparing','');checkDialog.setAttribute('open','');prepareDice();if(diceReady)done();
   });
   return dicePreparation;
 }};
@@ -321,11 +323,12 @@ function openEnvelope(){
 }
 function showOpenedEnvelope(withKnife){
   const stats=[rollCounts.critical?`触发 ${rollCounts.critical} 次大成功`:'',rollCounts.fumble?`触发 ${rollCounts.fumble} 次大失败`:''].filter(Boolean).join('，');
-  const ending=withKnife?'你达成了：\n完美结局\n截图私发给新人可以获得神秘礼品！':'你沿着封口撕开一道小口，看到了里面完好的请柬。\n“关于往后的故事，我们想邀请你，一起见证。”';
+  const perfectEndingCopy='\n截图私发给新人可以获得神秘礼品！\n\n你完美通关，保留了完整的火漆，信用评级+1。\n\n划开封口，你看到了一张温暖的请柬。\n“关于往后的故事，我们想邀请你，一起见证。”';
+  const ending=withKnife?'你达成了：\n完美结局'+perfectEndingCopy:'你沿着封口撕开一道小口，看到了里面完好的请柬。\n“关于往后的故事，我们想邀请你，一起见证。”';
   showObject('原来，是一场喜事',ending+(stats?'\n\n'+stats+'。':''),'invitation',[{label:'阅读婚礼请柬',run:readInvitation}]);
   if(withKnife){
     const title=document.createElement('strong');title.className='perfect-ending-title';title.textContent='完美结局';
-    $('#interaction-copy').replaceChildren(document.createTextNode('你达成了：\n'),title,document.createTextNode('\n截图私发给新人可以获得神秘礼品！'+(stats?'\n\n'+stats+'。':'')));
+    $('#interaction-copy').replaceChildren(document.createTextNode('你达成了：\n'),title,document.createTextNode(perfectEndingCopy+(stats?'\n\n'+stats+'。':'')));
   }
 }
 async function readInvitation(){
@@ -351,6 +354,16 @@ async function unseal(withKnife){
     announce('信封动画暂时无法播放，请重试。');
     setInteractionActions([{label:'重新打开信封',run:()=>unseal(withKnife)},returnAction()]);
   }finally{opening=false;interaction.removeAttribute('aria-busy');}
+}
+async function prepareCheckAppearance(){
+  await document.fonts?.ready;
+  const urls=new Set(['assets/check-ornate-frame.svg',...Object.values(thumbnailAssets)]);
+  for(const element of [checkDialog,...checkDialog.querySelectorAll('*')])for(const pseudo of [null,'::before','::after']){
+    for(const match of getComputedStyle(element,pseudo).backgroundImage.matchAll(/url\(["']?([^"')]+)["']?\)/g))urls.add(match[1]);
+  }
+  await Promise.all([...urls].map(url=>{const image=new Image();image.src=url;return image.decode();}));
+  // Flush layout and paint the complete check card behind the loading overlay.
+  checkDialog.getBoundingClientRect();await new Promise(resolve=>requestAnimationFrame(()=>requestAnimationFrame(resolve)));
 }
 function prepareDice(){
   if(frame.hasAttribute('srcdoc'))return;

@@ -16,6 +16,8 @@ export const inspectionLimits=art=>({min:.06,max:art==='record'?Math.PI/2-.12:Ma
 export function createInspection({getModel,mobile=false}){
   let renderer,scene,camera,controls,host,art,model,mixer,frame=0,timer=0,token=0,last=0;
   let materials=[];
+  let warming=false,preparation;
+  const warmed=new Set(),warmMaterials=new Set(),boundsCache=new Map();
   let boxClosedHold=null;
   let windchimeMotion=null;
   let envelopePlaying=false,envelopeCancel=null,envelopeAction=null;
@@ -25,9 +27,9 @@ export function createInspection({getModel,mobile=false}){
   let clipRoot,clips=[],jewelryController,busy=false,pendingShow=Promise.resolve(),bookPlaying=false,bookOpened=false;
   const isBox=value=>['drawer','drawer-open','drawer-empty'].includes(value);
   function resetView(){const distance=camera.position.length();camera.position.set(.3,.7,1).setLength(distance);controls.target.set(0,0,0);controls.update();fit();}
-  const visible=()=>host?.isConnected&&host.closest('dialog')?.open&&!document.hidden;
+  const visible=()=>host?.isConnected&&(warming||host.closest('dialog')?.open)&&!document.hidden;
   function stop(){cancelAnimationFrame(frame);clearTimeout(timer);frame=timer=0;}
-  function request(){if(visible()&&renderer&&!frame)frame=requestAnimationFrame(render);}
+  function request(){if(!warming&&visible()&&renderer&&!frame)frame=requestAnimationFrame(render);}
   function init(){
     if(renderer)return;
     renderer=new THREE.WebGLRenderer({alpha:true,antialias:true});
@@ -68,7 +70,7 @@ export function createInspection({getModel,mobile=false}){
     mixer?.stopAllAction();if(mixer)mixer.uncacheRoot(mixer.getRoot());
     if(model)scene.remove(model);model=mixer=null;
     // Geometry and textures belong to the room; only viewer materials are owned here.
-    materials.forEach(material=>material.dispose());materials=[];
+    materials.forEach(material=>{if(!warmMaterials.has(material))material.dispose();});materials=[];
   }
   function fit(){
     if(!visible()||!renderer)return;
@@ -101,11 +103,11 @@ export function createInspection({getModel,mobile=false}){
     resizeObserver.disconnect();host=detail.host;art=detail.art;
     host.classList.add('model-inspection');host.dataset.modelState='loading';
     host.setAttribute('aria-busy','true');
-    if(art==='handheld'&&!same)handheldMedia.begin(host);
+    if(art==='handheld'&&!same&&!warming)handheldMedia.begin(host);
     else if(art!=='handheld')handheldMedia.end();
     try{
       // Paint the dialog before model cloning, material setup and shader work.
-      await new Promise(resolve=>requestAnimationFrame(()=>setTimeout(resolve,0)));
+      if(!warming&&!warmed.has(art))await new Promise(resolve=>requestAnimationFrame(()=>setTimeout(resolve,0)));
       if(sequence!==token||!visible())return;
       init();host.replaceChildren(renderer.domElement);resizeObserver.observe(host);
       renderer.domElement.setAttribute('aria-label',art==='record'?'留声机模型。拖动或使用方向键查看上方与侧面，无法翻看底部。':'物品模型。拖动或使用方向键旋转调查，Home 键重置。');
@@ -123,10 +125,11 @@ export function createInspection({getModel,mobile=false}){
           const cloned=original.map(material=>{const copy=material.clone();materials.push(copy);applyTabletopMaterial(copy,renderer,{enabled:true});return copy;});
           node.material=Array.isArray(node.material)?cloned:cloned[0];
         });
-        if(art==='handheld')handheldMedia.bind(object);
-        const box=new THREE.Box3().setFromObject(object,art==='notebook-opening'||result.notebookOpen),size=box.getSize(new THREE.Vector3());
+        if(art==='handheld'&&!warming)handheldMedia.bind(object);
+        const boundsKey=art+':'+!!result.notebookOpen,cachedBounds=boundsCache.get(boundsKey);
+        const box=cachedBounds?cachedBounds.clone():new THREE.Box3().setFromObject(object,art==='notebook-opening'||result.notebookOpen),size=box.getSize(new THREE.Vector3());
         // Reserve room for the raised lid without reframing halfway through opening.
-        if(isBox(art)){
+        if(isBox(art)&&!cachedBounds){
           const preview=new THREE.AnimationMixer(object);
           for(const name of ['Unlock','OpenLid']){
             const clip=clips.find(clip=>clip.name===name);if(!clip)continue;
@@ -135,7 +138,7 @@ export function createInspection({getModel,mobile=false}){
           box.union(new THREE.Box3().setFromObject(object));box.getSize(size);
           preview.stopAllAction();preview.uncacheRoot(object);
         }
-        if(art==='notebook-opening'){
+        if(art==='notebook-opening'&&!cachedBounds){
           const clip=clips.find(c=>c.name==='OpenBook');if(!clip)throw Error('缺少笔记打开动画');
           const preview=new THREE.AnimationMixer(object),action=preview.clipAction(clip);action.setLoop(THREE.LoopOnce,1);action.clampWhenFinished=true;action.play();
           for(let t=0;t<=clip.duration+.05;t+=.3){preview.setTime(Math.min(t,clip.duration));box.union(new THREE.Box3().setFromObject(object,true));}
@@ -144,19 +147,20 @@ export function createInspection({getModel,mobile=false}){
         if(['envelope','invitation'].includes(art)){
           envelopeDetails=await createEnvelopeDetails(object,clips);
           if(sequence!==token)return;
-          const preview=new THREE.AnimationMixer(object);
+          if(!cachedBounds){const preview=new THREE.AnimationMixer(object);
           for(const name of ['Seal_Remove','Flap_Open']){
             const clip=clips.find(c=>c.name===name);if(!clip)throw Error('缺少信封打开动画');
             const action=preview.clipAction(clip);action.setLoop(THREE.LoopOnce,1);action.clampWhenFinished=true;action.play();preview.update(clip.duration+.001);
             box.union(new THREE.Box3().setFromObject(object));
           }
-          box.getSize(size);preview.stopAllAction();preview.uncacheRoot(object);
+          box.getSize(size);preview.stopAllAction();preview.uncacheRoot(object);}
           if(art==='invitation'){
             mixer=new THREE.AnimationMixer(object);
             for(const name of [detail.envelopeWithKnife?'Seal_Remove':'Seal_Split','Flap_Open']){const clip=clips.find(value=>value.name===name);const action=mixer.clipAction(clip);action.setLoop(THREE.LoopOnce,1);action.clampWhenFinished=true;action.play();action.time=clip.duration;}
             mixer.update(0);
           }
         }
+        boundsCache.set(boundsKey,box.clone());
         const scale=2/Math.max(size.x,size.y,size.z);
         const center=box.getCenter(new THREE.Vector3());
         const centered=new THREE.Group();centered.add(object);centered.position.copy(center).negate();model.add(centered);model.scale.setScalar(scale);scene.add(model);
@@ -168,6 +172,8 @@ export function createInspection({getModel,mobile=false}){
         controls.target.set(0,0,0);camera.up.set(0,1,0);camera.position.set(.3,.7,1);controls.update();
       }
       if(isBox(art))host.dataset.lockVisible=String(clipRoot.getObjectByName('BrassLock_Root')?.visible!==false);
+      // Reveal only after this viewer has drawn its real first frame.
+      fit();renderer.render(scene,camera);
       host.dataset.modelState='ready';host.setAttribute('aria-busy','false');
       controls.enabled=!busy&&!handheldRaised;host.dataset.inspectionBusy=String(busy);
       host.dataset.inspectionArt=art;fit();request();
@@ -345,12 +351,43 @@ export function createInspection({getModel,mobile=false}){
       return await jewelryController.run(()=>jewelryController.play('LockedShake'));
     }finally{busy=false;if(controls)controls.enabled=true;if(host)host.dataset.inspectionBusy='false';request();}
   }
+
+  async function prepare(){
+    if(preparation)return preparation;
+    preparation=(async()=>{
+      const target=document.createElement('div');
+      target.style.cssText='position:fixed;left:0;top:0;width:min(900px,calc(100vw - 40px));height:min(53svh,500px);opacity:0;pointer-events:none;z-index:-1';
+      target.setAttribute('aria-hidden','true');document.body.append(target);warming=true;
+      try{
+        for(const value of ['note','notebook','notebook-opening','musicbox','pendant','windchime','record','drawer','drawer-open','drawer-empty','envelope','invitation','photo','teacup','handheld','key','knife']){
+          await show({art:value,host:target});
+          if(target.dataset.modelState!=='ready')throw Error('互动模型预载失败：'+value);
+          const visibility=[];
+          model.traverse(node=>{visibility.push([node,node.visible]);node.visible=true;});
+          try{
+            for(const material of materials){warmMaterials.add(material);for(const texture of Object.values(material))if(texture?.isTexture)renderer.initTexture(texture);}
+            await renderer.compileAsync(scene,camera);renderer.render(scene,camera);
+            if(value==='notebook-opening')for(const result of ['critical','success','failure','fumble']){
+              const pages=applyNotebookPages(clipRoot,result);for(const material of pages){warmMaterials.add(material);renderer.initTexture(material.map);}
+              await renderer.compileAsync(scene,camera);renderer.render(scene,camera);
+            }
+          }finally{for(const [node,visible]of visibility)node.visible=visible;}
+          if(isBox(value)){const bounds=boundsCache.get('drawer:false');if(bounds)for(const variant of ['drawer-open','drawer-empty'])boundsCache.set(variant+':false',bounds);}
+          if(value==='envelope'){const bounds=boundsCache.get('envelope:false');if(bounds)boundsCache.set('invitation:false',bounds);}
+          warmed.add(value);target.dataset.preparedCount=String(warmed.size);
+          await new Promise(resolve=>setTimeout(resolve,0));
+        }
+        return warmed.size;
+      }finally{stop();release();art=null;host=null;target.remove();warming=false;}
+    })().catch(error=>{preparation=null;throw error;});
+    return preparation;
+  }
   window.addEventListener('study-inspect',event=>{pendingShow=show(event.detail);});
   window.addEventListener('record-state',request);
   document.addEventListener('visibilitychange',()=>{if(document.hidden)stop();else request();});
   new MutationObserver(()=>{
-    if(!visible()){stop();if(host&&!host.closest('dialog')?.open){++token;release();art=null;}}
+    if(!visible()){stop();if(!warming&&host&&!host.closest('dialog')?.open){++token;release();art=null;}}
     else{fit();request();}
   }).observe(document.body,{subtree:true,attributes:true,attributeFilter:['open']});
-  return {show,openJewelryBox,shakeJewelryBox,openNotebook,openEnvelope,readInvitation,showInvitation:()=>showInlineInvitation(host.closest('dialog')),pickupKey,shakeWindchime,setHandheldRaised,closeHandheld:()=>handheldMedia.end(),prepareHandheld:()=>handheldMedia.prepare()};
+  return {show,prepare,openJewelryBox,shakeJewelryBox,openNotebook,openEnvelope,readInvitation,showInvitation:()=>showInlineInvitation(host.closest('dialog')),pickupKey,shakeWindchime,setHandheldRaised,closeHandheld:()=>handheldMedia.end(),prepareHandheld:()=>handheldMedia.prepare()};
 }

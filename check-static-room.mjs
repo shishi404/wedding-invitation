@@ -20,6 +20,7 @@ try{
   const blocked=assetCatalog(width<500?'mobile':'desktop').tableProps.find(a=>a.id==='coffee-cup').url;
   let releaseModel;const modelGate=new Promise(r=>releaseModel=r);await p.route('**/*coffee-cup*.glb*',async r=>{await modelGate;await r.continue();});
   let releaseVideo;const videoGate=new Promise(r=>releaseVideo=r);await p.route('**/assets/handheld-memory.mp4',async r=>{await videoGate;await r.continue();});
+  await p.addInitScript(()=>{window.firstInspectionPaints=[];window.addEventListener('study-inspect',event=>requestAnimationFrame(()=>window.firstInspectionPaints.push({art:event.detail.art,state:event.detail.host.dataset.modelState})));});
   await p.goto(base);assert.equal(requests.some(u=>u.includes('/static-room/')),false);
   const start=Date.now();await p.locator('#start-exploration').click();
   await p.waitForFunction(()=>document.querySelector('#scene-loading-text').textContent==='正在准备音乐、音效、动画与骰子…',null,{timeout:90000});assert.equal(await p.locator('#scene-loading').isVisible(),true);assert.notEqual(await p.locator('#world').getAttribute('data-scene-loaded'),'true');
@@ -28,7 +29,8 @@ try{
   releaseModel();await p.waitForTimeout(500);assert.notEqual(await p.locator('#world').getAttribute('data-scene-loaded'),'true');
   releaseVideo();await p.waitForFunction(()=>document.querySelector('#world').dataset.sceneLoaded==='true',null,{timeout:90000});entered=true;const firstSeconds=(Date.now()-start)/1000;
   const firstFiles=[...network.values()].filter(r=>!r.entered);const firstMB=firstFiles.reduce((n,r)=>n+(r.finished?r.bytes:r.partial),0)/1e6;
-  for(const flag of ['staticRoomReady','windchimeReady','flameReady','roomAudioReady'])assert.equal(await p.locator('#world').evaluate((e,f)=>e.dataset[f],flag),'true');
+  for(const flag of ['staticRoomReady','windchimeReady','flameReady','roomAudioReady','inspectionReady'])assert.equal(await p.locator('#world').evaluate((e,f)=>e.dataset[f],flag),'true');
+  assert.ok(requests.some(url=>url.includes('/assets/check-ornate-frame.svg')),'The first check background must load behind the startup overlay');
   assert.equal(await p.locator('#world').getAttribute('data-scene-mode'),'static-hybrid');assert.equal(await p.locator('.static-room-image:not(.static-room-surround)').first().evaluate(e=>e.naturalWidth),3200);
   await p.waitForRequest(r=>r.url().includes('coffee-cup'),{timeout:10000}).catch(()=>{assert.ok(requests.some(u=>u.includes('coffee-cup')));});
   assert.ok(requests.some(u=>u.includes('handheld-memory.mp4')),'Video is downloaded before entry');releaseModel();releaseVideo();
@@ -43,7 +45,7 @@ try{
   }
   const staticRequests=requests.filter(value=>new URL(value).pathname.includes('/assets/static-room/'));
   assert.ok(staticRequests.length>0);
-  assert.ok(staticRequests.every(value=>new URL(value).searchParams.get('v')==='lit-art-ending-20261106-3'),'Every baked room asset must carry the same release to bypass old browser caches');
+  assert.ok(staticRequests.every(value=>new URL(value).searchParams.get('v')==='interaction-ready-20261107-4'),'Every baked room asset must carry the same release to bypass old browser caches');
   const before=requests.length;
 
   // Actual image-mask picking, with screen coordinates transformed with the picture.
@@ -55,6 +57,7 @@ try{
    if(art==='teacup')await p.screenshot({path:`output/static-room/qa/cup-${width}.png`});
    await p.evaluate(()=>{window.InvitationInspection.closeHandheld();document.querySelector('#interaction-dialog').close();});
   }
+  assert.deepEqual(await p.evaluate(()=>window.firstInspectionPaints.filter(value=>value.state!=='ready')),[],'First painted inspection frames must already show their models');
   assert.equal(requests.slice(before).filter(u=>/\.(?:glb|ogg|wav)(?:\?|$)/.test(u)).length,0,'Preloaded interactions must reuse downloaded resources');
   await p.evaluate(()=>window.dispatchEvent(new CustomEvent('study-state',{detail:{choice:'intelligence',notebookOpen:true,notebookResult:'success',drawerOpen:true,envelope:true,drawerLockBroken:true}})));
   assert.deepEqual((await p.locator('[data-state-layer]:visible').evaluateAll(es=>es.map(e=>e.dataset.stateLayer))).sort(),['box-empty-broken','notebook-success']);
@@ -71,6 +74,13 @@ try{
  assert.notEqual(await gated.locator('#world').getAttribute('data-scene-loaded'),'true');
  assert.equal(await gated.locator('#scene-loading').isVisible(),true);unlockDice();
  await gated.waitForFunction(()=>document.querySelector('#world').dataset.sceneLoaded==='true',null,{timeout:120000});await gated.close();
+ const card=await browser.newPage({viewport:{width:390,height:844},reducedMotion:'reduce'});
+ let unlockCard;const cardGate=new Promise(r=>unlockCard=r);
+ await card.route('**/assets/check-ornate-frame.svg',async route=>{await cardGate;await route.continue();});
+ await card.goto(base);await card.locator('#start-exploration').click();
+ await card.waitForFunction(()=>{const w=document.querySelector('#world');return document.querySelector('#dice-frame').dataset.diceState==='ready'&&w.dataset.startupTotal&&w.dataset.startupLoaded===w.dataset.startupTotal;},null,{timeout:120000});
+ assert.notEqual(await card.locator('#world').getAttribute('data-scene-loaded'),'true','A ready dice renderer must not bypass an unfinished check-card background');
+ unlockCard();await card.waitForFunction(()=>document.querySelector('#world').dataset.sceneLoaded==='true',null,{timeout:120000});await card.close();
  const retryPage=await browser.newPage({viewport:{width:390,height:844},reducedMotion:'reduce'});let fail=true;
  await retryPage.route('**/assets/windchime-12.ogg',route=>fail?route.fulfill({status:503,body:'Unavailable'}):route.continue());
  await retryPage.goto(base);await retryPage.locator('#start-exploration').click();
@@ -78,6 +88,6 @@ try{
  assert.equal(await retryPage.locator('#world').getAttribute('data-scene-loaded'),'error');
  assert.equal(await retryPage.locator('#scene-loading').isVisible(),true);fail=false;await retryPage.locator('#scene-retry').click();
  await retryPage.waitForFunction(()=>document.querySelector('#world').dataset.sceneLoaded==='true',null,{timeout:120000});await retryPage.close();
- console.log('Dice readiness gate and missing interaction-audio retry passed.');
+ console.log('Dice/card readiness gates, first-painted model frames and missing interaction-audio retry passed.');
  await writeFile('output/static-room/qa/report.json',JSON.stringify(reports,null,2));
 }finally{await browser.close();server.closeAllConnections();await new Promise(r=>server.close(r));}

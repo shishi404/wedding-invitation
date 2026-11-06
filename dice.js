@@ -538,5 +538,8 @@ if (embedded) {
     embeddedRollId = event.data.id;
     roll();
   });
+  await document.fonts?.ready;
+  await new Promise(resolve=>requestAnimationFrame(()=>requestAnimationFrame(resolve)));
+  draw();
   parent.postMessage({type:'dice-ready',rendererAvailable:!!renderer}, messageOrigin);
 }
