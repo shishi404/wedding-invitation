@@ -49,6 +49,21 @@
 !/assets/sfx/sticky-note.ogg
 !/assets/sfx/unlock.ogg
 !/assets/sfx/wax.ogg
+!/assets/static-room/box-broken.webp
+!/assets/static-room/box-empty-broken.webp
+!/assets/static-room/box-empty.webp
+!/assets/static-room/box-open-broken.webp
+!/assets/static-room/box-open.webp
+!/assets/static-room/hits.png
+!/assets/static-room/manifest.json
+!/assets/static-room/notebook-critical.webp
+!/assets/static-room/notebook-failure.webp
+!/assets/static-room/notebook-fumble.webp
+!/assets/static-room/notebook-success.webp
+!/assets/static-room/room.webp
+!/assets/static-room/windchime.glb
+!/assets/static-room/without-musicbox.webp
+!/assets/static-room/without-pendant.webp
 !/assets/study-ambient.wav
 !/assets/study-clair-de-lune.ogg
 !/assets/study-loft-layout.json
@@ -72,10 +87,13 @@
 !/audit-runtime.mjs
 !/build-browser.mjs
 !/build-static-site.mjs
+!/check-handheld-media.mjs
 !/check-mobile-scene-view.mjs
+!/check-static-room.mjs
 !/check-study-loft.mjs
 !/check-study-sounds.mjs
 !/check-study.mjs
+!/check-terminal-loading.mjs
 !/check.css
 !/cream-theme.css
 !/data.js
@@ -114,6 +132,7 @@
 !/loft-props-catalog.js
 !/loft-room-assets.js
 !/loft-room-finishes.js
+!/loft-startup-downloads.js
 !/loft-table-lighting.js
 !/loft-table-props.js
 !/loft-windchime-breeze.js
@@ -156,9 +175,12 @@
 !/output/loft-viewer/sticky-note-web.glb
 !/package.json
 !/prepare-http-assets.mjs
+!/prepare-static-room.mjs
 !/preview.mjs
 !/record-control.css
 !/runtime-delivery.mjs
+!/static-room-downloads.js
+!/static-room.css
 !/study-art.js
 !/study-bootstrap.js
 !/study-browser.js
@@ -173,6 +195,7 @@
 !/study-pickup.js
 !/study-rules.js
 !/study-sounds.js
+!/study-static-room.js
 !/study-sticky-note.js
 !/study-windchime-sway.js
 !/study.css
@@ -199,6 +222,7 @@
 !/模型库/14_彩绘漆面首饰盒_Source/青蓝写实旧铜锁版_v7/jewelry-box-teal-game.glb
 !/模型库/15_白色3DS_XL_写实/white-3ds-xl-realistic.glb
 !/模型库/16_方形深木相框_写实/square-wood-frame-realistic.glb
+!/部署说明.md
 # Isolated verification copies contain their own ignore rules.
 /output/github-cleanup/
 /output/site-release/

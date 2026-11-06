@@ -8,7 +8,7 @@ import {notebookPageLabel} from './notebook-page-copy.js';
 import {applyStickyNoteMessage,STICKY_NOTE_MESSAGE} from './study-sticky-note.js';
 import {createWindchimeSway} from './study-windchime-sway.js';
 import {createEnvelopeDetails,showInlineInvitation} from './study-envelope.js';
-import {createHandheldMedia} from './study-handheld.js?v=preload-10';
+import {createHandheldMedia} from './study-handheld.js?v=handheld-safari-3';
 
 // Orbit the camera rather than tipping the object: heavy objects stay upright.
 export const inspectionLimits=art=>({min:.06,max:art==='record'?Math.PI/2-.12:Math.PI-.06});
@@ -196,6 +196,7 @@ export function createInspection({getModel,mobile=false}){
     if(boxClosedHold){boxClosedHold.remaining-=dt;if(boxClosedHold.remaining<=0){const done=boxClosedHold.resolve;boxClosedHold=null;done(true);}}
     const lidAction=jewelryController?.actions.OpenLid;
     if(lidAction)host.dataset.boxOpenProgress=String(lidAction.time/lidAction.getClip().duration);
+    if(art==='handheld')handheldMedia.update();
     renderer.render(scene,camera);
     host.dataset.polarAngle=String(controls.getPolarAngle());
     if(handheldMedia.playing||boxClosedHold||jewelryController?.busy||bookPlaying||envelopePlaying||envelopeDetails?.active()||windchimeMotion?.active()||mixer&&art==='record'&&window.InvitationAudio?.recordPlaying)timer=setTimeout(request,1000/30);

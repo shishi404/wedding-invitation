@@ -14,12 +14,19 @@
     return;
   }
   function loadRoomProgram(){
-    const script=document.createElement('script');script.type='module';script.src='./study-loft.js?v=preload-10';
+    const script=document.createElement('script');script.type='module';script.src=new URLSearchParams(location.search).has('bake-room')?'./study-loft.js?v=handheld-safari-3':'./study-static-room.js?v=handheld-safari-3';
     script.onerror=()=>startupError('房间程序未能载入，请刷新页面重试。若是本地预览，请重新运行「启动书房预览.cmd」。','重新载入页面',()=>location.reload());
     document.head.append(script);
   }
-  // Module parsing, model decoding and WebGL setup must not compete with the intro.
+  // Download the first batch during typing; defer heavy modules and decoding.
   if(window.InvitationTerminal){
-    window.addEventListener('study-enter',()=>window.InvitationTerminal.intro().then(loadRoomProgram),{once:true});
+    window.addEventListener('study-enter',()=>{
+      if(!new URLSearchParams(location.search).has('bake-room')){
+        import('./static-room-downloads.js').then(module=>module.preloadStaticRoom()).catch(()=>{});
+        window.InvitationAudio?.prepareBackground().catch(()=>{});
+        window.InvitationStudySounds?.prepareCampfire().catch(()=>{});
+      }
+      window.InvitationTerminal.intro().then(loadRoomProgram);
+    },{once:true});
   }else loadRoomProgram();
 })();

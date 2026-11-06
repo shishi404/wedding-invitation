@@ -388,7 +388,7 @@ window.addEventListener('message',event=>{if(event.source!==frame.contentWindow|
 for(const dialog of [interaction,choose,checkDialog,gain]){dialog.setAttribute('closedby','none');dialog.addEventListener('cancel',e=>e.preventDefault());}
 $('#start-exploration').onclick=()=>{if(entry.hidden)return;entry.hidden=true;$('#study').hidden=false;if(window.InvitationLocalPreviewRequired){$('#hotspots').inert=true;return;}$('#hotspots').inert=false;refresh();if(window.InvitationTerminal)window.InvitationTerminal.intro().then(prepareDice);else prepareDice();window.dispatchEvent(new Event('study-enter'));};
 $('#study-direct-invitation').onclick=()=>window.InvitationAudio?.leaveStudy();
-function finishSelection(){gain.close();$('#hotspots').inert=false;($('#world canvas')||$('[data-object="note"]')).focus({preventScroll:true});}
+function finishSelection(){gain.close();$('#hotspots').inert=false;($('.static-room-stage')||$('#world canvas')||$('[data-object="note"]')).focus({preventScroll:true});}
 $('#gain-continue').onclick=finishSelection;
 document.querySelectorAll('[data-keepsake]').forEach(button=>button.onclick=()=>{
   if(state.choice)return;

@@ -6,6 +6,7 @@
   const audio = document.querySelector('#background-music');
   const status = document.querySelector('#music-status');
   const config = window.invitationData || {};
+  const cachedSource=value=>window.InvitationMediaSource?.(value)||value;
   // A mobile reader shares the parent's already-unlocked media element.
   if(window.parent&&window.parent!==window&&window.frameElement?.id==='invitation-reader-frame'){
     const parent=window.parent,player=parent.InvitationAudio;
@@ -159,13 +160,13 @@
     recordIndex = (recordIndex + direction + recordSources.length) % recordSources.length;
     if (sharedPlaylist) {
       audio.pause();
-      audio.src = recordIndex===0&&preparedBackground?preparedBackground.url:recordSources[recordIndex];
+      audio.src = recordIndex===0&&preparedBackground?preparedBackground.url:cachedSource(recordSources[recordIndex]);
       audio.currentTime = 0;
       await setBackground(true);
       return;
     }
     record.pause();
-    record.src = recordSources[recordIndex];
+    record.src = cachedSource(recordSources[recordIndex]);
     record.currentTime = 0;
     await playRecord();
   }
@@ -181,7 +182,7 @@
     musicBox?.pause();if(musicBox)musicBox.currentTime=0;
   }
   async function playMusicBoxSource(src,phase,token){
-    musicBoxPhase=phase;musicBox.pause();musicBox.src=src;musicBox.currentTime=0;musicBox.volume=phase==='winding'?.7:.55;musicBox.load();
+    musicBoxPhase=phase;musicBox.pause();musicBox.src=cachedSource(src);musicBox.currentTime=0;musicBox.volume=phase==='winding'?.7:.55;musicBox.load();
     try{
       await musicBox.play();
       if(token!==musicBoxRequest){if(musicBoxPhase==='idle')musicBox.pause();return false;}
@@ -222,7 +223,7 @@
     async playDice() {
       if (!diceSound) return false;
       diceSound.pause();diceSound.currentTime = 0;
-      diceSound.src = diceSources[Math.floor(Math.random() * diceSources.length)];
+      diceSound.src = cachedSource(diceSources[Math.floor(Math.random() * diceSources.length)]);
       diceSound.load();
       try { await diceSound.play(); return true; }
       catch { return false; }
@@ -241,7 +242,7 @@
       // Keep background music and the record player completely independent.
       bell.pause();
       bell.currentTime = 0;
-      bell.src = bellSources[Math.floor(Math.random() * bellSources.length)];
+      bell.src = cachedSource(bellSources[Math.floor(Math.random() * bellSources.length)]);
       bell.load();
       try { await bell.play(); return true; }
       catch { return false; } // A replaced pending play may reject with AbortError.

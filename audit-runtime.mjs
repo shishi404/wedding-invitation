@@ -16,6 +16,7 @@ export async function auditRuntime(){
   // Catalogs also describe authoring backups and earlier optimizations. Only
   // the default desktop/mobile profiles are dependencies of the published site.
   const activeModels=new Set(),activeImages=new Set();
+  activeModels.add('assets/static-room/windchime.glb');
   const assetPath=url=>relative(root,resolve(root,url.split(/[?#]/)[0])).split(sep).join('/');
   for(const profile of ['mobile','desktop']){
     const catalog=assetCatalog(profile);

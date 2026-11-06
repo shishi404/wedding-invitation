@@ -12,11 +12,11 @@ import {applyStickyNoteMessage} from './study-sticky-note.js';
 import {createWindchimeBreeze} from './loft-windchime-breeze.js';
 export {TABLE_PROP_ASSETS};
 
-export function createTableProps({desk,scene,renderer,loader,saved,onChange,lighting,assets=TABLE_PROP_ASSETS,envelopeAsset=ENVELOPE_ASSET,emphasizeShadows=false}){
+export function createTableProps({desk,scene,renderer,loader,saved,onChange,lighting,assets=TABLE_PROP_ASSETS,envelopeAsset=ENVELOPE_ASSET}){
   const entries=new Map(assets.map(asset=>[asset.id,{asset,status:'waiting',layout:{...asset.defaults,...saved?.items?.[asset.id]}}]));
   const outline=new THREE.Box3Helper(new THREE.Box3(),0xd6b971);outline.visible=false;scene.add(outline);
-  const shadowTexture=contactTexture(emphasizeShadows?1.7:1);
-  const shadowScale=emphasizeShadows?1.24:1.12;
+  const shadowTexture=contactTexture();
+  const shadowScale=1.12;
   const reducedMotion=typeof matchMedia==='function'?matchMedia('(prefers-reduced-motion: reduce)'):null;
   let selected=entries.has(saved?.selected)?saved.selected:assets[0].id,editing=false,taken=null,recordPlaying=false,recordMixer=null;
   function selectedEntry(){return entries.get(selected);}
@@ -63,7 +63,7 @@ export function createTableProps({desk,scene,renderer,loader,saved,onChange,ligh
       }});
       const root=new THREE.Group();root.name=entry.asset.name;root.userData.tablePropId=id;root.add(normalized);desk.surface.add(root);
       const footprint={width:size.x*factor,depth:size.z*factor};
-      const shadow=new THREE.Mesh(new THREE.PlaneGeometry(footprint.width*shadowScale,footprint.depth*shadowScale),new THREE.MeshBasicMaterial({map:shadowTexture,transparent:true,opacity:emphasizeShadows?.72:.35,depthWrite:false,polygonOffset:true,polygonOffsetFactor:-1,polygonOffsetUnits:-1}));shadow.name='桌面接触阴影';shadow.userData.mobileContactShadow=emphasizeShadows;shadow.position.y=emphasizeShadows?.0003:0;shadow.rotation.x=-Math.PI/2;shadow.raycast=()=>{};root.add(shadow);
+      const shadow=new THREE.Mesh(new THREE.PlaneGeometry(footprint.width*shadowScale,footprint.depth*shadowScale),new THREE.MeshBasicMaterial({map:shadowTexture,transparent:true,opacity:.35,depthWrite:false,polygonOffset:true,polygonOffsetFactor:-1,polygonOffsetUnits:-1}));shadow.name='桌面接触阴影';shadow.rotation.x=-Math.PI/2;shadow.raycast=()=>{};root.add(shadow);
       Object.assign(entry,{root,content:normalized,footprint,hitArea,height:size.y*factor,clips:gltf.animations,status:'ready'});
       if(id==='windchime')entry.breeze=createWindchimeBreeze(content,{enabled:()=>!reducedMotion?.matches});
       lighting?.prepare(root);
