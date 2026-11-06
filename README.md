@@ -6,6 +6,8 @@
 
 `node prepare-static-room.mjs` 从完整电脑模型重新渲染背景和状态图，不减少源模型面数；风铃仅压缩纹理和几何传输编码，保留几何拓扑。更改相机、物品摆放、材质或笔记文案后需要重新生成。背景文件在 `assets/static-room/`，运行入口是 `study-static-room.js`；`study-loft.js` 保留为离线渲染源。专项验证：`node check-static-room.mjs`、`node check-terminal-loading.mjs`、`node check-handheld-media.mjs`。
 
+物品点击使用独立、关闭抗锯齿的 RGB 点击图，颜色与物品 ID 固定对应；未知颜色不会被解释成其他物品。`picking-v2.json` 同时绑定带内容哈希的基础点击图和拿走信物、翻开笔记、打开盒盖的区域补丁，避免混用不同版本的图和 ID。吊坠链条内部保留可点击范围。完整背景重建会自动调用 `prepare-static-picking.mjs`；只修点击区域可单独运行此工具。`node check-static-picking.mjs` 以原始三维几何射线取得的独立验证点，检查全部物品、吊坠边缘、物品状态变化及手机缩放拖动。
+
 2026-11-05 确定淡奶油米色版为最终稿，GitHub `main` 以此版本继续维护。加载页保留扫描纹和移动扫描光带；互动背景透明度为 30%，模糊为 7.2px。手机书房全屏显示场景，桌面光影统一使用电脑场景效果。
 
 仓库仅保留两条使用路径及其实际运行资源：

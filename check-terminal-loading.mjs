@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import {createRequire} from 'node:module';
-import {mkdir} from 'node:fs/promises';
+import {mkdir,readFile} from 'node:fs/promises';
 import {createPreviewServer} from './preview.mjs';
 import {assetCatalog} from './loft-asset-profile.js';
 const require=createRequire(import.meta.url);
@@ -10,6 +10,7 @@ const base=`http://127.0.0.1:${server.address().port}/`;
 const browser=await chromium.launch({executablePath:'C:/Program Files/Google/Chrome/Application/chrome.exe',headless:true,args:['--enable-unsafe-swiftshader']});
 await mkdir('output/terminal-loading',{recursive:true});
 const errors=[];
+const picking=JSON.parse(await readFile('assets/static-room/picking-v2.json','utf8'));
 try{
   for(const [name,viewport] of [['desktop',{width:1672,height:941}],['mobile',{width:390,height:844}]]){
     const page=await browser.newPage({viewport});page.on('pageerror',e=>errors.push(e.message));
@@ -23,7 +24,7 @@ try{
       };
     });
     const heavyRequests=[];
-    const earlyURLs=['./assets/static-room/manifest.json','./assets/static-room/room.webp','./assets/static-room/hits.png','./assets/static-room/windchime.glb'].map(url=>new URL(url,base).href);
+    const earlyURLs=['./assets/static-room/manifest.json','./assets/static-room/picking-v2.json','./assets/static-room/room.webp','./assets/static-room/'+picking.mask.slice(2),'./assets/static-room/windchime.glb',...Object.values(picking.patches).map(p=>'./assets/static-room/'+p.url.slice(2))].map(url=>new URL(url,base).href);
     page.on('request',request=>{if(/\/static-room\/|\.glb(?:\?|$)/.test(request.url()))heavyRequests.push(request.url());});
     let release;
     const gate=new Promise(r=>release=r);

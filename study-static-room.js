@@ -5,7 +5,8 @@ import {clone} from './vendor/three-addons/utils/SkeletonUtils.js';
 import {assetCatalog} from './loft-asset-profile.js';
 import {inspectionAssetCatalog} from './loft-inspection-assets.js';
 import {sceneAssetProfile} from './loft-startup-downloads.js';
-import {preloadStaticRoom,downloadRoomFile,backgroundRoomDownloads} from './static-room-downloads.js';
+import {preloadStaticRoom,downloadRoomFile,backgroundRoomDownloads} from './static-room-downloads.js?v=static-picking-2';
+import {createPickingDecoder,pickStaticRoom,applyPickingPatches} from './static-room-picking.js';
 import {createInspection} from './study-inspection.js?v=handheld-safari-3';
 import {createFlame} from './loft-flame.js';
 import {createWindchimeBreeze} from './loft-windchime-breeze.js';
@@ -22,6 +23,7 @@ const world=document.querySelector('#world'),study=document.querySelector('#stud
 const profile=sceneAssetProfile(),catalog=assetCatalog(profile),extras=inspectionAssetCatalog(profile),loader=new GLTFLoader().setMeshoptDecoder(MeshoptDecoder),parsed=new Map();
 const ids={...Object.fromEntries(Object.entries(LOFT_INTERACTIONS).map(([id,art])=>[art,id])),'drawer-open':'painted-lacquer-jewelry-box','drawer-empty':'painted-lacquer-jewelry-box',envelope:'envelope',invitation:'envelope'};
 let game={},ready=false,booting=false,stage,renderer,scene,camera,windchime,breeze,flame,view,manifest,url,hitPixels,hitWidth=0,hitHeight=0,layerImages={},frame=0,timer=0,last=0,generation=0;
+let baseHitPixels,decodeHit,pickingPatches={},pickingState='';
 const inspectionURL=art=>extras[art]||(ids[art]==='envelope'?catalog.envelope.url:catalog.tableProps.find(a=>a.id===ids[art])?.url);
 async function modelAt(value){
  const absolute=new URL(value,document.baseURI).href;
@@ -63,6 +65,10 @@ function addLayer(image,rect={x:0,y:0,width:1,height:1}){
 }
 function sync(){
  if(!stage)return;
+ const maskNames=[];
+ const removal={strength:'without-musicbox',will:'without-pendant',intelligence:'without-windchime'}[game.choice];if(removal)maskNames.push(removal);
+ if(game.notebookOpen)maskNames.push('notebook-open');if(game.drawerOpen)maskNames.push('box-open');
+ const maskState=maskNames.join('|');if(baseHitPixels&&maskState!==pickingState){hitPixels=applyPickingPatches(baseHitPixels,hitWidth,hitHeight,maskNames.map(key=>pickingPatches[key]).filter(Boolean));pickingState=maskState;}
  const selected=new Set();if(game.choice==='strength')selected.add('without-musicbox');if(game.choice==='will')selected.add('without-pendant');
  if(game.notebookOpen)selected.add('notebook-'+(game.notebookResult||'success'));
  if(game.drawerOpen)selected.add((game.envelope?'box-empty':'box-open')+(game.drawerLockBroken?'-broken':''));else if(game.drawerLockBroken)selected.add('box-broken');
@@ -73,14 +79,8 @@ function sync(){
 }
 window.addEventListener('study-state',e=>{game={...e.detail};sync();});
 function hit(event){
- if(!hitPixels||!stage)return null;const r=stage.getBoundingClientRect(),x=Math.floor((event.clientX-r.left)/r.width*hitWidth),y=Math.floor((event.clientY-r.top)/r.height*hitHeight);
- if(x<0||y<0||x>=hitWidth||y>=hitHeight)return null;
- // Include thin strings and chains while respecting the visible object mask.
- for(const radius of [0,3,7])for(let dy=-radius;dy<=radius;dy+=Math.max(1,radius))for(let dx=-radius;dx<=radius;dx+=Math.max(1,radius)){
-  const xx=x+dx,yy=y+dy;if(xx<0||yy<0||xx>=hitWidth||yy>=hitHeight)continue;
-  const id=manifest.hitIds[hitPixels[(yy*hitWidth+xx)*4]-1];if(canUseLoftObject(id,game))return id;
- }
- return null;
+ if(!hitPixels||!stage)return null;const r=stage.getBoundingClientRect();
+ return pickStaticRoom({pixels:hitPixels,width:hitWidth,height:hitHeight,u:(event.clientX-r.left)/r.width,v:(event.clientY-r.top)/r.height,decode:decodeHit,regions:manifest.picking.regions,canUse:id=>canUseLoftObject(id,game),radius:Math.max(1,Math.min(12,Math.round(4*hitWidth/r.width)))});
 }
 function size(){
  if(!stage||!manifest)return;const bounds=world.getBoundingClientRect(),fit=(bounds.width<bounds.height?Math.min:Math.max)(bounds.width/manifest.width,bounds.height/manifest.height),w=manifest.width*fit,h=manifest.height*fit;
@@ -116,7 +116,8 @@ async function boot(){
   stop();view?.destroy();stage?.remove();renderer?.dispose();layerImages={};
   stage=document.createElement('div');stage.className='static-room-stage';stage.tabIndex=0;stage.setAttribute('aria-label','书房。点击物品调查，双指或滚轮缩放，Home 键还原画面。');world.prepend(stage);
   const [backgroundImage,hitImage,windModel]=await Promise.all([imageFor(url(manifest.background)),imageFor(url(manifest.hitMap)),modelAt(url(manifest.windchime))]);
-  addLayer(backgroundImage);const mask=document.createElement('canvas');mask.width=hitWidth=hitImage.naturalWidth;mask.height=hitHeight=hitImage.naturalHeight;const ctx=mask.getContext('2d',{willReadFrequently:true});ctx.drawImage(hitImage,0,0);hitPixels=ctx.getImageData(0,0,mask.width,mask.height).data;
+  addLayer(backgroundImage);const mask=document.createElement('canvas');mask.width=hitWidth=hitImage.naturalWidth;mask.height=hitHeight=hitImage.naturalHeight;const ctx=mask.getContext('2d',{willReadFrequently:true});ctx.imageSmoothingEnabled=false;ctx.drawImage(hitImage,0,0);baseHitPixels=hitPixels=ctx.getImageData(0,0,mask.width,mask.height).data;decodeHit=createPickingDecoder(manifest.picking.colors);pickingState='';pickingPatches={};
+  await Promise.all(Object.entries(manifest.picking.patches).map(async([key,rect])=>{const image=await imageFor(url(rect.url)),canvas=document.createElement('canvas');canvas.width=image.naturalWidth;canvas.height=image.naturalHeight;const context=canvas.getContext('2d',{willReadFrequently:true});context.imageSmoothingEnabled=false;context.drawImage(image,0,0);pickingPatches[key]={...rect,pixels:context.getImageData(0,0,canvas.width,canvas.height).data};}));
   renderer=new THREE.WebGLRenderer({alpha:true,antialias:true});renderer.outputColorSpace=THREE.SRGBColorSpace;renderer.setPixelRatio(1);renderer.setSize(1600,Math.round(1600/manifest.camera.aspect),false);renderer.domElement.className='static-room-dynamics';stage.append(renderer.domElement);
   scene=new THREE.Scene();scene.add(new THREE.AmbientLight(0xffffff,.3));camera=new THREE.PerspectiveCamera(manifest.camera.fov,manifest.camera.aspect,.03,100);camera.position.fromArray(manifest.camera.position);camera.quaternion.fromArray(manifest.camera.quaternion);camera.updateMatrixWorld(true);
   const deskRoot=transformGroup(manifest.desk.root),deskSurface=transformGroup(manifest.desk.surface);scene.add(deskRoot,deskSurface);

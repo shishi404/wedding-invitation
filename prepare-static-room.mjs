@@ -52,16 +52,8 @@ try{
   await p.evaluate(async result=>{const b=window.LoftBake;const model=await b.getInspectionModel('notebook-opening');b.props.setNotebookOpen({...model,result});},result);
   await patch(`notebook-${result}`,()=>window.LoftBake.capture());
  }
- // The color ID image makes picking independent of downloading any object model.
- const hits=bytes(await p.evaluate(async()=>{
-  const THREE=await import('./vendor/three.module.js'),b=window.LoftBake,ids=Object.keys(b.items),bg=b.scene.background;b.items.windchime.visible=true;
-  b.props.setJewelryState({open:false});
-  b.scene.background=new THREE.Color(0);b.renderer.toneMapping=THREE.NoToneMapping;b.renderer.shadowMap.enabled=false;
-  b.scene.traverse(o=>{if(!o.isMesh)return;let parent=o;while(parent&&!parent.userData.tablePropId)parent=parent.parent;const index=parent?ids.indexOf(parent.userData.tablePropId)+1:0;const color=new THREE.Color().setRGB(index/255,0,0,THREE.SRGBColorSpace);o.material=new THREE.MeshBasicMaterial({color,toneMapped:false,side:THREE.DoubleSide});if(o.name==='桌面接触阴影'||o.name.includes('shadow')||o.name.includes('Contact'))o.visible=false;});
-  b.renderer.render(b.scene,b.camera);return b.renderer.domElement.toDataURL('image/png');
- }));
- await sharp(hits).resize(1600,1600,{kernel:'nearest'}).png({palette:true}).toFile(`${dir}/hits.png`);
- metadata.hitMapSize=1600;metadata.hitIds=Object.keys(metadata.hits);metadata.layers=layers;metadata.background='./room.webp';metadata.hitMap='./hits.png';metadata.windchime='./windchime.glb';
+ // Picking is generated in a separate, un-antialiased renderer after this artwork pass.
+ metadata.layers=layers;metadata.background='./room.webp';metadata.picking='./picking-v2.json';metadata.windchime='./windchime.glb';
  await writeFile(`${dir}/manifest.json`,JSON.stringify(metadata,null,2));
  // Compress the full desktop windchime without simplifying geometry or animation.
  const {NodeIO}=await import('./output/loft-viewer/mobile-tools/node_modules/@gltf-transform/core/dist/index.js');
@@ -75,3 +67,4 @@ try{
  await io.write(`${dir}/windchime.glb`,doc);
  console.log('Static room baked with full desktop geometry, shared lighting, independent state patches and losslessly compressed windchime geometry.');
 }finally{await browser.close();server.closeAllConnections();await new Promise(r=>server.close(r));}
+await import('./prepare-static-picking.mjs');

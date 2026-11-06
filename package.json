@@ -11,6 +11,7 @@
     "prepare:delivery": "node prepare-http-assets.mjs",
     "prepare:room": "node prepare-static-room.mjs",
     "test:room": "node check-static-room.mjs",
+    "test:picking": "node check-static-picking.mjs",
     "prepare:github": "node build-browser.mjs && node github-files.mjs --write-ignore",
     "release": "node build-browser.mjs && node prepare-http-assets.mjs && node build-static-site.mjs"
   }

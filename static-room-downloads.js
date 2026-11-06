@@ -4,6 +4,7 @@ const mediaURLs=new Map();
 window.InvitationMediaSource=value=>mediaURLs.get(new URL(value,document.baseURI).href)||value;
 window.addEventListener('pagehide',()=>{for(const value of mediaURLs.values())URL.revokeObjectURL(value.split('#')[0]);});
 export const staticManifestURL=new URL('./assets/static-room/manifest.json',import.meta.url).href;
+export const staticPickingURL=new URL('./assets/static-room/picking-v2.json',import.meta.url).href;
 export function downloadRoomFile(url,{retry=false}={}){
  url=new URL(url,document.baseURI).href;
  if(retry)downloads.delete(url);
@@ -14,9 +15,11 @@ let first;
 export function preloadStaticRoom({retry=false}={}){
  if(retry)first=null;
  if(!first)first=(async()=>{
-  const manifest=JSON.parse(new TextDecoder().decode(await downloadRoomFile(staticManifestURL)));
+  const [layout,picking]=await Promise.all([staticManifestURL,staticPickingURL].map(async value=>JSON.parse(new TextDecoder().decode(await downloadRoomFile(value)))));
+  if(picking.schema!==2)throw Error('点击区域版本不匹配，请刷新页面');
+  const manifest={...layout,hitMap:picking.mask,hitIds:picking.colors.map(c=>c.id),picking};
   const url=value=>new URL(value,staticManifestURL).href;
-  await Promise.all([manifest.background,manifest.hitMap,manifest.windchime].map(value=>downloadRoomFile(url(value))));
+  await Promise.all([manifest.background,manifest.hitMap,manifest.windchime,...Object.values(picking.patches).map(p=>p.url)].map(value=>downloadRoomFile(url(value))));
   return {manifest,url};
  })();
  return first;
