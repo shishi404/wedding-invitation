@@ -90,7 +90,11 @@ function refresh() {
 function acquired(name){announce(`获得${name}，已放入物品栏。`);refresh();}
 function musicbox(){
   currentObject='musicbox';
-  showObject('中古八音盒','这个八音盒是shishi送给之南的生日礼物，之南很喜欢。可以作为首饰盒，发条在里面，转一圈，会播放独特又好听的歌。','musicbox',[{label:'转动发条',run:()=>window.InvitationAudio?.windMusicBox()},{label:'看上去请柬不在八音盒里',run:()=>interaction.close(),secondary:true}]);
+  const copy='这个八音盒是shishi送给之南的生日礼物，之南很喜欢。可以作为首饰盒，发条在里面，转一圈，会播放独特又好听的歌。';
+  showObject('中古八音盒',copy,'musicbox',[{label:'转动发条',run:async()=>{
+    const started=await window.InvitationAudio?.windMusicBox();
+    if(interaction.open&&currentObject==='musicbox')$('#interaction-copy').textContent=copy+(started===false?'\n声音暂时未能开始，请再点一次“转动发条”。':'');
+  }},{label:'看上去请柬不在八音盒里',run:()=>interaction.close(),secondary:true}]);
 }
 function pendant(){
   currentObject='pendant';

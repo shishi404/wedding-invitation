@@ -8,6 +8,23 @@
   const config = window.invitationData || {};
   const audioSource=value=>window.InvitationAudioSource?.(value)||value;
   const cachedSource=value=>{value=audioSource(value);return window.InvitationMediaSource?.(value)||value;};
+  // Native music keeps a normal media URL. Blob URLs (especially fragments on
+  // them) can fail in iOS WebViews even when the entry HTTP track played.
+  const musicSource=value=>audioSource(value);
+  const nativeAttempts=new WeakMap();
+  function playNative(media){
+    const attempt={expired:false};nativeAttempts.set(media,attempt);
+    const started=Promise.resolve(media.play()); // Call before any await: retain the click.
+    let timer;
+    started.then(()=>{if(attempt.expired&&nativeAttempts.get(media)===attempt)media.pause();},()=>{});
+    return Promise.race([started,new Promise((_,reject)=>{
+      timer=setTimeout(()=>{
+        attempt.expired=true;
+        if(nativeAttempts.get(media)===attempt)media.pause();
+        const error=Error('音乐暂时未能开始，请再试一次。');error.name='TimeoutError';reject(error);
+      },8000);
+    })]).finally(()=>clearTimeout(timer));
+  }
   // A mobile reader shares the parent's already-unlocked media element.
   if(window.parent&&window.parent!==window&&window.frameElement?.id==='invitation-reader-frame'){
     const parent=window.parent,player=parent.InvitationAudio;
@@ -54,7 +71,7 @@
   let recordBroken = false;
   let enabled = false;
   let mediaPause=null;
-  let request = 0;
+  let request = 0,recordSourceChanges=0;
   if (sharedPlaylist) { audio.src = recordSources[0]; audio.loop=false; }
   else if (source) audio.src = source;
   audio.volume = .5;
@@ -66,16 +83,11 @@
     backgroundPreparation=(async()=>{
       const response=await fetch(original,{signal:AbortSignal.timeout(60000)});
       if(!response.ok)throw Error('背景音乐下载失败');
-      const blob=await response.blob();
-      const objectURL=URL.createObjectURL(blob);
-      preparedBackground={objectURL,url:objectURL+'#'+original.split('/').pop()};
-      // Keep the source that was unlocked in the entry click. Replacing it with
-      // a blob after fetching can discard media permission in mobile WebViews.
-      if(recordIndex===0&&!isStudy)audio.src=preparedBackground.url;
+      await response.arrayBuffer();preparedBackground=true;
+      // Download readiness never changes the source unlocked by the entry click.
     })().catch(error=>{backgroundPreparation=null;throw error;});
     return backgroundPreparation;
   }
-  window.addEventListener('pagehide',()=>{if(preparedBackground)URL.revokeObjectURL(preparedBackground.objectURL);});
   function update() {
     if (sharedPlaylist && recordBroken) {
       label.textContent = '唱片已损坏';
@@ -97,7 +109,7 @@
   // The study's 3D record and the music button follow actual media playback.
   for (const event of ['playing','play','pause','waiting','ended','emptied','error']) audio.addEventListener(event,()=>{
     syncPlayback();
-    if(event==='pause'&&sharedPlaylist&&enabled&&audio.paused&&!audio.ended&&!audio.error&&!mediaPause&&musicBoxPhase==='idle'&&(studyRoomReady||readingInvitation||autoplay)){
+    if(event==='pause'&&!recordSourceChanges&&sharedPlaylist&&enabled&&audio.paused&&!audio.ended&&!audio.error&&!mediaPause&&musicBoxPhase==='idle'&&(studyRoomReady||readingInvitation||autoplay)){
       enabled=false;retryAutoplay=true;update();syncPlayback();
     }
   });
@@ -119,7 +131,7 @@
     }
     try {
       if (sharedPlaylist) recordError = false;
-      await audio.play();
+      await playNative(audio);
       if (!enabled || mediaPause || musicBoxPhase!=='idle' || (sharedPlaylist ? recordBroken : recordPlaying)) audio.pause();
       syncPlayback();
     } catch (error) {
@@ -167,14 +179,15 @@
     if (recordBroken || (!sharedPlaylist && !record)) return;
     recordIndex = (recordIndex + direction + recordSources.length) % recordSources.length;
     if (sharedPlaylist) {
-      audio.pause();
-      audio.src = recordIndex===0&&preparedBackground?preparedBackground.url:cachedSource(recordSources[recordIndex]);
-      audio.load?.();
-      await setBackground(true);
+      ++recordSourceChanges;
+      try{
+        audio.pause();audio.src=musicSource(recordSources[recordIndex]);audio.load?.();
+        await setBackground(true);
+      }finally{--recordSourceChanges;}
       return;
     }
     record.pause();
-    record.src = cachedSource(recordSources[recordIndex]);
+    record.src = musicSource(recordSources[recordIndex]);
     record.load?.();
     await playRecord();
   }
@@ -191,9 +204,9 @@
   }
   async function playMusicBoxSource(src,phase,token){
     retryMusicBox=false;
-    musicBoxPhase=phase;musicBox.pause();musicBox.src=cachedSource(src);musicBox.volume=phase==='winding'?.7:.55;musicBox.load();
+    musicBoxPhase=phase;musicBox.pause();musicBox.src=musicSource(src);musicBox.volume=phase==='winding'?.7:.55;musicBox.load();
     try{
-      await musicBox.play();
+      await playNative(musicBox);
       if(token!==musicBoxRequest){if(musicBoxPhase==='idle')musicBox.pause();return false;}
       return true;
     }catch{
@@ -204,7 +217,7 @@
   async function resumeMusicBox(){
     if(mediaPause||musicBoxPhase==='idle')return false;
     const token=musicBoxRequest;retryMusicBox=false;
-    try{await musicBox.play();return token===musicBoxRequest;}
+    try{await playNative(musicBox);return token===musicBoxRequest;}
     catch(error){
       if(token===musicBoxRequest&&musicBoxPhase!=='idle'){
         retryMusicBox=error.name==='NotAllowedError';

@@ -13,7 +13,7 @@ function setup(config={studyMusic:'bg.ogg',recordPlaylist:['record.ogg']}){
   });
   const els=Object.fromEntries(['study','music-toggle','music-toggle-label','music-record-icon','background-music','record-music','music-status','musicbox-music'].map(id=>[id,element(id)]));
   const window={invitationData:config,dispatchEvent(){},addEventListener(){}};
-  vm.runInNewContext(code,{window,document:{querySelector:s=>els[s.slice(1)],addEventListener(){}},Event:class{}});
+  vm.runInNewContext(code,{window,setTimeout,clearTimeout,document:{querySelector:s=>els[s.slice(1)],addEventListener(){}},Event:class{}});
   const box=els['musicbox-music'],bg=els['background-music'];
   const end=()=>{box.ended=true;box.paused=true;return box.listeners.ended();};
   return {els,box,bg,api:window.InvitationAudio,end,log};

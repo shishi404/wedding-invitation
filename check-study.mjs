@@ -29,7 +29,7 @@ assert.equal(recordRoute(noKeepsake),'unread');assert.equal(drawerRoute(noKeepsa
 // Exercise actual audio controller using media doubles, including background-off,
 // pause/resume position, user cancellation, natural ending, error and rapid stop.
 function element(){const listeners={};return {listeners,paused:true,currentTime:9,volume:1,textContent:'',attrs:{},addEventListener(t,f){listeners[t]=f;},setAttribute(k,v){this.attrs[k]=v;},play(){this.paused=false;return Promise.resolve();},pause(){this.paused=true;}};}
-async function audioContext(){const els=Object.fromEntries(['music-toggle','background-music','record-music','music-status'].map(k=>[k,element()]));const w={invitationData:{music:'bg.wav',recordMusic:'record.wav'},dispatchEvent(){},addEventListener(){}};const context=vm.createContext({window:w,document:{querySelector:s=>els[s.slice(1)]},Event:class{}});vm.runInContext(await readFile('music.js','utf8'),context);return {els,api:w.InvitationAudio};}
+async function audioContext(){const els=Object.fromEntries(['music-toggle','background-music','record-music','music-status'].map(k=>[k,element()]));const w={invitationData:{music:'bg.wav',recordMusic:'record.wav'},dispatchEvent(){},addEventListener(){}};const context=vm.createContext({window:w,setTimeout,clearTimeout,document:{querySelector:s=>els[s.slice(1)]},Event:class{}});vm.runInContext(await readFile('music.js','utf8'),context);return {els,api:w.InvitationAudio};}
 {
   const {els,api}=await audioContext();await api.toggleRecord();assert.equal(els['background-music'].paused,true);assert.equal(api.recordPlaying,true);await api.toggleRecord();assert.equal(els['background-music'].paused,true);
   await els['music-toggle'].listeners.click();assert.equal(els['background-music'].paused,false);
@@ -49,7 +49,7 @@ async function studyAudioContext(config){
     el.pause=function(){this.paused=true;this.listeners.pause?.();};
   }
   const w={invitationData:config||{studyMusic:'study.ogg',recordPlaylist:['record.wav']},dispatchEvent(){events.push(w.InvitationAudio?.recordPlaying);},addEventListener(type,fn){handlers[type]=fn;}};
-  vm.runInNewContext(await readFile('music.js','utf8'),{window:w,document:{querySelector:s=>els[s.slice(1)],addEventListener(type,fn){documentHandlers[type]=fn;}},Event:class{}});
+  vm.runInNewContext(await readFile('music.js','utf8'),{window:w,setTimeout,clearTimeout,document:{querySelector:s=>els[s.slice(1)],addEventListener(type,fn){documentHandlers[type]=fn;}},Event:class{}});
   return {els,events,handlers,documentHandlers,api:w.InvitationAudio};
 }
 {

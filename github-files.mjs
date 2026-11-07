@@ -8,7 +8,7 @@ export async function githubFiles(){
   const files=await deliveryFiles();
   for(const path of ['.gitignore','README.md','部署说明.md','package.json','build-browser.mjs',
     'study.js','study-rules.js','study-art.js','preview.mjs','http-compression.mjs',
-    'audit-runtime.mjs','runtime-delivery.mjs','github-files.mjs','prepare-audio-compat.mjs','check-audio-compat.mjs','check-audio-interruption.mjs','check-study-sounds-browser.mjs','check-musicbox-audio.mjs','check-ui-sounds-browser.mjs','check-musicbox-browser.mjs',
+    'audit-runtime.mjs','runtime-delivery.mjs','github-files.mjs','prepare-audio-compat.mjs','check-audio-compat.mjs','check-audio-interruption.mjs','check-study-sounds-browser.mjs','check-musicbox-audio.mjs','check-ui-sounds-browser.mjs','check-musicbox-browser.mjs','check-native-music-sources.mjs','check-music-ios.mjs',
     'prepare-http-assets.mjs','build-static-site.mjs','check-study.mjs',
     'check-study-loft.mjs','check-study-sounds.mjs','check-mobile-scene-view.mjs','check-terminal-loading.mjs','check-handheld-media.mjs','check-handheld-ios.mjs','check-handheld-screen.mjs','check-static-room.mjs','check-static-picking.mjs','prepare-static-room.mjs','prepare-room-surround.mjs','prepare-static-picking.mjs','启动书房预览.cmd'])files.add(path);
   const result=[...files].sort();

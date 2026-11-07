@@ -148,8 +148,10 @@
 !/check-handheld-media.mjs
 !/check-handheld-screen.mjs
 !/check-mobile-scene-view.mjs
+!/check-music-ios.mjs
 !/check-musicbox-audio.mjs
 !/check-musicbox-browser.mjs
+!/check-native-music-sources.mjs
 !/check-static-picking.mjs
 !/check-static-room.mjs
 !/check-study-loft.mjs
