@@ -8,7 +8,7 @@ import {notebookPageLabel} from './notebook-page-copy.js';
 import {applyStickyNoteMessage,STICKY_NOTE_MESSAGE} from './study-sticky-note.js';
 import {createWindchimeSway} from './study-windchime-sway.js';
 import {createEnvelopeDetails,showInlineInvitation} from './study-envelope.js';
-import {createHandheldMedia} from './study-handheld.js?v=handheld-safari-3';
+import {createHandheldMedia} from './study-handheld.js?v=ios-media-20261107-4';
 
 // Orbit the camera rather than tipping the object: heavy objects stay upright.
 export const inspectionLimits=art=>({min:.06,max:art==='record'?Math.PI/2-.12:Math.PI-.06});
@@ -125,7 +125,7 @@ export function createInspection({getModel,mobile=false}){
           const cloned=original.map(material=>{const copy=material.clone();materials.push(copy);applyTabletopMaterial(copy,renderer,{enabled:true});return copy;});
           node.material=Array.isArray(node.material)?cloned:cloned[0];
         });
-        if(art==='handheld'&&!warming)handheldMedia.bind(object);
+        if(art==='handheld')handheldMedia.bind(object);
         const boundsKey=art+':'+!!result.notebookOpen,cachedBounds=boundsCache.get(boundsKey);
         const box=cachedBounds?cachedBounds.clone():new THREE.Box3().setFromObject(object,art==='notebook-opening'||result.notebookOpen),size=box.getSize(new THREE.Vector3());
         // Reserve room for the raised lid without reframing halfway through opening.

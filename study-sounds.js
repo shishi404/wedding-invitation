@@ -1,8 +1,15 @@
 (() => {
   'use strict';
+  // The mobile reader must use the context unlocked by its parent's entry click.
+  // A fresh iframe context cannot inherit permission for delayed envelope cues.
+  if(window.parent&&window.parent!==window&&window.frameElement?.id==='invitation-reader-frame'&&window.parent.InvitationStudySounds){
+    window.InvitationStudySounds=window.parent.InvitationStudySounds;return;
+  }
   const definitions={
     'ui-click':[['assets/ui-button-1.ogg','assets/ui-button-2.ogg'],'ui'],
     'ui-record':['assets/record-button.ogg','ui'],
+    'windchime':[Array.from({length:12},(_,i)=>`assets/windchime-${String(i+1).padStart(2,'0')}.ogg`),'bell'],
+    'dice':[['assets/dice1.ogg','assets/dice2.ogg'],'dice'],
     'notebook-open':['notebook-open','mechanism'],
     'notebook-tear':['notebook-tear','mechanism'],
     'notebook-pickup':['notebook-pickup','object'],
@@ -26,7 +33,7 @@
     'record-search':['record-search','action-result'],
   };
   const channels=new Map(),buffers=new Map();let context,ambient,ambientToken=0,ambientWanted=false,stopGeneration=0,roomReady=false;
-  const src=name=>name.startsWith('assets/')?name:`assets/sfx/${name}.ogg`;
+  const src=name=>{const value=name.startsWith('assets/')?name:`assets/sfx/${name}.ogg`;return window.InvitationAudioSource?.(value)||value;};
   let preparedCampfire,campfirePreparation;
   async function prepareCampfire(){
     if(preparedCampfire)return;
@@ -35,7 +42,7 @@
       const response=await fetch(src('campfire'),{signal:AbortSignal.timeout(60000)});
       if(!response.ok)throw Error('篝火声下载失败');
       const objectURL=URL.createObjectURL(await response.blob());
-      preparedCampfire={objectURL,url:objectURL+'#campfire.ogg'};
+      preparedCampfire={objectURL,url:objectURL+'#'+src('campfire').split('/').pop()};
     })().catch(error=>{campfirePreparation=null;throw error;});
     return campfirePreparation;
   }
@@ -43,9 +50,19 @@
   function audioContext(){
     const Constructor=window.AudioContext||window.webkitAudioContext;
     if(!Constructor)return null;
-    context ||= new Constructor({latencyHint:'interactive'});
-    if(context.state==='suspended')context.resume().catch(()=>{});
+    if(!context||context.state==='closed')context=new Constructor({latencyHint:'interactive'});
+    if(context.state==='suspended'||context.state==='interrupted')context.resume().catch(()=>{});
     return context;
+  }
+  async function ensureRunning(ctx){
+    if(ctx.state==='running')return true;
+    let timer;
+    try{
+      // A suspended resume promise must not hold notebook/result sequences open
+      // forever while the browser waits for a future gesture.
+      await Promise.race([ctx.resume(),new Promise((_,reject)=>{timer=setTimeout(()=>reject(Error('Audio resume requires interaction')),1500);})]);
+      return ctx.state==='running';
+    }finally{clearTimeout(timer);}
   }
   function notify(name,url){window.dispatchEvent(new CustomEvent('study-sound-started',{detail:{name,src:url}}));}
   function bufferFor(url,ctx){
@@ -66,15 +83,15 @@
       const ctx=audioContext();
       if(ctx){
         const buffer=await bufferFor(url,ctx);
-        if(ctx.state==='suspended')await ctx.resume();
+        if(!await ensureRunning(ctx)){finish(false);return false;}
         if(token!==slot.token){finish(false);return false;}
-        const node=ctx.createBufferSource(),gain=ctx.createGain();node.buffer=buffer;gain.gain.value=.65;
+        const node=ctx.createBufferSource(),gain=ctx.createGain();node.buffer=buffer;gain.gain.value=channel==='bell'?.7:.65;
         node.connect(gain);gain.connect(ctx.destination);slot.node=node;
         node.onended=()=>{node.disconnect();gain.disconnect();if(slot.node===node)slot.node=null;finish(token===slot.token);};node.start();
       }else{
-        if(!slot.media){slot.media=document.createElement('audio');slot.media.preload='none';slot.media.id=`study-effect-${channel}`;slot.media.volume=.65;document.body.append(slot.media);}
+        if(!slot.media){slot.media=document.createElement('audio');slot.media.preload='none';slot.media.id=`study-effect-${channel}`;slot.media.volume=channel==='bell'?.7:.65;document.body.append(slot.media);}
         slot.media.onended=()=>finish(token===slot.token);slot.media.onerror=()=>finish(false);
-        slot.media.src=window.InvitationMediaSource?.(url)||url;slot.media.currentTime=0;await slot.media.play();
+        slot.media.src=window.InvitationMediaSource?.(url)||url;slot.media.load?.();await slot.media.play();
         if(token!==slot.token){if(slot.stopped)slot.media.pause();finish(false);return false;}
       }
       notify(name,url);return waitForEnd?ended:true;
@@ -106,7 +123,13 @@
   }
   function playUI(record=false){return play(record?'ui-record':'ui-click');}
   function campfireMedia(){
-    if(!ambient){ambient=document.createElement('audio');ambient.id='study-campfire';ambient.preload='none';ambient.loop=true;ambient.volume=.2;ambient.src=preparedCampfire?.url||src('campfire');document.body.append(ambient);}
+    if(!ambient){
+      ambient=document.createElement('audio');ambient.id='study-campfire';ambient.preload='none';ambient.loop=true;ambient.volume=.2;ambient.src=preparedCampfire?.url||src('campfire');document.body.append(ambient);
+      // Safari can pause after an accepted play(), for example on unmute or
+      // returning from an interruption. The next gesture must be able to retry.
+      ambient.addEventListener?.('pause',()=>{if(roomReady&&ambient.paused)ambientWanted=false;});
+      ambient.addEventListener?.('error',()=>{ambientWanted=false;});
+    }
     return ambient;
   }
   function primeCampfire(){
@@ -123,16 +146,28 @@
     try{await ambient.play();if(token!==ambientToken){if(!ambientWanted)ambient.pause();return;}notify('campfire',ambient.src);}
     catch{if(token===ambientToken)ambientWanted=false;}
   }
-  function stop(){
-    ++stopGeneration;++ambientToken;ambientWanted=false;roomReady=false;ambient?.pause();
+  function stopEffects(){
+    ++stopGeneration;
     for(const slot of channels.values()){++slot.token;slot.finish?.(false);slot.stopped=true;try{slot.node?.stop();}catch{}slot.media?.pause();}
   }
-  window.InvitationStudySounds={play,playUI,playSequence,prepare,prepareEffects,prepareCampfire,stop};
+  function stop(){
+    ++ambientToken;ambientWanted=false;roomReady=false;ambient?.pause();stopEffects();
+  }
+  window.InvitationStudySounds={play,playUI,playSequence,prepare,prepareEffects,prepareCampfire,unlock:audioContext,stop};
   // Both media channels need their own gesture-bound play in mobile WebViews.
   window.addEventListener('study-enter',primeCampfire);
   document.querySelector?.('#scene-retry')?.addEventListener('click',primeCampfire);
   window.addEventListener('study-room-enter',()=>{if(roomReady)return;roomReady=true;if(ambient)ambient.currentTime=0;return startCampfire();});
-  const retryCampfire=()=>{if(roomReady&&!ambientWanted)startCampfire();};
+  const retryCampfire=()=>{if(roomReady&&(!ambientWanted||ambient?.paused))startCampfire();};
+  const unlockEffects=event=>{
+    if(event?.type==='keydown'&&!['Enter',' '].includes(event.key))return;
+    // Resume synchronously in the gesture, before animation/result callbacks
+    // run later. Never replay an old cue that happened during interruption.
+    if(context&&(context.state==='suspended'||context.state==='interrupted')){stopEffects();audioContext();}
+  };
+  document.addEventListener?.('click',unlockEffects,{capture:true});
+  document.addEventListener?.('touchend',unlockEffects,{capture:true,passive:true});
+  document.addEventListener?.('keydown',unlockEffects,{capture:true});
   document.addEventListener?.('click',retryCampfire,{capture:true});
   document.addEventListener?.('touchend',retryCampfire,{capture:true,passive:true});
   document.addEventListener?.('WeixinJSBridgeReady',retryCampfire);

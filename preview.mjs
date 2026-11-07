@@ -10,7 +10,7 @@ const root=resolve(import.meta.dirname);
 // A live process can still run an old server while serving newly edited files.
 // Reuse a port only when the server implementation and checkout both match.
 const previewVersion=createHash('sha256').update(await readFile(new URL(import.meta.url))).update(root).digest('hex').slice(0,16);
-const types={'.html':'text/html; charset=utf-8','.js':'text/javascript; charset=utf-8','.json':'application/json; charset=utf-8','.glb':'model/gltf-binary','.gltf':'model/gltf+json','.css':'text/css; charset=utf-8','.jpg':'image/jpeg','.jpeg':'image/jpeg','.png':'image/png','.webp':'image/webp','.svg':'image/svg+xml','.wav':'audio/wav','.ogg':'audio/ogg','.woff2':'font/woff2','.ttf':'font/ttf'};
+const types={'.html':'text/html; charset=utf-8','.js':'text/javascript; charset=utf-8','.json':'application/json; charset=utf-8','.glb':'model/gltf-binary','.gltf':'model/gltf+json','.css':'text/css; charset=utf-8','.jpg':'image/jpeg','.jpeg':'image/jpeg','.png':'image/png','.webp':'image/webp','.svg':'image/svg+xml','.wav':'audio/wav','.ogg':'audio/ogg','.mp3':'audio/mpeg','.woff2':'font/woff2','.ttf':'font/ttf'};
 export function createPreviewServer({compression=true}={}){const send=createCompressedSender(root);return http.createServer(async(req,res)=>{
   res.setHeader('X-Study-Preview',previewVersion);
   try{
@@ -18,8 +18,8 @@ export function createPreviewServer({compression=true}={}){const send=createComp
     const relative=decodeURIComponent(url.pathname).replace(/^\/+/, '')||'index.html';
     const path=resolve(root,relative);
     if(!path.startsWith(root+sep)){res.writeHead(403);res.end();return;}
-    if(extname(path)==='.mp4'){
-      const {size}=await stat(path),headers={'Content-Type':'video/mp4','Content-Disposition':'inline','Accept-Ranges':'bytes','Cache-Control':'no-cache'};
+    if(/\.(?:mp4|mp3|ogg|wav)$/i.test(path)){
+      const {size}=await stat(path),headers={'Content-Type':extname(path)==='.mp4'?'video/mp4':types[extname(path)],'Content-Disposition':'inline','Accept-Ranges':'bytes','Cache-Control':'no-cache'};
       let start=0,end=size-1,status=200;
       if(req.headers.range){
         const match=/^bytes=(\d*)-(\d*)$/.exec(req.headers.range);

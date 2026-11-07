@@ -165,5 +165,12 @@
   document.addEventListener('visibilitychange', () => {
     if (context) (document.hidden ? context.suspend() : context.resume()).catch(() => {});
   });
+  const resumeSound=event=>{
+    if(event.type==='keydown'&&!['Enter',' '].includes(event.key))return;
+    if(running&&!document.hidden&&context&&(context.state==='suspended'||context.state==='interrupted'))context.resume().catch(()=>{});
+  };
+  document.addEventListener('click',resumeSound,{capture:true});
+  document.addEventListener('touchend',resumeSound,{capture:true,passive:true});
+  document.addEventListener('keydown',resumeSound,{capture:true});
   window.addEventListener('pagehide', fail);
 })();

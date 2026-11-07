@@ -141,4 +141,13 @@ async function studyAudioContext(config){
   assert.equal(bg.src,tracks[0],'The four remaining tracks wrap without a missing-file request');
   await api.previousRecord();assert.equal(bg.src,tracks.at(-1));
 }
-console.log('Passed: 600 roll evaluations, four-track playlist cycling, music controls, media inspection pause/restore, gesture priming, mobile invitation music, blocked-play recovery, deliberate pause, buffering and record damage.');
+{
+  const {els,handlers,documentHandlers,api}=await studyAudioContext(),bg=els['background-music'];
+  handlers['study-room-enter']();await new Promise(resolve=>setImmediate(resolve));
+  bg.pause();assert.equal(els['music-toggle'].attrs['aria-pressed'],'false','A browser pause must not leave the control claiming playback');
+  documentHandlers.click({target:{closest:()=>null}});await new Promise(resolve=>setImmediate(resolve));
+  assert.equal(bg.paused,false,'A browser interruption recovers in the next click');
+  await api.toggleRecord();documentHandlers.click({target:{closest:()=>null}});
+  assert.equal(bg.paused,true,'An intentional pause stays paused');
+}
+console.log('Passed: 600 rolls, playlist cycling, media pause/restore, gesture priming, mobile reader music, blocked-play/browser-pause recovery, deliberate pause, buffering and record damage.');

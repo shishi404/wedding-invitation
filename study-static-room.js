@@ -5,9 +5,9 @@ import {clone} from './vendor/three-addons/utils/SkeletonUtils.js';
 import {assetCatalog} from './loft-asset-profile.js';
 import {inspectionAssetCatalog} from './loft-inspection-assets.js';
 import {sceneAssetProfile} from './loft-startup-downloads.js';
-import {preloadStaticRoom,downloadRoomFile,backgroundRoomDownloads} from './static-room-downloads.js?v=terraria-preload-20261107-6';
+import {preloadStaticRoom,downloadRoomFile,backgroundRoomDownloads} from './static-room-downloads.js?v=ios-media-20261107-2';
 import {createPickingDecoder,pickStaticRoom,applyPickingPatches} from './static-room-picking.js';
-import {createInspection} from './study-inspection.js?v=terraria-preload-20261107-6';
+import {createInspection} from './study-inspection.js?v=ios-media-20261107-4';
 import {createFlame} from './loft-flame.js';
 import {createWindchimeBreeze} from './loft-windchime-breeze.js';
 import {createTableLighting,applyTabletopMaterial} from './loft-table-lighting.js';
@@ -49,7 +49,7 @@ const suspended=()=>!ready||document.hidden||study.hidden||!!document.querySelec
 function request(){if(!frame&&!suspended())frame=requestAnimationFrame(render);}
 function render(now){
  frame=0;clearTimeout(timer);timer=0;if(suspended())return;const dt=Math.min(.05,Math.max(0,(now-last)/1000));last=now;
- if(windchime.visible)breeze?.update(dt);flame.update(now/1000);renderer.render(scene,camera);
+ if(windchime.visible){breeze?.update(dt);if(breeze?.active())renderer.shadowMap.needsUpdate=true;}flame.update(now/1000);renderer.render(scene,camera);
  world.dataset.renderCount=String(Number(world.dataset.renderCount||0)+1);world.dataset.triangles=renderer.info.render.triangles;world.dataset.drawCalls=renderer.info.render.calls;
  timer=setTimeout(request,1000/30);
 }
@@ -73,7 +73,7 @@ function sync(){
  if(game.notebookOpen)selected.add('notebook-'+(game.notebookResult||'success'));
  if(game.drawerOpen)selected.add((game.envelope?'box-empty':'box-open')+(game.drawerLockBroken?'-broken':''));else if(game.drawerLockBroken)selected.add('box-broken');
  for(const [key,image]of Object.entries(layerImages))image.hidden=!selected.has(key);
- if(windchime)windchime.visible=game.choice!=='intelligence';
+ if(windchime){const visible=game.choice!=='intelligence';if(windchime.visible!==visible)renderer.shadowMap.needsUpdate=true;windchime.visible=visible;}
  world.dataset.notebookState=game.notebookOpen?'open':'closed';world.dataset.notebookPages=notebookPageLabel(game.notebookResult);world.dataset.jewelryLock=game.drawerLockBroken?'hidden':'visible';world.dataset.boxState=game.drawerOpen?(game.envelope?'empty':'open'):'closed';
  document.querySelector('#scene-hint').textContent=(game.noteRead?'与物品互动·寻找婚礼请柬':'与物品互动·便签上有字也许有线索')+(world.clientWidth<world.clientHeight?'\n双指捏合查看全桌 · 张开放大后左右拖动':'');request();
 }
@@ -147,6 +147,16 @@ async function boot(){
   const lighting=createTableLighting({desk:{root:deskRoot,surface:deskSurface},renderer});lighting.apply({enabled:true,strength:1,shadows:true,reflection:.38});
   deskRoot.getObjectByName('Realtime floor shadow receiver').visible=false;
   const windShadow=new THREE.Mesh(new THREE.PlaneGeometry(manifest.desk.nativeSize[0],manifest.desk.nativeSize[2]),new THREE.ShadowMaterial({opacity:.3,depthWrite:false}));windShadow.rotation.x=-Math.PI/2;windShadow.position.y=.001;windShadow.receiveShadow=true;deskSurface.add(windShadow);
+  // The photo is baked into the background, so it has no depth in this renderer.
+  // Use its exact picking silhouette to keep tabletop shadows behind the frame.
+  const photoColor=manifest.picking.colors.find(item=>item.id==='square-wood-photo-frame').rgb;
+  const photoMask=new THREE.Texture(hitImage);photoMask.minFilter=photoMask.magFilter=THREE.NearestFilter;photoMask.generateMipmaps=false;photoMask.needsUpdate=true;
+  windShadow.material.onBeforeCompile=shader=>{
+   shader.uniforms.photoMask={value:photoMask};shader.uniforms.photoColor={value:new THREE.Vector3(...photoColor).divideScalar(255)};
+   shader.uniforms.shadowViewport={value:new THREE.Vector2(renderer.domElement.width,renderer.domElement.height)};
+   shader.fragmentShader='uniform sampler2D photoMask;\nuniform vec3 photoColor;\nuniform vec2 shadowViewport;\n'+shader.fragmentShader.replace('void main() {','void main() {\nif(distance(texture2D(photoMask,gl_FragCoord.xy/shadowViewport).rgb,photoColor)<0.02)discard;');
+  };
+  windShadow.material.customProgramCacheKey=()=> 'windchime-shadow-photo-occlusion-v1';
   windchime=clone(windModel.scene);windchime.matrix.fromArray(manifest.windchimeMatrix);windchime.matrixAutoUpdate=false;scene.add(windchime);lighting.prepare(windchime);
   // Apply the shared desktop light/material treatment; no mobile contact-shadow overlay.
   const deskRotation=new THREE.Quaternion();new THREE.Matrix4().fromArray(manifest.desk.root).decompose(new THREE.Vector3(),deskRotation,new THREE.Vector3());

@@ -3,18 +3,18 @@ import {readFile} from 'node:fs/promises';
 import vm from 'node:vm';
 const code=await readFile('study-sounds.js','utf8');
 function setup({web=true,deferred=false}={}){
-  const handlers={},notifications=[],media=[],nodes=[],requests=[];let random=0,release;
+  const handlers={},documentHandlers={},notifications=[],media=[],nodes=[],requests=[],contexts=[];let random=0,release;
   class Context{
-    constructor(){this.state='suspended';this.destination={};}
-    resume(){this.state='running';return Promise.resolve();}
+    constructor(){this.state='suspended';this.destination={};this.resumes=0;contexts.push(this);}
+    resume(){this.resumes++;if(this.pending)return new Promise(()=>{});if(this.blocked)return Promise.reject(Object.assign(Error('Gesture required'),{name:'NotAllowedError'}));if(!this.remainInterrupted)this.state='running';return Promise.resolve();}
     decodeAudioData(bytes){return Promise.resolve(bytes);}
     createGain(){return {gain:{value:0},connect(){},disconnect(){}};}
     createBufferSource(){const node={stopped:false,connect(){},disconnect(){},start(){nodes.push(this);},stop(){this.stopped=true;this.onended?.();}};return node;}
   }
   const window={addEventListener(type,fn){handlers[type]=fn;},dispatchEvent(e){notifications.push(e.detail);},...(web?{AudioContext:Context}:{})};
-  const createElement=()=>{const a={src:'',paused:true,currentTime:0,play(){this.paused=false;return Promise.resolve();},pause(){this.paused=true;}};media.push(a);return a;};
-  vm.runInNewContext(code,{window,document:{createElement,body:{append(){}}},CustomEvent:class{constructor(type,options){this.detail=options.detail;}},Math:Object.assign(Object.create(Math),{random:()=>random}),fetch:async url=>{requests.push(url);if(deferred)await new Promise(resolve=>{release=resolve;});return {ok:true,arrayBuffer:async()=>({url})};}});
-  return {api:window.InvitationStudySounds,handlers,notifications,media,nodes,requests,setRandom:v=>random=v,release:()=>release()};
+  const createElement=()=>{const a={src:'',paused:true,currentTime:0,listeners:{},addEventListener(type,fn){this.listeners[type]=fn;},play(){this.paused=false;return Promise.resolve();},pause(){this.paused=true;this.listeners.pause?.();}};media.push(a);return a;};
+  vm.runInNewContext(code,{window,setTimeout,clearTimeout,document:{createElement,body:{append(){}},addEventListener(type,fn){(documentHandlers[type]||=[]).push(fn);}},CustomEvent:class{constructor(type,options){this.detail=options.detail;}},Math:Object.assign(Object.create(Math),{random:()=>random}),fetch:async url=>{requests.push(url);if(deferred)await new Promise(resolve=>{release=resolve;});return {ok:true,arrayBuffer:async()=>({url})};}});
+  return {api:window.InvitationStudySounds,handlers,documentHandlers,notifications,media,nodes,requests,contexts,setRandom:v=>random=v,release:()=>release()};
 }
 {
   const f=setup();await f.handlers['study-enter']();assert.equal(f.media.length,1);assert.equal(f.media[0].muted,true,'Entry primes the ambience silently');await f.handlers['study-room-enter']();assert.equal(f.media[0].muted,false);assert.equal(f.media[0].loop,true);assert.equal(f.media[0].paused,false);
@@ -25,6 +25,9 @@ function setup({web=true,deferred=false}={}){
   assert.equal(f.media[0].paused,false,'Other cues must not interrupt the campfire loop');
   const count=f.media.length;await f.handlers['study-room-enter']();assert.equal(f.media.length,count);
   const before=f.requests.length;await f.api.prepare('notebook-open');await f.api.play('notebook-open');assert.equal(f.requests.length,before,'Decoded effects must be reused');
+  for(const random of [0,.5,.999]){f.setRandom(random);await f.api.play('windchime');assert.match(f.nodes.at(-1).buffer.url,/windchime-(01|07|12)\.ogg$/);}
+  const previousBell=f.nodes.at(-1);await f.api.play('windchime');assert.equal(previousBell.stopped,true,'A fresh bell replaces only the previous bell');
+  assert.equal(f.media[0].paused,false,'Bell playback must preserve ambience');
   f.api.stop();assert.ok(f.media.every(a=>a.paused));assert.ok(f.nodes.every(n=>n.stopped));
 }
 {
@@ -59,4 +62,37 @@ for(const web of [true,false]){
     assert.equal(f.notifications.filter(e=>e.name==='notebook-tear').length,1);
   }
 }
-console.log('Study effects passed: all cue mappings, sequential playback and cancellation in both audio backends, random successes, cached decoding and independent ambience.');
+{
+  const f=setup();await f.api.prepareEffects();const ctx=f.contexts[0],before=f.nodes.length;
+  ctx.state='interrupted';ctx.blocked=true;
+  assert.equal(await f.api.play('unlock'),false,'A blocked interruption must not report an inaudible cue as started');
+  assert.equal(f.nodes.length,before);
+  ctx.blocked=false;
+  for(const handler of f.documentHandlers.click)handler({type:'click'});
+  assert.equal(ctx.state,'running','The next gesture resumes before delayed animation cues');
+  assert.equal(f.nodes.length,before,'Recovery does not replay an old cue');
+  assert.equal(await f.api.play('box-open'),true);
+  ctx.state='interrupted';ctx.remainInterrupted=true;
+  assert.equal(await f.api.play('wax'),false,'A resolved resume promise with no running context is still not playback');
+  ctx.remainInterrupted=false;
+  for(const handler of f.documentHandlers.keydown)handler({type:'keydown',key:'Enter'});
+  assert.equal(ctx.state,'running');
+  for(const random of [0,.999]){f.setRandom(random);assert.equal(await f.api.play('dice'),true);assert.match(f.nodes.at(-1).buffer.url,/dice[12]\.ogg$/);}
+  ctx.state='interrupted';ctx.pending=true;
+  assert.equal(await f.api.playSequence(['notebook-open','notebook-tear']),false,'A pending resume cannot freeze a sequential animation');
+}
+{
+  const f=setup();await f.handlers['study-enter']();await f.handlers['study-room-enter']();
+  const ambience=f.media[0];ambience.pause();
+  for(const handler of f.documentHandlers.touchend)handler({type:'touchend'});
+  await tick();assert.equal(ambience.paused,false,'A browser-paused campfire retries on the next gesture');
+  f.api.stop();for(const handler of f.documentHandlers.click)handler({type:'click'});
+  assert.equal(ambience.paused,true,'Leaving the room must suppress ambience recovery');
+}
+{
+  const shared={play(){},unlock(){}};
+  const window={parent:{InvitationStudySounds:shared},frameElement:{id:'invitation-reader-frame'}};
+  vm.runInNewContext(code,{window});
+  assert.equal(window.InvitationStudySounds,shared,'The reader shares the parent context instead of creating a locked iframe context');
+}
+console.log('Study effects passed: all mappings, both audio backends, sequences/cancellation, dice variants, interrupted-context recovery, blocked-resume detection, campfire recovery and shared reader context.');

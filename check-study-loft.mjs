@@ -259,9 +259,9 @@ for(const withKnife of [false,true]){
  vm.runInContext('rollCounts.critical=0;rollCounts.fumble=0;showOpenedEnvelope('+withKnife+');',gameContext);
  assert.ok(!/大成功|大失败/.test(getGameElement('#interaction-copy').textContent));
  vm.runInContext("activeCheck={started:true,attribute:'strength',difficulty:'normal'};resolveRoll(1);resolveRoll(1);clearTimeout(resultTimer);activeCheck={started:true,attribute:'will',difficulty:'normal'};resolveRoll(100);clearTimeout(resultTimer);showOpenedEnvelope("+withKnife+");",gameContext);
- assert.ok(getGameElement('#interaction-copy').textContent.includes('大成功x1大失败x1'));
+ assert.ok(getGameElement('#interaction-copy').textContent.includes('大成功 x 1大失败 x 1'));
  vm.runInContext('rollCounts.critical=0;showOpenedEnvelope('+withKnife+');',gameContext);
- assert.ok(!getGameElement('#interaction-copy').textContent.includes('大成功x'));
- assert.ok(getGameElement('#interaction-copy').textContent.includes('大失败x1'));
+ assert.ok(!getGameElement('#interaction-copy').textContent.includes('大成功 x'));
+ assert.ok(getGameElement('#interaction-copy').textContent.includes('大失败 x 1'));
 }
 console.log('Both endings passed: zero counts omitted, critical/fumble rolls counted once.');

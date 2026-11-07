@@ -12,6 +12,9 @@
     "prepare:room": "node prepare-static-room.mjs",
     "test:room": "node check-static-room.mjs",
     "test:picking": "node check-static-picking.mjs",
+    "test:ios-video": "node check-handheld-media.mjs && node check-handheld-ios.mjs && node check-handheld-screen.mjs",
+    "test:media": "node check-audio-interruption.mjs && node check-audio-compat.mjs && node check-study-sounds-browser.mjs && node check-ui-sounds-browser.mjs && node check-musicbox-browser.mjs && node check-handheld-media.mjs",
+    "prepare:audio-compat": "node prepare-audio-compat.mjs",
     "prepare:github": "node build-browser.mjs && node github-files.mjs --write-ignore",
     "release": "node build-browser.mjs && node prepare-http-assets.mjs && node build-static-site.mjs"
   }

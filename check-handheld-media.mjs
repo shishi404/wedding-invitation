@@ -35,10 +35,11 @@ try{
   await Promise.race([Promise.all([media.prepare(),media.prepare()]),new Promise((_,reject)=>{timeout=setTimeout(()=>reject(Error('Preparation waited for iOS metadata')),1000);})]);
 }finally{clearTimeout(timeout);}
 assert.equal(video.readyState,0,'Preparation completes even when iOS emits no metadata');
-assert.equal(video.loads,0,'Room loading must not initialize the video decoder');
-assert.equal(video.getAttribute('src'),null,'The downloaded video stays detached until inspection');
+assert.equal(video.loads,1,'Initialize the decoder while the room loads without waiting for metadata');
+assert.equal(video.getAttribute('src'),'blob:test','Attach the downloaded file before inspection');
 assert.equal(video.plays,0,'Preloading must never call play');
 assert.ok(video.paused&&video.muted&&video.defaultMuted);
+assert.equal(video.autoplay,false);assert.equal(video.controls,false);
 assert.equal(fetched,1,'Concurrent preparation shares one download');
 video.paused=false;video.dispatchEvent(new Event('playing'));
 assert.ok(video.paused&&video.muted,'Unexpected playback before inspection is stopped silently');
@@ -54,11 +55,16 @@ await media.prepare();assert.equal(fetched,1);
 media.begin(host);assert.equal(video.currentTime,0);assert.equal(video.muted,false);
 windowEvents.dispatchEvent(new Event('study-room-failed'));assert.ok(video.paused&&video.muted);
 media.begin(host);windowEvents.dispatchEvent(new Event('study-enter'));assert.ok(video.paused&&video.muted);
+const allowedPlays=video.plays;
+context.document.querySelector=()=>({dataset:{sceneLoaded:'loading'}});
+media.begin(host);assert.equal(video.plays,allowedPlays,'Even an erroneous inspection callback cannot play while the room is loading');
+assert.ok(video.paused&&video.muted);media.end();delete context.document.querySelector;
+media.begin({dataset:{},isConnected:false});assert.equal(video.plays,allowedPlays,'A detached inspection cannot authorize playback');media.end();
 failFetch=true;const retryMedia=context.createHandheldMedia({requestRender(){}});
 await assert.rejects(retryMedia.prepare(),/下载失败/);
 assert.ok(retryMedia.video.paused&&retryMedia.video.muted);assert.equal(retryMedia.video.loads,0);
 failFetch=false;await retryMedia.prepare();assert.equal(retryMedia.video.readyState,0);
-assert.equal(retryMedia.video.getAttribute('src'),null);assert.equal(retryMedia.video.plays,0);
+assert.equal(retryMedia.video.getAttribute('src'),'blob:test');assert.equal(retryMedia.video.plays,0);
 
 const require=createRequire(import.meta.url);
 const {chromium}=require('C:/Users/shishi/.cache/codex-runtimes/codex-primary-runtime/dependencies/node/node_modules/playwright');
@@ -88,27 +94,39 @@ try{
       if(this.id==='handheld-video'){
         window.handheldPlayCalls.push({muted:this.muted,loading:!document.querySelector('#scene-loading').hidden});
         if(window.blockNextHandheldPlay){window.blockNextHandheldPlay=false;return Promise.reject(new DOMException('Gesture required','NotAllowedError'));}
+        if(window.stallNextHandheldPlay){window.stallNextHandheldPlay=false;return new Promise(()=>{});}
       }
       return play.call(this);
     };
   });
   await page.goto(`http://127.0.0.1:${server.address().port}/`);
   await page.locator('#start-exploration').click();
-  await page.waitForFunction(()=>document.querySelector('#world').dataset.sceneLoaded==='true',null,{timeout:120000});
+  await page.locator('#scene-retry').waitFor({state:'visible',timeout:120000});
   await page.waitForFunction(()=>document.querySelector('#handheld-video').dataset.preloadState==='error');
   assert.ok(await page.locator('#handheld-video').evaluate(v=>v.paused&&v.muted&&!v.getAttribute('src')));
-  assert.equal(await page.locator('#scene-retry').isVisible(),false,'Background video failure must not block the room');
-  await page.evaluate(()=>window.InvitationInspection.prepareHandheld());
+  assert.equal(await page.locator('#scene-retry').isVisible(),true,'A failed required download offers a room retry');
+  await page.locator('#scene-retry').click();
+  await page.waitForFunction(()=>document.querySelector('#world').dataset.sceneLoaded==='true',null,{timeout:120000});
   assert.equal(videoRequests,2,'A failed video download can be retried without triggering playback');
   assert.deepEqual(await page.evaluate(()=>window.handheldPlayCalls),[],'Room loading never plays the 3DS video');
-  assert.deepEqual(await page.evaluate(()=>window.handheldLoadCalls),[],'Neither initial boot nor room retry waits for decoder events');
-  assert.ok(await page.locator('#handheld-video').evaluate(v=>v.paused&&v.muted&&v.defaultMuted&&!v.getAttribute('src')&&v.readyState===0&&v.dataset.preloadState==='ready'));
+  assert.equal((await page.evaluate(()=>window.handheldLoadCalls)).length,1,'Initialize once before inspection without waiting for decoder events');
+  assert.ok(await page.locator('#handheld-video').evaluate(v=>v.paused&&v.muted&&v.defaultMuted&&!!v.getAttribute('src')&&v.dataset.preloadState==='ready'));
   await page.evaluate(()=>{window.handheldInspectionClicked=true;});
   await page.locator('[data-object="handheld"]').focus();await page.keyboard.press('Enter');
   await page.locator('#object-art .inspection-stage[data-model-state="ready"]').waitFor();
   await page.waitForFunction(()=>document.querySelector('#handheld-video').currentTime>.1);
   assert.ok(await page.locator('#handheld-video').evaluate(v=>!v.paused&&!v.muted));
+  assert.equal(await page.locator('#handheld-video').evaluate(v=>v.parentElement.id),'interaction-dialog','The video must stay within the modal top layer');
   assert.ok((await page.evaluate(()=>window.handheldPlayCalls)).every(call=>!call.loading));
+  await page.locator('#handheld-video').evaluate(v=>v.pause());
+  await page.getByRole('button',{name:'点击播放视频',exact:true}).click();
+  await page.waitForFunction(()=>!document.querySelector('#handheld-video').paused);
+  await page.locator('#interaction-dialog').getByRole('button',{name:'继续寻找新的线索',exact:true}).click();
+  await page.waitForFunction(()=>document.querySelector('#handheld-video').paused&&document.querySelector('#handheld-video').muted);
+  await page.evaluate(()=>{window.stallNextHandheldPlay=true;});
+  await page.locator('[data-object="handheld"]').focus();await page.keyboard.press('Enter');
+  await page.getByRole('button',{name:'点击播放视频',exact:true}).click({timeout:10000});
+  await page.waitForFunction(()=>document.querySelector('#handheld-video').currentTime>.1&&!document.querySelector('#handheld-video').paused);
   await page.locator('#interaction-dialog').getByRole('button',{name:'继续寻找新的线索',exact:true}).click();
   await page.waitForFunction(()=>document.querySelector('#handheld-video').paused&&document.querySelector('#handheld-video').muted);
   await page.evaluate(()=>{window.blockNextHandheldPlay=true;});
@@ -120,5 +138,5 @@ try{
   await page.waitForFunction(()=>document.querySelector('#handheld-video').paused&&document.querySelector('#handheld-video').muted);
   assert.deepEqual(errors,[]);
   assert.equal(videoRequests,2,'Inspection reuses the downloaded video');
-  console.log('3DS video checks passed: detached automatic background download, non-blocking download failure/retry, no-metadata iOS simulation, user-triggered playback and silent close.');
+  console.log('3DS video checks passed: decoder preinitialization without metadata waits, download retry, modal placement, blocked/pending playback recovery, browser pause recovery and silent close.');
 }finally{await browser.close();server.closeAllConnections();await new Promise(resolve=>server.close(resolve));}

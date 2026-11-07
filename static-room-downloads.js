@@ -5,7 +5,7 @@ window.InvitationMediaSource=value=>mediaURLs.get(new URL(value,document.baseURI
 window.addEventListener('pagehide',()=>{for(const value of mediaURLs.values())URL.revokeObjectURL(value.split('#')[0]);});
 // Carry the release through the manifest and every baked image. Reusing an
 // unversioned image URL can mix a cached old room with a newly downloaded script.
-const roomVersion=new URL(import.meta.url).searchParams.get('v')||'terraria-preload-20261107-6';
+const roomVersion=new URL(import.meta.url).searchParams.get('v')||'ios-media-20261107-2';
 function versionedURL(value,base){const url=new URL(value,base);url.searchParams.set('v',roomVersion);return url.href;}
 export const staticManifestURL=versionedURL('./assets/static-room/manifest.json',import.meta.url);
 export const staticPickingURL=versionedURL('./assets/static-room/picking-v2.json',import.meta.url);
@@ -30,5 +30,5 @@ export function preloadStaticRoom({retry=false}={}){
 }
 export function backgroundRoomDownloads(urls,onProgress=()=>{},{strict=false}={}){
  const pending=[...new Set(urls)],total=pending.length;let done=0;
- return Promise.all([0,1].map(async()=>{while(pending.length){const url=pending.shift();try{const data=await downloadRoomFile(url),absolute=new URL(url,document.baseURI).href;if(/\.(?:ogg|wav|mp3|webp)(?:\?|$)/.test(absolute)&&!mediaURLs.has(absolute)){const extension=new URL(absolute).pathname.split('.').pop(),type={ogg:'audio/ogg',wav:'audio/wav',mp3:'audio/mpeg',webp:'image/webp'}[extension];mediaURLs.set(absolute,URL.createObjectURL(new Blob([data],{type}))+'#'+new URL(absolute).pathname.split('/').pop());}}catch(error){if(strict)throw error;}onProgress(++done,total);}}));
+ return Promise.all([0,1].map(async()=>{while(pending.length){const original=pending.shift(),url=window.InvitationAudioSource?.(original)||original;try{const data=await downloadRoomFile(url),absolute=new URL(url,document.baseURI).href;if(/\.(?:ogg|wav|mp3|webp)(?:\?|$)/.test(absolute)&&!mediaURLs.has(absolute)){const extension=new URL(absolute).pathname.split('.').pop(),type={ogg:'audio/ogg',wav:'audio/wav',mp3:'audio/mpeg',webp:'image/webp'}[extension];mediaURLs.set(absolute,URL.createObjectURL(new Blob([data],{type}))+'#'+new URL(absolute).pathname.split('/').pop());}}catch(error){if(strict)throw error;}onProgress(++done,total);}}));
 }

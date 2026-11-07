@@ -11,11 +11,15 @@ const browser=await chromium.launch({executablePath:'C:/Program Files/Google/Chr
 await mkdir('output/terminal-loading',{recursive:true});
 const errors=[];
 const picking=JSON.parse(await readFile('assets/static-room/picking-v2.json','utf8'));
+const roomVersion=(await readFile('study-bootstrap.js','utf8')).match(/static-room-downloads\.js\?v=([^'"]+)/)[1];
 try{
   for(const [name,viewport] of [['desktop',{width:1672,height:941}],['mobile',{width:390,height:844}]]){
     const page=await browser.newPage({viewport});page.on('pageerror',e=>errors.push(e.message));
     await page.addInitScript(()=>{
-      window.terminalTones=[];window.roomAudioStarts=[];
+      window.terminalTones=[];window.roomAudioStarts=[];window.audioContexts=[];window.terminalGesture=false;
+      window.addEventListener('click',()=>{window.terminalGesture=true;setTimeout(()=>{window.terminalGesture=false;},0);},{capture:true});
+      const NativeAudioContext=window.AudioContext;
+      window.AudioContext=class extends NativeAudioContext{constructor(...args){super(...args);window.audioContexts.push(this);}};
       window.addEventListener('terminal-character-sound',e=>window.terminalTones.push(e.detail));
       const play=HTMLMediaElement.prototype.play;
       HTMLMediaElement.prototype.play=function(){
@@ -24,18 +28,27 @@ try{
       };
     });
     const heavyRequests=[];
-    const earlyURLs=['./assets/static-room/manifest.json','./assets/static-room/picking-v2.json','./assets/static-room/room.webp','./assets/static-room/'+picking.mask.slice(2),'./assets/static-room/windchime.glb',...Object.values(picking.patches).map(p=>'./assets/static-room/'+p.url.slice(2))].map(url=>new URL(url,base).href);
+    const earlyURLs=['./assets/static-room/manifest.json','./assets/static-room/picking-v2.json','./assets/static-room/room.webp','./assets/static-room/'+picking.mask.slice(2),'./assets/static-room/windchime.glb',...Object.values(picking.patches).map(p=>'./assets/static-room/'+p.url.slice(2))].map(value=>{const url=new URL(value,base);url.searchParams.set('v',roomVersion);return url.href;});
     page.on('request',request=>{if(/\/static-room\/|\.glb(?:\?|$)/.test(request.url()))heavyRequests.push(request.url());});
     let release;
     const gate=new Promise(r=>release=r);
-    await page.route('**/assets/static-room/room.webp',async route=>{await gate;await route.continue();});
+    await page.route('**/assets/static-room/room.webp*',async route=>{await gate;await route.continue();});
     await page.goto(base);assert.deepEqual(heavyRequests,[]);
     await page.locator('#start-exploration').click();
-    await page.evaluate(()=>window.InvitationTerminal.progress(50));
+    await page.evaluate(()=>{window.controlledTerminalProgress=window.InvitationTerminal.progress;window.InvitationTerminal.progress=()=>{};window.controlledTerminalProgress(50);});
     assert.equal(await page.locator('.terminal-line').nth(2).textContent(),'');
     assert.equal(await page.locator('.terminal-percent').textContent(),'02%');
     await page.waitForFunction(()=>document.querySelectorAll('.terminal-line')[1].textContent.length>=5);
     assert.equal(await page.locator('#scene-loading').getAttribute('data-phase'),'typing');
+    await page.evaluate(async()=>{
+      const shared=window.InvitationStudySounds.unlock();
+      window.terminalContext=window.audioContexts.find(ctx=>ctx!==shared&&ctx.state!=='closed');
+      const ctx=window.terminalContext,resume=ctx.resume.bind(ctx);await ctx.suspend();
+      Object.defineProperty(ctx,'state',{configurable:true,get:()=> 'interrupted'});
+      ctx.resume=()=>{if(!window.terminalGesture)return Promise.reject(new DOMException('Gesture required','NotAllowedError'));delete ctx.state;return resume();};
+    });
+    await page.locator('.terminal-screen').click();
+    await page.waitForFunction(()=>window.terminalContext.state==='running');
     for(const url of earlyURLs)assert.ok(heavyRequests.includes(url),'Initial resource downloads start during Chinese typing: '+url);
     assert.ok(heavyRequests.every(url=>earlyURLs.includes(url)),'Heavy room modules, other models and dice still wait until typing ends');
     assert.equal(await page.locator('#world canvas').count(),0,'No WebGL room initialization during the intro');
@@ -45,7 +58,7 @@ try{
     await page.waitForFunction(()=>document.querySelector('.terminal-percent').textContent==='50%');
     const motto='AUDENTES FORTUNA IUVAT';
     assert.deepEqual(await page.locator('.terminal-line').allTextContents(),['作为shishi和之南的好友或师长，同时也是一个优秀调查员的你','可以动用你的智力、力量和意志来探索这个书房',motto.slice(0,Math.floor(motto.length*.5))]);
-    await page.evaluate(()=>window.InvitationTerminal.progress(80));
+    await page.evaluate(()=>window.controlledTerminalProgress(80));
     await page.waitForFunction(()=>document.querySelector('.terminal-percent').textContent==='80%');
     assert.equal(await page.locator('.terminal-line').nth(2).textContent(),motto.slice(0,Math.floor(motto.length*.8)));
     assert.deepEqual(await page.evaluate(()=>window.roomAudioStarts),[],'Room audio must remain silent during third-line loading');
@@ -56,7 +69,7 @@ try{
     const metrics=await page.locator('.terminal-copy').evaluate(el=>({width:el.clientWidth,scroll:el.scrollWidth,sizes:[...el.children].map(p=>getComputedStyle(p).fontSize)}));
     assert.equal(new Set(metrics.sizes).size,1);assert.ok(metrics.scroll<=metrics.width+1);
     assert.equal(await page.locator('#scene-loading').getAttribute('data-audio'),'running');
-    await page.screenshot({path:`output/terminal-loading/${name}.png`});release();
+    await page.screenshot({path:`output/terminal-loading/${name}.png`});await page.evaluate(()=>{window.InvitationTerminal.progress=window.controlledTerminalProgress;});release();
     await page.waitForFunction(()=>document.querySelector('#world').dataset.sceneLoaded==='true',null,{timeout:120000});
     for(const url of earlyURLs)assert.equal(heavyRequests.filter(request=>request===url).length,1,'Boot reuses the early download without another request: '+url);
     assert.equal(await page.locator('#scene-loading').evaluate(el=>el.hidden),true);
@@ -75,7 +88,7 @@ try{
   await legacy.waitForFunction(()=>document.querySelector('#world').dataset.sceneLoaded==='true',null,{timeout:120000});await legacy.close();
   const retry=await browser.newPage({reducedMotion:'reduce'});let failed=false;
   const retryPhases=[];
-  await retry.route('**/assets/static-room/room.webp',async route=>{retryPhases.push(await retry.locator('#scene-loading').getAttribute('data-phase'));if(!failed){failed=true;await route.fulfill({status:503,body:'Unavailable'});}else await route.continue();});
+  await retry.route('**/assets/static-room/room.webp*',async route=>{retryPhases.push(await retry.locator('#scene-loading').getAttribute('data-phase'));if(!failed){failed=true;await route.fulfill({status:503,body:'Unavailable'});}else await route.continue();});
   await retry.goto(base);await retry.locator('#start-exploration').click();
   await retry.locator('#scene-retry').waitFor({state:'visible'});
   assert.equal(await retry.locator('#background-music').evaluate(audio=>audio.paused),true);

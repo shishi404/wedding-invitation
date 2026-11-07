@@ -7,6 +7,8 @@ window.invitationData = {
   recordMusic: "assets/record-nocturne.wav",
   musicBoxWinding: "assets/musicbox-winding.ogg",
   musicBoxMusic: "assets/musicbox-nop.ogg",
+  musicBoxSequence: "assets/audio-compat/musicbox-sequence.mp3",
+  musicBoxWindingSeconds: 2.90,
   // 唱片机歌单：上一首、下一首会首尾循环；可继续添加音乐路径。
   recordPlaylist: [
     "assets/study-clair-de-lune.ogg",

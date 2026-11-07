@@ -6,7 +6,8 @@
   const audio = document.querySelector('#background-music');
   const status = document.querySelector('#music-status');
   const config = window.invitationData || {};
-  const cachedSource=value=>window.InvitationMediaSource?.(value)||value;
+  const audioSource=value=>window.InvitationAudioSource?.(value)||value;
+  const cachedSource=value=>{value=audioSource(value);return window.InvitationMediaSource?.(value)||value;};
   // A mobile reader shares the parent's already-unlocked media element.
   if(window.parent&&window.parent!==window&&window.frameElement?.id==='invitation-reader-frame'){
     const parent=window.parent,player=parent.InvitationAudio;
@@ -28,21 +29,23 @@
   let studyRoomReady = false;
   let readingInvitation = false;
   let invitationRecordBroken = false;
-  const source = sharedPlaylist ? (config.studyMusic || config.music) : config.music;
+  const source = audioSource(sharedPlaylist ? (config.studyMusic || config.music) : config.music);
   const record = document.querySelector('#record-music');
   const bell = document.querySelector('#bell-sound');
   const diceSound = document.querySelector('#dice-sound');
-  const diceSources = ['assets/dice1.ogg','assets/dice2.ogg'];
+  const diceSources = ['assets/dice1.ogg','assets/dice2.ogg'].map(audioSource);
   if (diceSound) diceSound.volume = .65;
   const musicBox = document.querySelector('#musicbox-music');
-  const musicBoxWindingSource=config.musicBoxWinding||'assets/musicbox-winding.ogg';
-  const musicBoxMusicSource=config.musicBoxMusic||'assets/musicbox-nop.ogg';
-  if (musicBox) { musicBox.src = musicBoxWindingSource; musicBox.volume = .7; musicBox.loop = false; }
-  let musicBoxPhase='idle',musicBoxResumeBackground=false,musicBoxRequest=0;
-  const bellSources = Array.from({length:12},(_,i)=>`assets/windchime-${String(i+1).padStart(2,'0')}.ogg`);
+  const musicBoxWindingSource=audioSource(config.musicBoxWinding||'assets/musicbox-winding.ogg');
+  const musicBoxMusicSource=audioSource(config.musicBoxMusic||'assets/musicbox-nop.ogg');
+  const musicBoxSequenceSource=config.musicBoxSequence||'';
+  const musicBoxWindingSeconds=Number(config.musicBoxWindingSeconds)||2.9;
+  if (musicBox) { musicBox.src = musicBoxSequenceSource||musicBoxWindingSource; musicBox.volume = .7; musicBox.loop = false; }
+  let musicBoxPhase='idle',musicBoxResumeBackground=false,musicBoxRequest=0,retryMusicBox=false;
+  const bellSources = Array.from({length:12},(_,i)=>audioSource(`assets/windchime-${String(i+1).padStart(2,'0')}.ogg`));
   if (bell) bell.volume = .7;
-  const recordSources = Array.isArray(config.recordPlaylist) ? config.recordPlaylist.filter(src => typeof src === 'string' && src.trim()) : [];
-  if (!recordSources.length) recordSources.push(config.recordMusic || 'assets/record-waltz.wav');
+  const recordSources = Array.isArray(config.recordPlaylist) ? config.recordPlaylist.filter(src => typeof src === 'string' && src.trim()).map(audioSource) : [];
+  if (!recordSources.length) recordSources.push(audioSource(config.recordMusic || 'assets/record-waltz.wav'));
   // In the study, the background track is the first record on one shared channel.
   if (sharedPlaylist && source) recordSources.splice(0, recordSources.length, ...new Set([source, ...recordSources]));
   let recordIndex = 0;
@@ -92,7 +95,12 @@
     }
   }
   // The study's 3D record and the music button follow actual media playback.
-  for (const event of ['playing','play','pause','waiting','ended','emptied','error']) audio.addEventListener(event, syncPlayback);
+  for (const event of ['playing','play','pause','waiting','ended','emptied','error']) audio.addEventListener(event,()=>{
+    syncPlayback();
+    if(event==='pause'&&sharedPlaylist&&enabled&&audio.paused&&!audio.ended&&!audio.error&&!mediaPause&&musicBoxPhase==='idle'&&(studyRoomReady||readingInvitation||autoplay)){
+      enabled=false;retryAutoplay=true;update();syncPlayback();
+    }
+  });
   syncPlayback();
   async function setBackground(nextEnabled) {
     if(nextEnabled&&mediaPause)return;
@@ -161,28 +169,29 @@
     if (sharedPlaylist) {
       audio.pause();
       audio.src = recordIndex===0&&preparedBackground?preparedBackground.url:cachedSource(recordSources[recordIndex]);
-      audio.currentTime = 0;
+      audio.load?.();
       await setBackground(true);
       return;
     }
     record.pause();
     record.src = cachedSource(recordSources[recordIndex]);
-    record.currentTime = 0;
+    record.load?.();
     await playRecord();
   }
   async function finishMusicBox(error=false){
     const shouldResume=musicBoxResumeBackground&&!recordBroken;
-    const completion=++musicBoxRequest;musicBoxPhase='idle';musicBoxResumeBackground=false;musicBox?.pause();
+    const completion=++musicBoxRequest;musicBoxPhase='idle';musicBoxResumeBackground=false;retryMusicBox=false;musicBox?.pause();
     if(shouldResume)await setBackground(true);
     else update();
     if(error&&completion===musicBoxRequest)status.textContent='八音盒暂时无法播放，请稍后重试。';
   }
   function cancelMusicBox(){
-    ++musicBoxRequest;musicBoxPhase='idle';musicBoxResumeBackground=false;
+    ++musicBoxRequest;musicBoxPhase='idle';musicBoxResumeBackground=false;retryMusicBox=false;
     musicBox?.pause();if(musicBox)musicBox.currentTime=0;
   }
   async function playMusicBoxSource(src,phase,token){
-    musicBoxPhase=phase;musicBox.pause();musicBox.src=cachedSource(src);musicBox.currentTime=0;musicBox.volume=phase==='winding'?.7:.55;musicBox.load();
+    retryMusicBox=false;
+    musicBoxPhase=phase;musicBox.pause();musicBox.src=cachedSource(src);musicBox.volume=phase==='winding'?.7:.55;musicBox.load();
     try{
       await musicBox.play();
       if(token!==musicBoxRequest){if(musicBoxPhase==='idle')musicBox.pause();return false;}
@@ -192,18 +201,35 @@
       return false;
     }
   }
+  async function resumeMusicBox(){
+    if(mediaPause||musicBoxPhase==='idle')return false;
+    const token=musicBoxRequest;retryMusicBox=false;
+    try{await musicBox.play();return token===musicBoxRequest;}
+    catch(error){
+      if(token===musicBoxRequest&&musicBoxPhase!=='idle'){
+        retryMusicBox=error.name==='NotAllowedError';
+        status.textContent=retryMusicBox?'点击页面继续播放八音盒。':'八音盒暂时无法播放，请重新转动发条。';
+      }
+      return false;
+    }
+  }
   musicBox?.addEventListener('ended',()=>{
     if(!musicBox.ended)return;
+    if(musicBoxSequenceSource&&musicBoxPhase!=='idle')return finishMusicBox();
     if(musicBoxPhase==='winding')return playMusicBoxSource(musicBoxMusicSource,'music',musicBoxRequest);
     if(musicBoxPhase==='music')return finishMusicBox();
   });
+  musicBox?.addEventListener('timeupdate',()=>{
+    if(musicBoxSequenceSource&&musicBoxPhase==='winding'&&musicBox.currentTime>=musicBoxWindingSeconds){musicBoxPhase='music';musicBox.volume=.55;}
+  });
   musicBox?.addEventListener('error',()=>{if(musicBoxPhase!=='idle')return finishMusicBox(true);});
+  musicBox?.addEventListener('pause',()=>{if(musicBoxPhase!=='idle'&&!mediaPause&&musicBox.paused&&!musicBox.ended)retryMusicBox=true;});
   if(sharedPlaylist)audio.addEventListener('ended',()=>{
     if(audio.ended&&enabled&&!recordBroken&&musicBoxPhase==='idle')return changeRecord(1);
   });
   window.InvitationAudio = {
     prepareBackground,
-    preloadSources:()=>[...new Set([source,...recordSources,...bellSources,...diceSources,musicBoxWindingSource,musicBoxMusicSource].filter(Boolean))],
+    preloadSources:()=>[...new Set([source,...recordSources,...bellSources,...diceSources,...(musicBoxSequenceSource?[musicBoxSequenceSource]:[musicBoxWindingSource,musicBoxMusicSource])].filter(Boolean))],
     pauseForMedia(){
       const hold={background:enabled&&!audio.paused&&!audio.ended&&!recordBroken,musicBox:musicBoxPhase!=='idle'&&musicBox&&!musicBox.paused};
       mediaPause=hold;++request;retryAutoplay=false;enabled=false;resumeBackground=false;
@@ -211,19 +237,20 @@
       return ()=>{
         if(mediaPause!==hold)return;
         mediaPause=null;
-        if(hold.musicBox&&musicBoxPhase!=='idle')musicBox.play().catch(()=>{});
+        if(hold.musicBox&&musicBoxPhase!=='idle')return resumeMusicBox();
         else if(hold.background&&!recordBroken)return setBackground(true);
       };
     },
-    startInvitation(){if(!readingInvitation)invitationRecordBroken=recordBroken;readingInvitation=true;recordBroken=false;button.disabled=false;window.InvitationStudySounds?.stop();audio.muted=false;return setBackground(true);},
+    startInvitation(){if(!readingInvitation)invitationRecordBroken=recordBroken;readingInvitation=true;recordBroken=false;button.disabled=false;window.InvitationStudySounds?.stop();window.InvitationStudySounds?.unlock?.();audio.muted=false;return setBackground(true);},
     endInvitation(){readingInvitation=false;if(invitationRecordBroken){invitationRecordBroken=false;window.InvitationAudio.breakRecord();}},
-    resumeAfterGesture(){if(retryAutoplay)return window.InvitationAudio.startBackground();},
+    resumeAfterGesture(){window.InvitationStudySounds?.unlock?.();if(retryMusicBox&&!mediaPause)return resumeMusicBox();if(retryAutoplay)return window.InvitationAudio.startBackground();},
     get recordPlaying() { return recordPlaying; },
     get recordError() { return recordError; },
-    startBackground() { return enabled ? Promise.resolve() : setBackground(true); },
+    startBackground() { return enabled&&!audio.paused ? Promise.resolve() : setBackground(true); },
     async playDice() {
+      if(window.InvitationStudySounds?.play&&(window.AudioContext||window.webkitAudioContext))return window.InvitationStudySounds.play('dice');
       if (!diceSound) return false;
-      diceSound.pause();diceSound.currentTime = 0;
+      diceSound.pause();
       diceSound.src = cachedSource(diceSources[Math.floor(Math.random() * diceSources.length)]);
       diceSound.load();
       try { await diceSound.play(); return true; }
@@ -234,15 +261,16 @@
       if(musicBoxPhase==='idle')musicBoxResumeBackground=enabled&&!recordBroken;
       const token=++musicBoxRequest;++request;
       musicBoxPhase='winding';enabled=false;audio.pause();update();syncPlayback();status.textContent='';
-      // Reuse one media element for both clips, including on mobile browsers.
-      return playMusicBoxSource(musicBoxWindingSource,'winding',token);
+      // Start the continuous winding + song file in this click. No asynchronous
+      // source replacement or second play() is needed when winding ends.
+      return playMusicBoxSource(musicBoxSequenceSource||musicBoxWindingSource,'winding',token);
     },
     async playBell() {
+      if(window.InvitationStudySounds?.play&&(window.AudioContext||window.webkitAudioContext))return window.InvitationStudySounds.play('windchime');
       if (!bell) return false;
       // One shared sound channel: a fresh ring always replaces the previous one.
       // Keep background music and the record player completely independent.
       bell.pause();
-      bell.currentTime = 0;
       bell.src = cachedSource(bellSources[Math.floor(Math.random() * bellSources.length)]);
       bell.load();
       try { await bell.play(); return true; }
@@ -264,7 +292,7 @@
       audio.pause(); record?.pause(); syncPlayback(); update();
       status.textContent = '唱片已损坏，无法继续播放音乐。';
     },
-    leaveStudy() { mediaPause=null;studyRoomReady=false;retryAutoplay=false;window.InvitationStudySounds?.stop(); ++request; ++recordRequest; ++musicBoxRequest; musicBoxPhase='idle';musicBoxResumeBackground=false;enabled = false; record?.pause(); bell?.pause(); if (bell) bell.currentTime = 0; musicBox?.pause(); if (musicBox) musicBox.currentTime = 0; diceSound?.pause(); if (diceSound) diceSound.currentTime = 0; audio.pause();audio.muted=false; recordPlaying = false; resumeBackground = false; update(); syncPlayback(); notifyRecord(); }
+    leaveStudy() { mediaPause=null;studyRoomReady=false;retryAutoplay=false;retryMusicBox=false;window.InvitationStudySounds?.stop(); ++request; ++recordRequest; ++musicBoxRequest; musicBoxPhase='idle';musicBoxResumeBackground=false;enabled = false; record?.pause(); bell?.pause(); if (bell) bell.currentTime = 0; musicBox?.pause(); if (musicBox) musicBox.currentTime = 0; diceSound?.pause(); if (diceSound) diceSound.currentTime = 0; audio.pause();audio.muted=false; recordPlaying = false; resumeBackground = false; update(); syncPlayback(); notifyRecord(); }
   };
   if (!sharedPlaylist) {
     record?.addEventListener('ended', stopRecord);
@@ -291,9 +319,9 @@
   if (autoplay || isStudy) {
     // Browsers may require a gesture; a later deliberate pause must never be undone.
     const resumeAutoplay = event => {
-      if (!retryAutoplay || (isStudy&&!studyRoomReady&&!readingInvitation) || event.target?.closest?.('#music-toggle')) return;
+      if ((!retryAutoplay&&!retryMusicBox) || (isStudy&&!studyRoomReady&&!readingInvitation) || event.target?.closest?.('#music-toggle')) return;
       if (event.type === 'keydown' && !['Enter',' ','ArrowDown','PageDown'].includes(event.key)) return;
-      window.InvitationAudio.startBackground();
+      window.InvitationAudio.resumeAfterGesture();
     };
     document.addEventListener('click', resumeAutoplay, {capture:true});
     document.addEventListener('touchend', resumeAutoplay, {capture:true,passive:true});

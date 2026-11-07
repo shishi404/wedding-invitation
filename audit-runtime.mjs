@@ -40,6 +40,9 @@ export async function auditRuntime(){
     const file=queue.pop();if(files.has(file))continue;files.add(file);
     const path=resolve(root,file);let bytes;
     try{bytes=await readFile(path);}catch{missing.add(file);continue;}
+    if(file.startsWith('assets/')&&!file.startsWith('assets/audio-compat/')&&file.endsWith('.ogg')){
+      queue.push(file.replace(/^assets\//,'assets/audio-compat/').replace(/\.ogg$/,'.mp3'));
+    }
     if(extname(file)==='.glb'){
       const json=JSON.parse(bytes.subarray(20,20+bytes.readUInt32LE(12)));
       for(const item of [...json.images||[],...json.buffers||[]])if(item.uri)await enqueue(item.uri,file,{required:true});
